@@ -9048,6 +9048,8 @@ let
     conf = config.st.conf or null;
   };
 
+  substitute = callPackage ../tools/text/substitute { };
+
   sxiv = callPackage ../applications/graphics/sxiv { };
 
   bittorrentSync = callPackage ../applications/networking/bittorrentsync { };
