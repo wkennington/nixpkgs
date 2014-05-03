@@ -3832,6 +3832,10 @@ let
   smlnjBootstrap = callPackage ../development/compilers/smlnj/bootstrap.nix { };
   smlnj = callPackage_i686 ../development/compilers/smlnj { };
 
+  spark-ada = spark-ada-2013;
+  spark-ada-2012 = callPackage ../development/compilers/spark/2012.nix { };
+  spark-ada-2013 = callPackage ../development/compilers/spark/2013.nix { };
+
   stalin = callPackage ../development/compilers/stalin { };
 
   strategoPackages = recurseIntoAttrs strategoPackages018;

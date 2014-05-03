@@ -1,0 +1,13 @@
+diff --git a/common/Makefile.inc b/common/Makefile.inc
+index 0e46fdd..c81494d 100644
+--- a/common/Makefile.inc
++++ b/common/Makefile.inc
+@@ -83,7 +83,7 @@ endif
+ CUSTOMER_LIB:=${ROOT}/lib/spark/current
+ 
+ # Common compiler options.
+-COMMON_OPTS:=-g -gnatwae -gnat05 -gnatwl -gnaty3abefhiklnprt -I${CUSTOMER_LIB} -I${COMMON}/versioning -I${ROOT}/examiner -gnatf -k
++COMMON_OPTS:=-g -gnatwa -gnat05 -gnatwl -gnaty3abefhiklnprt -I${CUSTOMER_LIB} -I${COMMON}/versioning -I${ROOT}/examiner -gnatf -k
+ GNATMAKE_OPTS:=${COMMON_OPTS} -O2 -fno-strict-aliasing
+ BIND_OPTS:=-E
+ 
