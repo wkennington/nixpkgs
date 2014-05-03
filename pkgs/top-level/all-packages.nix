@@ -4492,6 +4492,10 @@ let
 
   m4 = gnum4;
 
+  muen = callPackage ../misc/muen {
+    spark-ada = spark-ada-2012;
+  };
+
   global = callPackage ../development/tools/misc/global { };
 
   gnome_doc_utils = callPackage ../development/tools/documentation/gnome-doc-utils {};
