@@ -3150,7 +3150,7 @@ let
       libXrandr xproto renderproto xextproto inputproto randrproto;
   });
 
-  gnat = gnat45;
+  gnat = gnat48;
 
   gnat45 = wrapGCC (gcc45.gcc.override {
     name = "gnat";
@@ -3166,6 +3166,19 @@ let
   });
 
   gnat46 = wrapGCC (gcc46.gcc.override {
+    name = "gnat";
+    langCC = false;
+    langC = true;
+    langAda = true;
+    profiledCompiler = false;
+    gnatboot = gnat45;
+    # We can't use the ppl stuff, because we would have
+    # libstdc++ problems.
+    ppl = null;
+    cloog = null;
+  });
+
+  gnat48 = wrapGCC (gcc48.gcc.override {
     name = "gnat";
     langCC = false;
     langC = true;
