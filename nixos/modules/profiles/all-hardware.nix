@@ -44,6 +44,12 @@
 
       # Keyboards
       "usbhid" "hid_apple" "hid_logitech_dj" "hid_lenovo_tpkbd" "hid_roccat"
+
+      # Hyper-v modules needed for booting a generation 2 virtual machine
+      "hv_storvsc" "hyperv_fb" "hyperv_keyboard"
+
+      # Framebuffer console needed for a console to display in UEFI environments
+      "fbcon"
     ];
 
   # Include lots of firmware.
