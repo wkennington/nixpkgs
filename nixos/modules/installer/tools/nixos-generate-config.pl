@@ -244,6 +244,9 @@ if ($virt eq "qemu" || $virt eq "kvm" || $virt eq "bochs") {
     push @imports, "<nixpkgs/nixos/modules/profiles/qemu-guest.nix>";
 }
 
+# Likewise for Hyper-V.
+push @imports, "<nixpkgs/nixos/modules/profiles/hyperv-guest.nix>" if $virt eq "hyperv";
+
 
 # Pull in NixOS configuration for containers.
 if ($virt eq "systemd-nspawn") {
