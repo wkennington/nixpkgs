@@ -8,7 +8,9 @@ with lib;
 let
   libDir = "/var/lib/bacula";
 
-  fd_cfg = config.services.bacula-fd;
+  package = config.services.bacula.package;
+
+  fd_cfg = config.services.bacula.fd;
   fd_conf = pkgs.writeText "bacula-fd.conf"
     ''
       Client {
@@ -34,7 +36,7 @@ let
       }
     '';
 
-  sd_cfg = config.services.bacula-sd;
+  sd_cfg = config.services.bacula.sd;
   sd_conf = pkgs.writeText "bacula-sd.conf" 
     ''
       Storage {
@@ -69,7 +71,7 @@ let
       }
     '';
 
-  dir_cfg = config.services.bacula-dir;
+  dir_cfg = config.services.bacula.dir;
   dir_conf = pkgs.writeText "bacula-dir.conf" 
     ''
     Director {
@@ -78,7 +80,7 @@ let
       DirPort = ${toString dir_cfg.port};
       Working Directory = "${libDir}";
       Pid Directory = "/var/run/";
-      QueryFile = "${pkgs.bacula}/etc/query.sql";
+      QueryFile = "${package}/etc/query.sql";
       ${dir_cfg.extraDirectorConfig}
     }
 
@@ -164,127 +166,150 @@ let
 
 in {
   options = {
-    services.bacula-fd = {
-      enable = mkOption {
-        type = types.bool;
-        default = false;
-        description = ''
-          Whether to enable Bacula File Daemon.
-        '';
-      };
- 
-      name = mkOption {
-        default = "${config.networking.hostName}-fd";
-        description = ''
-        	The client name that must be used by the Director when connecting. Generally, it is a good idea to use a name related to the machine so that error messages can be easily identified if you have multiple Clients. This directive is required.
-        '';
-      };
- 
-      port = mkOption {
-        default = 9102;
-        type = types.uniq types.int;
-        description = ''
-        	This specifies the port number on which the Client listens for Director connections. It must agree with the FDPort specified in the Client resource of the Director's configuration file. The default is 9102.
-        '';
-      };
- 
-      director = mkOption {
-        default = {};
-        description = ''
-          This option defines director resources in Bacula File Daemon.
-        '';
-        type = types.attrsOf types.optionSet;
-        options = [ directorOptions ];
-      };
 
-      extraClientConfig = mkOption {
-        default = "";
+    services.bacula = {
+
+      package = mkOption {
+        default = pkgs.bacula;
         description = ''
-          Extra configuration to be passed in Client directive.
-        '';
-        example = ''
-          Maximum Concurrent Jobs = 20;
-          Heartbeat Interval = 30;
+          The derivation used for the bacula daemons and system package.
         '';
       };
 
-      extraMessagesConfig = mkOption {
-        default = "";
-        description = ''
-          Extra configuration to be passed in Messages directive.
-        '';
-        example = ''
-          console = all
-        '';
+      fd = {
+
+        enable = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Whether to enable Bacula File Daemon.
+          '';
+        };
+
+        name = mkOption {
+          type = types.str;
+          default = "${config.networking.hostName}-fd";
+          description = ''
+            The client name that must be used by the Director when connecting.
+            Generally, it is a good idea to use a name related to the machine
+            so that error messages can be easily identified if you have multiple
+            clients. This directive is required.
+          '';
+        };
+
+        port = mkOption {
+          default = 9102;
+          type = types.uniq types.int;
+          description = ''
+            This specifies the port number on which the client listens for
+            director connections. It must agree with the FDPort specified in
+            the client resource of the director's configuration file.
+          '';
+        };
+
+        director = mkOption {
+          default = {};
+          description = ''
+            This option defines director resources in Bacula File Daemon.
+          '';
+          type = types.attrsOf types.optionSet;
+          options = [ directorOptions ];
+        };
+
+        extraClientConfig = mkOption {
+          default = "";
+          description = ''
+            Extra configuration to be passed in Client directive.
+          '';
+          example = ''
+            Maximum Concurrent Jobs = 20;
+            Heartbeat Interval = 30;
+          '';
+        };
+
+        extraMessagesConfig = mkOption {
+          default = "";
+          description = ''
+            Extra configuration to be passed in Messages directive.
+          '';
+          example = ''
+            console = all
+          '';
+        };
+
       };
+
+      sd = {
+        enable = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Whether to enable Bacula storage daemon.
+          '';
+        };
+
+        name = mkOption {
+          type = types.str;
+          default = "${config.networking.hostName}-sd";
+          description = ''
+            Specifies the name of the storage daemon.
+          '';
+        };
+
+        port = mkOption {
+          default = 9103;
+          type = types.uniq types.int;
+          description = ''
+            Specifies port number on which the storage daemon listens for
+            director connections.
+          '';
+        };
+
+        director = mkOption {
+          default = {};
+          description = ''
+            This option defines Director resources in Bacula Storage Daemon.
+          '';
+          type = types.attrsOf types.optionSet;
+          options = [ directorOptions ];
+        };
+
+        device = mkOption {
+          default = {};
+          description = ''
+            This option defines Device resources in Bacula Storage Daemon.
+          '';
+          type = types.attrsOf types.optionSet;
+          options = [ deviceOptions ];
+        };
+
+        extraStorageConfig = mkOption {
+          default = "";
+          description = ''
+            Extra configuration to be passed in Storage directive.
+          '';
+          example = ''
+            Maximum Concurrent Jobs = 20;
+            Heartbeat Interval = 30;
+          '';
+        };
+
+        extraMessagesConfig = mkOption {
+          default = "";
+          description = ''
+            Extra configuration to be passed in Messages directive.
+          '';
+          example = ''
+            console = all
+          '';
+        };
+
+      };
+
     };
 
-    services.bacula-sd = {
-      enable = mkOption {
-        type = types.bool;
-        default = false;
-        description = ''
-          Whether to enable Bacula Storage Daemon.
-        '';
-      };
- 
-      name = mkOption {
-        default = "${config.networking.hostName}-sd";
-        description = ''
-          Specifies the Name of the Storage daemon.
-        '';
-      };
- 
-      port = mkOption {
-        default = 9103;
-        type = types.uniq types.int;
-        description = ''
-          Specifies port number on which the Storage daemon listens for Director connections. The default is 9103.
-        '';
-      };
+    services.bacula.dir = {
 
-      director = mkOption {
-        default = {};
-        description = ''
-          This option defines Director resources in Bacula Storage Daemon.
-        '';
-        type = types.attrsOf types.optionSet;
-        options = [ directorOptions ];
-      };
-
-      device = mkOption {
-        default = {};
-        description = ''
-          This option defines Device resources in Bacula Storage Daemon.
-        '';
-        type = types.attrsOf types.optionSet;
-        options = [ deviceOptions ];
-      };
- 
-      extraStorageConfig = mkOption {
-        default = "";
-        description = ''
-          Extra configuration to be passed in Storage directive.
-        '';
-        example = ''
-          Maximum Concurrent Jobs = 20;
-          Heartbeat Interval = 30;
-        '';
-      };
-
-      extraMessagesConfig = mkOption {
-        default = "";
-        description = ''
-          Extra configuration to be passed in Messages directive.
-        '';
-        example = ''
-          console = all
-        '';
-      };
- 
-    };
-
-    services.bacula-dir = {
       enable = mkOption {
         type = types.bool;
         default = false;
@@ -294,24 +319,29 @@ in {
       };
 
       name = mkOption {
+        type = types.str;
         default = "${config.networking.hostName}-dir";
         description = ''
           The director name used by the system administrator. This directive is required.
         '';
       };
- 
+
       port = mkOption {
         default = 9101;
         type = types.uniq types.int;
         description = ''
-          Specify the port (a positive integer) on which the Director daemon will listen for Bacula Console connections. This same port number must be specified in the Director resource of the Console configuration file. The default is 9101, so normally this directive need not be specified. This directive should not be used if you specify DirAddresses (N.B plural) directive.
+          Specify the port (a positive integer) on which the director daemon
+          will listen for Bacula console connections. This same port number
+          must be specified in the director resource of the console
+          configuration file. This directive should not be used if you specify
+          DirAddresses (N.B plural) directive.
         '';
       };
- 
+
       password = mkOption {
-        # TODO: required?
+        type = types.nullOr types.str;
         description = ''
-           Specifies the password that must be supplied for a Director.
+           Specifies the password that must be supplied for a director.
         '';
       };
 
@@ -345,16 +375,19 @@ in {
           TODO
         '';
       };
+
     };
+
   };
 
   config = mkIf (fd_cfg.enable || sd_cfg.enable || dir_cfg.enable) {
+
     systemd.services.bacula-fd = mkIf fd_cfg.enable {
       after = [ "network.target" ];
       description = "Bacula File Daemon";
       wantedBy = [ "multi-user.target" ];
-      path = [ pkgs.bacula ];
-      serviceConfig.ExecStart = "${pkgs.bacula}/sbin/bacula-fd -f -u root -g bacula -c ${fd_conf}";
+      path = [ package ];
+      serviceConfig.ExecStart = "${package}/sbin/bacula-fd -f -u root -g bacula -c ${fd_conf}";
       serviceConfig.ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
     };
 
@@ -362,19 +395,19 @@ in {
       after = [ "network.target" ];
       description = "Bacula Storage Daemon";
       wantedBy = [ "multi-user.target" ];
-      path = [ pkgs.bacula ];
-      serviceConfig.ExecStart = "${pkgs.bacula}/sbin/bacula-sd -f -u bacula -g bacula -c ${sd_conf}";
+      path = [ package ];
+      serviceConfig.ExecStart = "${package}/sbin/bacula-sd -f -u bacula -g bacula -c ${sd_conf}";
       serviceConfig.ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
     };
 
     services.postgresql.enable = dir_cfg.enable == true;
 
     systemd.services.bacula-dir = mkIf dir_cfg.enable {
-      after = [ "network.target" "postgresql.service" ];
+      after = [ "network.target" "postgresql.service" "mysql.service" ];
       description = "Bacula Director Daemon";
       wantedBy = [ "multi-user.target" ];
-      path = [ pkgs.bacula ];
-      serviceConfig.ExecStart = "${pkgs.bacula}/sbin/bacula-dir -f -u bacula -g bacula -c ${dir_conf}";
+      path = [ package ];
+      serviceConfig.ExecStart = "${package}/sbin/bacula-dir -f -u bacula -g bacula -c ${dir_conf}";
       serviceConfig.ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
       preStart = ''
         if ! test -e "${libDir}/db-created"; then
@@ -382,17 +415,17 @@ in {
             #${pkgs.postgresql}/bin/createdb --owner bacula bacula
 
             # populate DB
-            ${pkgs.bacula}/etc/create_bacula_database postgresql
-            ${pkgs.bacula}/etc/make_bacula_tables postgresql
-            ${pkgs.bacula}/etc/grant_bacula_privileges postgresql
+            ${package}/etc/create_bacula_database postgresql
+            ${package}/etc/make_bacula_tables postgresql
+            ${package}/etc/grant_bacula_privileges postgresql
             touch "${libDir}/db-created"
         else
-            ${pkgs.bacula}/etc/update_bacula_tables postgresql || true
+            ${package}/etc/update_bacula_tables postgresql || true
         fi
       '';
     };
 
-    environment.systemPackages = [ pkgs.bacula ];
+    environment.systemPackages = [ package ];
 
     users.extraUsers.bacula = {
       group = "bacula";
