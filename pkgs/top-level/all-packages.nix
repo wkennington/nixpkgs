@@ -8641,7 +8641,7 @@ let
 
   samba = samba4;
 
-  smbclient = samba;
+  smbclient = samba.client;
 
   # A lightweight Samba 3, useful for non-Linux-based OSes.
   samba3_light = lowPrio (samba3.override {

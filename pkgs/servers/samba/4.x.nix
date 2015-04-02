@@ -83,6 +83,10 @@ stdenv.mkDerivation rec {
 
     # Fix the XML Catalog Paths
     sed -i "s,\(XML_CATALOG_FILES=\"\),\1$XML_CATALOG_FILES ,g" buildtools/wafsamba/wafsamba.py
+
+    # Fix pkgconfig files so that they don't refer to the binary derivation
+    find . -name \*.pc.in -exec sed -i "s,\(@prefix@\|@exec_prefix@\),$lib,g" {} \;
+    sed -i 's,@modulesdir@,/etc/samba/modules,' source4/rpc_server/dcerpc_server.pc.in
   '';
 
   enableParallelBuilding = true;
@@ -141,16 +145,38 @@ stdenv.mkDerivation rec {
     (mkEnable null                 "pmda"              null)
   ];
 
+  preConfigure = ''
+    # Add extra flags which need to be evaluated by the shell
+    configureFlags="$configureFlags --libdir=$lib/lib --includedir=$lib/include --with-modulesdir=$out/lib/samba"
+  '';
+
+  outputs = [ "out" "client" "lib" ];
+
   stripAllList = [ "bin" "sbin" ];
 
   postInstall = ''
     # Remove unecessary components
-    rm -r $out/{lib,share}/ctdb-tests
+    rm -r $lib/lib/ctdb-tests
+    rm -r $out/share/ctdb-tests
     rm $out/bin/ctdb_run{_cluster,}_tests
+
+    # Fix references to the binary
+
+    # Make smbclient its own derivation
+    mkdir -p $client/bin
+    mv $out/bin/smbclient $client/bin
+    ln -s $client/bin/smbclient $out/bin
+
+    # Remove cruft
+    rm -r $lib/lib/ctdb-tests
+
+    # Add a propagated build input on the binary derivation for compatability
+    mkdir -p $out/nix-support
+    echo "$lib" > $out/nix-support/propagated-build-inputs
   '';
 
   postFixup = ''
-    export SAMBA_LIBS="$(find $out -type f -name \*.so -exec dirname {} \; | sort | uniq)"
+    export SAMBA_LIBS="$(find $lib $out -type f -name \*.so -exec dirname {} \; | sort | uniq)"
     read -r -d "" SCRIPT << EOF
     [ -z "\$SAMBA_LIBS" ] && exit 1;
     BIN='{}';
@@ -159,7 +185,7 @@ stdenv.mkDerivation rec {
     patchelf --set-rpath "\$ALL_LIBS" "\$BIN" 2>/dev/null || exit $?;
     patchelf --shrink-rpath "\$BIN";
     EOF
-    find $out -type f -exec $SHELL -c "$SCRIPT" \;
+    find $out $client -type f -exec $SHELL -c "$SCRIPT" \;
   '';
 
   meta = with stdenv.lib; {
