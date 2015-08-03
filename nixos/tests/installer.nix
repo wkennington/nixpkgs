@@ -160,8 +160,7 @@ let
       };
       nodes = {
 
-        # The configuration of the machine used to run "nixos-install". It
-        # also has a web server that simulates cache.nixos.org.
+        # The configuration of the machine used to run "nixos-install".
         machine =
           { config, lib, pkgs, ... }:
 
@@ -184,22 +183,6 @@ let
               if grubVersion == 1 then "scsi" else "virtio";
 
             hardware.enableAllFirmware = mkForce false;
-
-            # The test cannot access the network, so any packages we
-            # need must be included in the VM.
-            system.extraDependencies =
-              [ pkgs.sudo
-                pkgs.docbook5
-                pkgs.docbook5_xsl
-                pkgs.unionfs-fuse
-                pkgs.ntp
-                pkgs.nixos-artwork
-                pkgs.gummiboot
-                pkgs.perlPackages.XMLLibXML
-                pkgs.perlPackages.ListCompare
-              ]
-              ++ optional (grubVersion == 1) pkgs.grub
-              ++ optionals (grubVersion == 2) [ pkgs.grub2 pkgs.grub2_efi ];
 
             nix.binaryCaches = mkForce [ ];
           };

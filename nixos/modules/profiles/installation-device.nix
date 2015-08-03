@@ -67,8 +67,33 @@ with lib;
 
     # To speed up installation a little bit, include the complete
     # stdenv in the Nix store on the CD.  Archive::Cpio is needed for
-    # the initrd builder.
-    system.extraDependencies = [ pkgs.stdenv pkgs.busybox pkgs.perlPackages.ArchiveCpio ];
+    # the initrd builder. The rest are needed for bootloaders and common
+    # services.
+    system.extraDependencies = with pkgs; [
+      stdenv
+
+      docbook5
+      docbook5_xsl
+      libxslt
+
+      sudo
+      ntp
+
+      # Bootloaders
+      perlPackages.FileSlurp
+      perlPackages.XMLLibXML
+      perlPackages.XMLSAX
+      perlPackages.ListCompare
+      nixos-artwork
+      gummiboot
+      grub
+      grub2
+      grub2_efi
+
+      # Initrd
+      busybox
+      perlPackages.ArchiveCpio
+    ];
 
   };
 }
