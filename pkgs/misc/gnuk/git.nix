@@ -1,11 +1,11 @@
 { callPackage, fetchgit, ... } @ args:
 
 callPackage ./generic.nix (args // rec {
-  version = "2015-04-22";
+  version = "2015-07-28";
 
   src = fetchgit {
     url = "git://git.gniibe.org/gnuk/gnuk.git";
-    rev = "3d5a776ab15a4ae6e17d91341a58eda3db09f700";
-    sha256 = "1pkdca331wrf1lsnlxxwbbnfcr7vj9xsac92dhj06fhpq4mb8kgb";
+    rev = "ec2a2e049f3074e5327e6c47140e582e883d1c8a";
+    sha256 = "0y7g84klhby8gibi0zzlm829jh8bi9h9fdjmdjfr0rzbk20fi263";
   };
 })

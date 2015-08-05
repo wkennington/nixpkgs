@@ -29,10 +29,10 @@ stdenv.mkDerivation {
     find . -name gnuk.bin -exec cp {} $out \;
 
     #sed -i 's,Exception as e,IOError as e,' ../tool/stlinkv2.py
-    sed -i ../tool/stlinkv2.py \
-      -e "1a import array" \
-      -e "s,\(data_received =\) (),\1 array.array('B'),g" \
-      -e "s,\(data_received\) = data_received + \(.*\),\1.extend(\2),g"
+    #sed -i ../tool/stlinkv2.py \
+    #  -e "1a import array" \
+    #  -e "s,\(data_received =\) (),\1 array.array('B'),g" \
+    #  -e "s,\(data_received\) = data_received + \(.*\),\1.extend(\2),g"
     cp ../tool/stlinkv2.py $out/bin/stlinkv2
     wrapProgram $out/bin/stlinkv2 --prefix PYTHONPATH : "$PYTHONPATH"
 
