@@ -34,6 +34,7 @@
 
       # USB support, especially for booting from USB CD-ROM
       # drives.
+      "uhci_hcd" "ehci_hcd" "ehci_pci" "ohci_hcd" "ohci_pci" "xhci_hcd" "xhci_pci"
       "usb_storage"
 
       # Firewire support.  Not tested.
