@@ -1,7 +1,7 @@
-{ stdenv, fetchurl, pkgconfig, intltool, babl, gegl, gtk, glib, gdk_pixbuf
+{ stdenv, fetchurl, pkgconfig, intltool, babl, gegl, gtk2, glib, gdk_pixbuf
 , pango, cairo, freetype, fontconfig, lcms, libpng, libjpeg, poppler, libtiff
 , webkit, libmng, librsvg, libwmf, zlib, libzip, ghostscript, aalib, jasper
-, python, pygtk, libart_lgpl, libexif, gettext, xorg, wrapPython }:
+, pythonPackages, pygtk, libexif, gettext, xorg }:
 
 stdenv.mkDerivation rec {
   name = "gimp-2.8.16";
@@ -11,21 +11,19 @@ stdenv.mkDerivation rec {
     sha256 = "1dsgazia9hmab8cw3iis7s69dvqyfj5wga7ds7w2q5mms1xqbqwm";
   };
 
+  nativeBuildInputs = [ pkgconfig intltool pythonPackages.wrapPython gettext ];
   buildInputs =
-    [ pkgconfig intltool babl gegl gtk glib gdk_pixbuf pango cairo
+    [ babl gegl gtk2 glib gdk_pixbuf pango cairo
       freetype fontconfig lcms libpng libjpeg poppler libtiff webkit
       libmng librsvg libwmf zlib libzip ghostscript aalib jasper
-      python pygtk libart_lgpl libexif gettext xorg.libXpm
-      wrapPython
+      pythonPackages.python pygtk libexif xorg.libXpm
     ];
 
   pythonPath = [ pygtk ];
 
-  postInstall = ''wrapPythonPrograms'';
-
-  passthru = { inherit gtk; }; # probably its a good idea to use the same gtk in plugins ?
-
-  #configureFlags = [ "--disable-print" ];
+  postInstall = ''
+    wrapPythonPrograms
+  '';
 
   # "screenshot" needs this.
   NIX_LDFLAGS = "-rpath ${xorg.libX11}/lib"

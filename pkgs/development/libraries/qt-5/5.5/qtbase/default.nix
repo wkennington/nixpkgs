@@ -19,7 +19,7 @@
 , buildExamples ? false
 , buildTests ? false
 , developerBuild ? false
-, gtkStyle ? false, libgnomeui, GConf, gnome_vfs, gtk
+, gtkStyle ? false, libgnomeui, GConf, gnome_vfs, gtk2
 , decryptSslTraffic ? false
 }:
 

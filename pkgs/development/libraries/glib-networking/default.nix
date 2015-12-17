@@ -2,25 +2,29 @@
 , gsettings_desktop_schemas }:
 
 let
-  ver_maj = "2.44";
-  ver_min = "0";
+  ver_maj = "2.46";
+  ver_min = "1";
 in
 stdenv.mkDerivation rec {
   name = "glib-networking-${ver_maj}.${ver_min}";
 
   src = fetchurl {
     url = "mirror://gnome/sources/glib-networking/${ver_maj}/${name}.tar.xz";
-    sha256 = "8f8a340d3ba99bfdef38b653da929652ea6640e27969d29f7ac51fbbe11a4346";
+    sha256 = "d5034214217f705891b6c9e719cc2c583c870bfcfdc454ebbb5e5e8940ac90b1";
   };
 
-  configureFlags = "--with-ca-certificates=/etc/ssl/certs/ca-certificates.crt";
+  configureFlags = [
+    "--with-libproxy"
+    "--with-ca-certificates=/etc/ssl/certs/ca-certificates.crt"
+  ];
 
-  preBuild = ''
+  /*preBuild = ''
     sed -e "s@${glib}/lib/gio/modules@$out/lib/gio/modules@g" -i $(find . -name Makefile)
-  '';
+  '';*/
 
   nativeBuildInputs = [ pkgconfig intltool ];
-  propagatedBuildInputs = [ glib gnutls libproxy gsettings_desktop_schemas ];
+  buildInputs = [ glib ];
+  #propagatedBuildInputs = [ glib gnutls libproxy gsettings_desktop_schemas ];
 
   doCheck = false; # tests need to access the certificates (among other things)
 

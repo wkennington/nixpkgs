@@ -2149,6 +2149,8 @@ let
 
   libtorrent = callPackage ../tools/networking/p2p/libtorrent { };
 
+  libIDL = callPackage ../development/libraries/libIDL { };
+
   libiberty = callPackage ../development/libraries/libiberty { };
 
   libibverbs = callPackage ../development/libraries/libibverbs { };
@@ -5330,7 +5332,6 @@ let
   tcl-8_6 = callPackage ../development/interpreters/tcl/8.6.nix { };
 
   xulrunner = callPackage ../development/interpreters/xulrunner {
-    inherit (gnome) libIDL;
     inherit (pythonPackages) pysqlite;
   };
 
@@ -6711,19 +6712,11 @@ let
     gettext = gettextWithExpat;
   };
 
-  gtk = pkgs.gtk2;
-
-  gtkmm = callPackage ../development/libraries/gtkmm/2.x.nix { };
+  gtk2mm = callPackage ../development/libraries/gtkmm/2.x.nix { };
   gtkmm3 = callPackage ../development/libraries/gtkmm/3.x.nix { };
 
   gtkmozembedsharp = callPackage ../development/libraries/gtkmozembed-sharp {
     gtksharp = gtk-sharp;
-  };
-
-  gtk-sharp = callPackage ../development/libraries/gtk-sharp-2 {
-    inherit (gnome) libglade libgtkhtml gtkhtml
-              libgnomecanvas libgnomeui libgnomeprint
-              libgnomeprintui GConf gnomepanel;
   };
 
   gtkspell = callPackage ../development/libraries/gtkspell { };
@@ -6734,7 +6727,7 @@ let
 
   gts = callPackage ../development/libraries/gts { };
 
-  gvfs = callPackage ../development/libraries/gvfs { gconf = gnome.GConf; };
+  gvfs = callPackage ../development/libraries/gvfs { };
 
   gwenhywfar = callPackage ../development/libraries/gwenhywfar { gnutls = gnutls33; };
 
@@ -10230,7 +10223,6 @@ let
 
     virtualbox = callPackage ../applications/virtualization/virtualbox {
       stdenv = stdenv_32bit;
-      inherit (gnome) libIDL;
       enableExtensionPack = config.virtualbox.enableExtensionPack or false;
       pulseSupport = config.pulseaudio or false;
     };
@@ -10833,8 +10825,6 @@ let
 
   gohufont = callPackage ../data/fonts/gohufont { };
 
-  gnome_user_docs = callPackage ../data/documentation/gnome-user-docs { };
-
   inherit (gnome3) gsettings_desktop_schemas;
 
   gyre-fonts = callPackage ../data/fonts/gyre {};
@@ -11053,10 +11043,7 @@ let
     libcdio = libcdio082;
   };
 
-  abiword = callPackage ../applications/office/abiword {
-    inherit (gnome) libglade libgnomecanvas;
-    iconTheme = gnome3.defaultIconTheme;
-  };
+  abiword = callPackage ../applications/office/abiword { };
 
   abook = callPackage ../applications/misc/abook { };
 
@@ -11851,7 +11838,6 @@ let
   filezilla = callPackage ../applications/networking/ftp/filezilla { };
 
   inherit (callPackages ../applications/networking/browsers/firefox {
-    inherit (gnome) libIDL;
     inherit (pythonPackages) pysqlite;
     libpng = libpng_apng;
     enableGTK3 = false;
@@ -11919,10 +11905,8 @@ let
   get_iplayer = callPackage ../applications/misc/get_iplayer {};
 
   gimp_2_8 = callPackage ../applications/graphics/gimp/2.8.nix {
-    inherit (gnome) libart_lgpl;
     webkit = null;
     lcms = lcms2;
-    wrapPython = pythonPackages.wrapPython;
   };
 
   gimp = gimp_2_8;
@@ -13369,7 +13353,6 @@ let
   thinkingRock = callPackage ../applications/misc/thinking-rock { };
 
   thunderbird = callPackage ../applications/networking/mailreaders/thunderbird {
-    inherit (gnome) libIDL;
     inherit (pythonPackages) pysqlite;
     libpng = libpng_apng;
   };
@@ -14554,8 +14537,6 @@ let
   gnome3_18 = recurseIntoAttrs (callPackage ../desktops/gnome-3/3.18 { });
 
   gnome3 = gnome3_18;
-
-  gnome = recurseIntoAttrs gnome2;
 
   hsetroot = callPackage ../tools/X11/hsetroot { };
 
