@@ -1,7 +1,7 @@
 { stdenv, fetchgit, xorg
 , autoconf, automake, cvs, libtool, nasm, pixman, xkeyboard_config
 , fontDirectories, libgcrypt, gnutls, pam, flex, bison, gettext
-, cmake, libjpeg_turbo, fltk
+, cmake, libjpeg, fltk
 }:
 
 with stdenv.lib;
@@ -68,7 +68,7 @@ stdenv.mkDerivation rec {
 
   buildInputs =
     [ xorg.libX11 xorg.libXext gettext xorg.libICE xorg.libXtst xorg.libXi xorg.libSM xorg.libXft
-      nasm libgcrypt gnutls pam pixman libjpeg_turbo fltk xorg.xineramaproto
+      nasm libgcrypt gnutls pam pixman libjpeg fltk xorg.xineramaproto
       xorg.libXinerama xorg.libXcursor
     ];
 

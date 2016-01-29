@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, libXi, libXrandr, libXxf86vm, mesa, xlibsWrapper, cmake }:
+{ stdenv, fetchurl, xorg, mesa, cmake, ninja }:
 
 let version = "3.0.0";
 in stdenv.mkDerivation {
@@ -9,7 +9,8 @@ in stdenv.mkDerivation {
     sha256 = "18knkyczzwbmyg8hr4zh8a1i5ga01np2jzd1rwmsh7mh2n2vwhra";
   };
 
-  buildInputs = [ libXi libXrandr libXxf86vm mesa xlibsWrapper cmake ];
+  nativeBuildInputs = [ cmake ninja xorg.xlibsWrapper ];
+  buildInputs = [ xorg.libXi xorg.libXrandr xorg.libXxf86vm mesa ];
 
   meta = with stdenv.lib; {
     description = "Create and manage windows containing OpenGL contexts";
