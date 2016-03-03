@@ -8,63 +8,76 @@ let
 
   efi = config.boot.loader.efi;
 
-  realGrub = if cfg.version == 1 then pkgs.grub
-    else if cfg.zfsSupport then pkgs.grub2.override { zfsSupport = true; }
-    else if cfg.trustedBoot.enable
-         then if cfg.trustedBoot.isHPLaptop
-              then pkgs.trustedGrub-for-HP
-              else pkgs.trustedGrub
-         else pkgs.grub2;
-
-  grub =
-    # Don't include GRUB if we're only generating a GRUB menu (e.g.,
-    # in EC2 instances).
-    if cfg.devices == ["nodev"]
-    then null
-    else realGrub;
+  grubMbr =
+    if cfg.version == 1 then
+      pkgs.grub
+    else if cfg.version == 2 then
+      pkgs.grub2
+    else
+      throw "Unsupported Grub Configuration for MBR";
 
   grubEfi =
-    # EFI version of Grub v2
-    if cfg.efiSupport && (cfg.version == 2)
-    then realGrub.override { efiSupport = cfg.efiSupport; }
-    else null;
+    if cfg.version == 2 then
+      pkgs.grub2_efi
+    else
+      throw "Unsupported Grub Configuration for EFI";
 
-  f = x: if x == null then "" else "" + x;
-
-  grubConfig = args:
-    let
-      efiSysMountPoint = if args.efiSysMountPoint == null then args.path else args.efiSysMountPoint;
-      efiSysMountPoint' = replaceChars [ "/" ] [ "-" ] efiSysMountPoint;
-    in
-    pkgs.writeText "grub-config.xml" (builtins.toXML
-    { splashImage = f cfg.splashImage;
-      grub = f grub;
-      grubTarget = f (grub.grubTarget or "");
-      shell = "${pkgs.stdenv.shell}";
-      fullName = (builtins.parseDrvName realGrub.name).name;
-      fullVersion = (builtins.parseDrvName realGrub.name).version;
-      grubEfi = f grubEfi;
-      grubTargetEfi = if cfg.efiSupport && (cfg.version == 2) then f (grubEfi.grubTarget or "") else "";
-      bootPath = args.path;
-      storePath = config.boot.loader.grub.storePath;
-      bootloaderId = if args.efiBootloaderId == null then "NixOS${efiSysMountPoint'}" else args.efiBootloaderId;
-      inherit efiSysMountPoint;
-      inherit (args) devices;
-      inherit (efi) canTouchEfiVariables;
-      inherit (cfg)
-        version extraConfig extraPerEntryConfig extraEntries
-        extraEntriesBeforeNixOS extraPrepareConfig configurationLimit copyKernels timeout
-        default fsIdentifier efiSupport gfxmodeEfi gfxmodeBios;
-      path = (makeSearchPath "bin" ([
-        pkgs.coreutils pkgs.gnused pkgs.gnugrep pkgs.findutils pkgs.diffutils pkgs.btrfs-progs
-        pkgs.util-linux_full ] ++ (if cfg.efiSupport && (cfg.version == 2) then [pkgs.efibootmgr ] else [])
-      )) + ":" + (makeSearchPath "sbin" [
-        pkgs.mdadm pkgs.util-linux_full
-      ]);
-    });
+  grubConfig = args: let
+    efiBootloaderId = if args.efiSys != null then "NixOS${replaceChars [ "/" ] [ "-" ] args.efiSysMountPoint}" else null;
+    grubMbr' = if args.mbrDevices == [ ] then "" else grubMbr;
+    grubEfi' = if args.efiSys == null then "" else grubEfi;
+  in pkgs.writeText "grub-config.xml" (builtins.toXML {
+    splashImage = if cfg.splashImage == null then "" else cfg.splashImage;
+    grubMbr = grubMbr';
+    grubEfi = grubEfi';
+    grubTarget = grubMbr'.grubTarget or null;
+    grubTargetEfi = grubEfi'.grubTarget or null;
+    shell = "${pkgs.stdenv.shell}";
+    fullName =
+      if grubMbr' != null then
+        grubMbr'
+      else if grubEfi' != null then
+        grubEfi'
+      else
+        "";
+    bootPath = args.path;
+    efiBootloaderId = if args.efiBootloaderId == null then efiBootloaderId else args.efiBootloaderId;
+    inherit (args)
+      efiSys
+      mbrDevices;
+    inherit (efi)
+      canTouchEfiVariables;
+    inherit (config.boot.loader)
+      timeout;
+    inherit (cfg)
+      version
+      extraConfig
+      extraPerEntryConfig
+      extraEntries
+      extraEntriesBeforeNixOS
+      extraPrepareConfig
+      configurationLimit
+      copyKernels
+      default
+      fsIdentifier
+      gfxmodeEfi
+      gfxmodeBios;
+    path = makeSearchPath "bin" ([
+      pkgs.coreutils
+      pkgs.gnused
+      pkgs.gnugrep
+      pkgs.findutils
+      pkgs.diffutils
+      pkgs.btrfs-progs
+      pkgs.util-linux_full
+      pkgs.mdadm
+    ] ++ optionals (grubEfi' != null) [
+      pkgs.efibootmgr
+    ]);
+  });
 
   bootDeviceCounters = fold (device: attr: attr // { "${device}" = (attr."${device}" or 0) + 1; }) {}
-    (concatMap (args: args.devices) cfg.mirroredBoots);
+    (concatMap (args: args.mbrDevices) cfg.mirroredBoots);
 
 in
 
@@ -77,7 +90,7 @@ in
     boot.loader.grub = {
 
       enable = mkOption {
-        default = !config.boot.isContainer;
+        default = false;
         type = types.bool;
         description = ''
           Whether to enable the GNU GRUB boot loader.
@@ -95,32 +108,7 @@ in
         '';
       };
 
-      device = mkOption {
-        default = "";
-        example = "/dev/hda";
-        type = types.str;
-        description = ''
-          The device on which the GRUB boot loader will be installed.
-          The special value <literal>nodev</literal> means that a GRUB
-          boot menu will be generated, but GRUB itself will not
-          actually be installed.  To install GRUB on multiple devices,
-          use <literal>boot.loader.grub.devices</literal>.
-        '';
-      };
-
-      devices = mkOption {
-        default = [];
-        example = [ "/dev/hda" ];
-        type = types.listOf types.str;
-        description = ''
-          The devices on which the boot loader, GRUB, will be
-          installed. Can be used instead of <literal>device</literal> to
-          install GRUB onto multiple devices.
-        '';
-      };
-
-      mirroredBoots = mkOption {
-        default = [ ];
+      installPoints = mkOption {
         example = [
           { path = "/boot1"; devices = [ "/dev/sda" ]; }
           { path = "/boot2"; devices = [ "/dev/sdb" ]; }
@@ -143,13 +131,13 @@ in
             '';
           };
 
-          efiSysMountPoint = mkOption {
-            default = null;
+          efiSys = mkOption {
             example = "/boot1/efi";
             type = types.nullOr types.str;
             description = ''
               The path to the efi system mount point. Usually this is the same
-              partition as the above path and can be left as null.
+              partition as the above path and can be left as null. If you are
+              not using efi set this to null;
             '';
           };
 
@@ -159,18 +147,19 @@ in
             type = types.nullOr types.str;
             description = ''
               The id of the bootloader to store in efi nvram.
-              The default is to name it NixOS and append the path or efiSysMountPoint.
+              The default is to name it NixOS and append the path or efiSys.
               This is only used if <literal>boot.loader.efi.canTouchEfiVariables</literal> is true.
             '';
           };
 
-          devices = mkOption {
-            default = [ ];
+          mbrDevices = mkOption {
             example = [ "/dev/sda" "/dev/sdb" ];
             type = types.listOf types.str;
             description = ''
               The path to the devices which will have the GRUB MBR written.
               Note these are typically device paths and not paths to partitions.
+              If you don't want to write to mbr devices, set this to the empty list instead.
+              This is usually empty on efi enabled machines.
             '';
           };
 
@@ -183,15 +172,6 @@ in
         type = types.str;
         description = ''
           GRUB entry name instead of default.
-        '';
-      };
-
-      storePath = mkOption {
-        default = "/nix/store";
-        type = types.str;
-        description = ''
-          Path to the Nix store when looking for kernels at boot.
-          Only makes sense when copyKernels is false.
         '';
       };
 
@@ -313,14 +293,6 @@ in
         '';
       };
 
-      timeout = mkOption {
-        default = if (config.boot.loader.timeout != null) then config.boot.loader.timeout else -1;
-        type = types.int;
-        description = ''
-          Timeout (in seconds) until GRUB boots the default menu item.
-        '';
-      };
-
       default = mkOption {
         default = 0;
         type = types.int;
@@ -344,68 +316,6 @@ in
         '';
       };
 
-      zfsSupport = mkOption {
-        default = false;
-        type = types.bool;
-        description = ''
-          Whether GRUB should be build against libzfs.
-          ZFS support is only available for GRUB v2.
-          This option is ignored for GRUB v1.
-        '';
-      };
-
-      efiSupport = mkOption {
-        default = false;
-        type = types.bool;
-        description = ''
-          Whether GRUB should be build with EFI support.
-          EFI support is only available for GRUB v2.
-          This option is ignored for GRUB v1.
-        '';
-      };
-
-      enableCryptodisk = mkOption {
-        default = false;
-        type = types.bool;
-        description = ''
-          Enable support for encrypted partitions. GRUB should automatically
-          unlock the correct encrypted partition and look for filesystems.
-        '';
-      };
-
-      trustedBoot = {
-
-        enable = mkOption {
-          default = false;
-          type = types.bool;
-          description = ''
-            Enable trusted boot. GRUB will measure all critical components during
-            the boot process to offer TCG (TPM) support.
-          '';
-        };
-
-        systemHasTPM = mkOption {
-          default = "";
-          example = "YES_TPM_is_activated";
-          type = types.string;
-          description = ''
-            Assertion that the target system has an activated TPM. It is a safety
-            check before allowing the activation of 'trustedBoot.enable'. TrustedBoot
-            WILL FAIL TO BOOT YOUR SYSTEM if no TPM is available.
-          '';
-        };
-
-        isHPLaptop = mkOption {
-          default = false;
-          type = types.bool;
-          description = ''
-            Use a special version of TrustedGRUB that is needed by some HP laptops
-            and works only for the HP laptops.
-          '';
-        };
-
-      };
-
     };
 
   };
@@ -426,18 +336,12 @@ in
 
     (mkIf cfg.enable {
 
-      boot.loader.grub.devices = optional (cfg.device != "") cfg.device;
-
-      boot.loader.grub.mirroredBoots = optionals (cfg.devices != [ ]) [
-        { path = "/boot"; inherit (cfg) devices; inherit (efi) efiSysMountPoint; }
-      ];
-
       system.build.installBootLoader = pkgs.writeScript "install-grub.sh" (''
         #!${pkgs.stdenv.shell}
         set -e
         export PERL5LIB=${makePerlPath (with pkgs.perlPackages; [ FileSlurp XMLLibXML XMLSAX XMLSAXBase ListCompare ])}
-        ${optionalString cfg.enableCryptodisk "export GRUB_ENABLE_CRYPTODISK=y"}
-      '' + flip concatMapStrings cfg.mirroredBoots (args: ''
+        export GRUB_ENABLE_CRYPTODISK=y
+      '' + flip concatMapStrings cfg.installPoints (args: ''
         ${pkgs.perl}/bin/perl ${./install-grub.pl} ${grubConfig args} $@
       ''));
 
@@ -456,39 +360,14 @@ in
 
       assertions = [
         {
-          assertion = !cfg.zfsSupport || cfg.version == 2;
-          message = "Only GRUB version 2 provides ZFS support";
-        }
-        {
-          assertion = cfg.mirroredBoots != [ ];
-          message = "You must set the option ‘boot.loader.grub.devices’ or "
-            + "'boot.loader.grub.mirroredBoots' to make the system bootable.";
+          assertion = cfg.installPoints != [ ];
+          message = "'boot.loader.grub.installPoints' to make the system bootable.";
         }
         {
           assertion = all (c: c < 2) (mapAttrsToList (_: c: c) bootDeviceCounters);
-          message = "You cannot have duplicated devices in mirroredBoots";
+          message = "You cannot have duplicated devices in installPoints";
         }
-        {
-          assertion = !cfg.trustedBoot.enable || cfg.version == 2;
-          message = "Trusted GRUB is only available for GRUB 2";
-        }
-        {
-          assertion = !cfg.efiSupport || !cfg.trustedBoot.enable;
-          message = "Trusted GRUB does not have EFI support";
-        }
-        {
-          assertion = !cfg.zfsSupport || !cfg.trustedBoot.enable;
-          message = "Trusted GRUB does not have ZFS support";
-        }
-        {
-          assertion = !cfg.trustedBoot.enable || cfg.trustedBoot.systemHasTPM == "YES_TPM_is_activated";
-          message = "Trusted GRUB can break the system! Confirm that the system has an activated TPM by setting 'systemHasTPM'.";
-        }
-      ] ++ flip concatMap cfg.mirroredBoots (args: [
-        {
-          assertion = args.devices != [ ];
-          message = "A boot path cannot have an empty devices string in ${args.path}";
-        }
+      ] ++ flip concatMap cfg.installPoints (args: [
         {
           assertion = hasPrefix "/" args.path;
           message = "Boot paths must be absolute, not ${args.path}";
@@ -497,8 +376,8 @@ in
           assertion = if args.efiSysMountPoint == null then true else hasPrefix "/" args.efiSysMountPoint;
           message = "Efi paths must be absolute, not ${args.efiSysMountPoint}";
         }
-      ] ++ flip map args.devices (device: {
-        assertion = device == "nodev" || hasPrefix "/" device;
+      ] ++ flip map args.mbrDevices (device: {
+        assertion = hasPrefix "/" device;
         message = "GRUB devices must be absolute paths, not ${dev} in ${args.path}";
       }));
     })

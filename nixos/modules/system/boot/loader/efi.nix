@@ -5,19 +5,18 @@ with lib;
 {
   options.boot.loader.efi = {
     canTouchEfiVariables = mkOption {
-      default = false;
-
       type = types.bool;
-
-      description = "Whether or not the installation process should modify efi boot variables.";
+      description = ''
+        Whether or not the installation process should modify efi boot variables.
+        You probably want to enable this.
+      '';
     };
 
     efiSysMountPoint = mkOption {
-      default = "/boot";
-
       type = types.str;
-
-      description = "Where the EFI System Partition is mounted.";
+      description = ''
+        Where the EFI System Partition is mounted.
+      '';
     };
   };
 }
