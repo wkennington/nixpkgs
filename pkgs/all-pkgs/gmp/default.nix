@@ -1,6 +1,6 @@
 { stdenv
 , fetchurl
-, m4
+, gnum4
 }:
 
 stdenv.mkDerivation rec {
@@ -14,7 +14,7 @@ stdenv.mkDerivation rec {
     sha256 = "1s3kddydvngqrpc6i1vbz39raya2jdcl042wi0ksbszgjjllk129";
   };
 
-  nativeBuildInputs = [ m4 ];
+  nativeBuildInputs = [ gnum4 ];
 
   configureFlags = [
     "--with-pic"

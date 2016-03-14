@@ -3,11 +3,15 @@
 
 , gmp
 
-, channel ? "0.16"
+, channel ? "0.17"
 }:
 
 let
   channels = {
+    "0.17" = {
+      version = "0.17.1";
+      sha256 = "0iqnffl4c0znkyp5c9vh4wx9y4nqcrb4n6f6yja7aivbh5f2w5dy";
+    };
     "0.16" = {
       version = "0.16.1";
       sha256 = "00jb3s5aavidfna1rr49mfsyjy9ayx6h414q001rr2ybncq2yaa5";

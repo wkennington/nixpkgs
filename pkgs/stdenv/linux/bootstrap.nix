@@ -33,8 +33,6 @@ if [ hostSystem ] == lib.platforms.x86_64-linux then {
     sha256 = "08amfjv6jvxvrr77kgrnsrlwpm1grzrpmb16vp29rcn9lg7wcmr2";
   };
 
-  langC = true;
-  langCC = true;
   isGNU = true;
 } else if [ hostSystem ] == lib.platforms.i686-linux then {
   busybox = makeUrls {
@@ -52,8 +50,6 @@ if [ hostSystem ] == lib.platforms.x86_64-linux then {
     sha256 = "0n5xvjjvwribhr9vlsm9gf02kyfk3hwd2zl57db8yprbd7x449vg";
   };
 
-  langC = true;
-  langCC = true;
   isGNU = true;
 } else
   throw "Unsupported System ${hostSystem}"

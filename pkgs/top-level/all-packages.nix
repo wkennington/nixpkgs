@@ -458,12 +458,9 @@ let
 
 
 wrapCCWith = ccWrapper: libc: extraBuildCommands: baseCC: ccWrapper {
-  nativeTools = pkgs.stdenv.cc.nativeTools or false;
-  nativeLibc = pkgs.stdenv.cc.nativeLibc or false;
-  nativePrefix = pkgs.stdenv.cc.nativePrefix or "";
+  nativeLibc = null;
+  nativePrefix = null;
   cc = baseCC;
-  isGNU = baseCC.isGNU or false;
-  isClang = baseCC.isClang or false;
   inherit libc extraBuildCommands;
 };
 
@@ -565,6 +562,8 @@ bash = callPackage ../all-pkgs/bash { };
 bashCompletion = callPackage ../all-pkgs/bash-completion { };
 
 bc = callPackage ../all-pkgs/bc { };
+
+binutils = callPackage ../all-pkgs/binutils { };
 
 bison = callPackage ../all-pkgs/bison { };
 
@@ -899,6 +898,20 @@ game-music-emu = callPackage ../all-pkgs/game-music-emu { };
 gawk = callPackage ../all-pkgs/gawk { };
 
 gcab = callPackage ../all-pkgs/gcab { };
+
+gcc = wrapCC (callPackage ../all-pkgs/gcc { });
+
+gcc_6 = wrapCC (callPackage ../all-pkgs/gcc {
+  channel = "6";
+});
+
+gcc_5 = wrapCC (callPackage ../all-pkgs/gcc {
+  channel = "5";
+});
+
+gcc_4_8 = wrapCC (callPackage ../all-pkgs/gcc {
+  channel = "4.8";
+});
 
 gconf = callPackage ../all-pkgs/gconf { };
 
@@ -1393,8 +1406,6 @@ libmicrohttpd = callPackage ../all-pkgs/libmicrohttpd { };
 
 libmnl = callPackage ../all-pkgs/libmnl { };
 
-libmpc = callPackage ../all-pkgs/libmpc { };
-
 libmpdclient = callPackage ../all-pkgs/libmpdclient { };
 
 libmpeg2 = callPackage ../all-pkgs/libmpeg2 {
@@ -1638,6 +1649,8 @@ mongodb-tools = pkgs.goPackages.mongo-tools.bin // { outputs = [ "bin" ]; };
 mosh = callPackage ../all-pkgs/mosh { };
 
 mp4v2 = callPackage ../all-pkgs/mp4v2 { };
+
+mpc = callPackage ../all-pkgs/mpc { };
 
 mpd = callPackage ../all-pkgs/mpd { };
 
@@ -5054,137 +5067,6 @@ zstd = callPackage ../all-pkgs/zstd { };
 #  clangStdenv = lowPrio llvmPackages.stdenv;
 #  libcxxStdenv = stdenvAdapters.overrideCC pkgs.stdenv (clangWrapSelf llvmPackages.clang-unwrapped);
 #
-#  cython = pythonPackages.cython;
-#  cython3 = python3Packages.cython;
-#
-  gcc = callPackageAlias "gcc6" { };
-
-#  gcc_multi =
-#    if system == "x86_64-linux" then lowPrio (
-#      let
-#        extraBuildCommands = ''
-#          echo "dontMoveLib64=1" >> $out/nix-support/setup-hook
-#        '';
-#      in wrapCCWith (callPackage ../build-support/cc-wrapper) glibc_multi extraBuildCommands (gcc.cc.override {
-#        stdenv = overrideCC pkgs.stdenv (wrapCCWith (callPackage ../build-support/cc-wrapper) glibc_multi "" gcc.cc);
-#        profiledCompiler = false;
-#        enableMultilib = true;
-#      }))
-#    else throw "Multilib gcc not supported on ‘${system}’";
-
-#  gcc_debug = lowPrio (wrapCC (gcc.cc.override {
-#    stripped = false;
-#  }));
-#
-#  gccCrossStageStatic = let
-#    libcCross1 = null;
-#    in wrapGCCCross {
-#      gcc = forceNativeDrv (gcc.cc.override {
-#        cross = crossSystem;
-#        crossStageStatic = true;
-#        langCC = false;
-#        libcCross = libcCross1;
-#        enableShared = false;
-#      });
-#      libc = libcCross1;
-#      binutils = binutilsCross;
-#      cross = crossSystem;
-#  };
-#
-#  # Only needed for mingw builds
-#  gccCrossMingw2 = wrapGCCCross {
-#    gcc = gccCrossStageStatic.gcc;
-#    libc = windows.mingw_headers2;
-#    binutils = binutilsCross;
-#    cross = assert crossSystem != null; crossSystem;
-#  };
-#
-#  gccCrossStageFinal = wrapGCCCross {
-#    gcc = forceNativeDrv (gcc.cc.override {
-#      cross = crossSystem;
-#      crossStageStatic = false;
-#
-#      # XXX: We have troubles cross-compiling libstdc++ on MinGW (see
-#      # <http://hydra.nixos.org/build/4268232>), so don't even try.
-#      langCC = crossSystem.config != "i686-pc-mingw32";
-#    });
-#    libc = libcCross;
-#    binutils = binutilsCross;
-#    cross = crossSystem;
-#  };
-#
-  gcc48 = lowPrio (wrapCC (callPackage ../development/compilers/gcc/4.8 {
-    noSysDirs = true;
-
-    # PGO seems to speed up compilation by gcc by ~10%, see #445 discussion
-    profiledCompiler = true;
-
-    # When building `gcc.crossDrv' (a "Canadian cross", with host == target
-    # and host != build), `cross' must be null but the cross-libc must still
-    # be passed.
-    cross = null;
-    libcCross = null;
-
-    isl = pkgs.isl_0_14;
-  }));
-#
-  gcc5 = lowPrio (wrapCC (callPackage ../development/compilers/gcc/5 {
-    noSysDirs = true;
-
-    # PGO seems to speed up compilation by gcc by ~10%, see #445 discussion
-    profiledCompiler = true;
-
-    # When building `gcc.crossDrv' (a "Canadian cross", with host == target
-    # and host != build), `cross' must be null but the cross-libc must still
-    # be passed.
-    cross = null;
-    libcCross = null;
-  }));
-
-  gcc6 = lowPrio (wrapCC (callPackage ../development/compilers/gcc/6 {
-    noSysDirs = true;
-
-    # PGO seems to speed up compilation by gcc by ~10%, see #445 discussion
-    profiledCompiler = true;
-
-    # When building `gcc.crossDrv' (a "Canadian cross", with host == target
-    # and host != build), `cross' must be null but the cross-libc must still
-    # be passed.
-    cross = null;
-    libcCross = null;
-  }));
-#
-#  gfortran = gfortran5;
-#  gfortran5 = wrapCC (gcc5.cc.override {
-#    name = "gfortran";
-#    langFortran = true;
-#    langCC = false;
-#    langC = false;
-#    profiledCompiler = false;
-#  });
-#
-#  gcj = gcj5;
-#  gcj5 = wrapCC (gcc5.cc.override {
-#    name = "gcj";
-#    langJava = true;
-#    langFortran = false;
-#    langCC = false;
-#    langC = false;
-#    profiledCompiler = false;
-#    inherit zip unzip zlib boehmgc gettext pkgconfig perl;
-#    inherit gtk;
-#    inherit (gnome) libart_lgpl;
-#  });
-#
-#  ghdl = wrapCC (gcc.cc.override {
-#    name = "ghdl";
-#    langVhdl = true;
-#    langCC = false;
-#    langC = false;
-#    profiledCompiler = false;
-#    enableMultilib = false;
-#  });
-#
 #  # Haskell and GHC
 #
   haskell = callPackage ./haskell-packages.nix { };
@@ -5912,8 +5794,6 @@ zstd = callPackage ../all-pkgs/zstd { };
 #  bazel = callPackage ../development/tools/build-managers/bazel { jdk = openjdk8; };
 #
 #  bin_replace_string = callPackage ../development/tools/misc/bin_replace_string { };
-#
-  binutils = callPackage ../development/tools/misc/binutils { };
 #
 #  bossa = callPackage ../development/tools/misc/bossa {
 #    wxGTK = wxGTK30;

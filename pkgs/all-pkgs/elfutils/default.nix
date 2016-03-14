@@ -1,6 +1,6 @@
 { stdenv
 , fetchurl
-, m4
+, gnum4
 
 , bzip2
 , xz
@@ -29,7 +29,7 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [
-    m4
+    gnum4
   ];
 
   buildInputs = [

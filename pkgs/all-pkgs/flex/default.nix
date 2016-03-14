@@ -1,20 +1,21 @@
 { stdenv
 , bison
 , fetchurl
-, m4
+, gnum4
 }:
 
 stdenv.mkDerivation rec {
   name = "flex-2.6.0";
 
   src = fetchurl {
-    url = "mirror://sourceforge/flex/${name}.tar.bz2";
-    sha256 = "1sdqx63yadindzafrq1w31ajblf9gl1c301g068s20s7bbpi3ri4";
+    url = "mirror://sourceforge/flex/${name}.tar.xz";
+    multihash = "Qmbh4C3bjyQ8oKNPHkc2euP7SGHrcKBL9dZHu8UH9iHMHY";
+    sha256 = "d39b15a856906997ced252d76e9bfe2425d7503c6ed811669665627b248e4c73";
   };
 
   nativeBuildInputs = [
     bison
-    m4
+    gnum4
   ];
 
   # Using static libraries fixes issues with references to

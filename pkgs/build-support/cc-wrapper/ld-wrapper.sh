@@ -4,6 +4,13 @@ if [ -n "@coreutils@" ]; then
   PATH="@coreutils@/bin"
 fi
 
+if [ -n "$NIX_DEBUG" ]; then
+  echo "original flags to @prog@:" >&2
+  for i in "$@"; do
+      echo "  $i" >&2
+  done
+fi
+
 if [ -n "$NIX_LD_WRAPPER_START_HOOK" ]; then
     source "$NIX_LD_WRAPPER_START_HOOK"
 fi
@@ -163,7 +170,7 @@ fi
 
 # Optionally print debug info.
 if [ -n "$NIX_DEBUG" ]; then
-  echo "original flags to @prog@:" >&2
+  echo "new flags to @prog@:" >&2
   for i in "${params[@]}"; do
       echo "  $i" >&2
   done

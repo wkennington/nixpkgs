@@ -14,6 +14,12 @@ fi
 
 source @out@/nix-support/utils.sh
 
+if [ -n "$NIX_DEBUG" ]; then
+  echo "original flags to @prog@:" >&2
+  for i in "$@"; do
+      echo "  $i" >&2
+  done
+fi
 
 # Figure out if linker flags should be passed.  GCC prints annoying
 # warnings when they are not needed.
@@ -183,7 +189,7 @@ fi
 
 # Optionally print debug info.
 if [ -n "$NIX_DEBUG" ]; then
-  echo "original flags to @prog@:" >&2
+  echo "new flags to @prog@:" >&2
   for i in "${params[@]}"; do
       echo "  $i" >&2
   done
