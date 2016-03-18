@@ -568,14 +568,8 @@ cdparanoia = callPackage ../all-pkgs/cdparanoia { };
 # Only ever add ceph LTS releases
 # The default channel should be the latest LTS
 # Dev should always point to the latest versioned release
-ceph_lib = pkgs.ceph.lib;
+ceph_lib = pkgs.ceph;
 ceph = hiPrio (callPackage ../all-pkgs/ceph { });
-ceph_0_94 = callPackage ../all-pkgs/ceph {
-  channel = "0.94";
-};
-ceph_9 = callPackage ../all-pkgs/ceph {
-  channel = "9";
-};
 ceph_dev = callPackage ../all-pkgs/ceph {
   channel = "dev";
 };
