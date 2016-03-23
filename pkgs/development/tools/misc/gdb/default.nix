@@ -1,48 +1,52 @@
-{ fetchurl, stdenv, ncurses, readline, gmp, mpfr, expat, texinfo, zlib
-, dejagnu, perl, pkgconfig
-, python ? null
-, guile ? null
-, target ? null
+{ stdenv
+, bison
+, fetchurl
+, flex
+, gnum4
+, texinfo
 }:
 
-let
-  basename = "gdb-7.10.1";
-in
-
 stdenv.mkDerivation rec {
-  name = basename + stdenv.lib.optionalString (target != null)
-      ("-" + target.config);
+  name = "gdb-7.11";
 
   src = fetchurl {
-    url = "mirror://gnu/gdb/${basename}.tar.xz";
-    sha256 = "1mfnjcwnwm5cg4rc9pncs9v356a0bz6ymjyac56mbj6784yjzir5";
+    url = "mirror://gnu/gdb/${name}.tar.xz";
+    sha256 = "7a434116cb630d77bb40776e8f5d3937bed11dea56bafebb4d2bc5dd389fe5c1";
   };
 
-  nativeBuildInputs = [ pkgconfig texinfo perl ];
+  nativeBuildInputs = [
+    bison
+    flex
+    gnum4
+    texinfo
+  ];
+  
+  postPatch = ''
+    rm -r bfd intl libdecnumber libiberty opcodes readline texinfo zlib
 
-  buildInputs = [ ncurses readline gmp mpfr expat zlib python guile ]
-    ++ stdenv.lib.optional doCheck dejagnu;
+    sed \
+      -e 's,.*/development.sh,true,g' \
+      -e 's,.*/config.bfd,true,g' \
+      -i gdb/configure
+  '';
 
-  configureFlags = with stdenv.lib;
-    [ "--with-gmp=${gmp}" "--with-mpfr=${mpfr}" "--with-system-readline"
-      "--with-system-zlib" "--with-expat" "--with-libexpat-prefix=${expat}"
-      "--with-separate-debug-dir=/run/current-system/sw/lib/debug"
-    ]
-    ++ optional (target != null) "--target=${target.config}";
+  configureFlags = [
+    "--with-system-zlib"
+  ];
 
-  postInstall =
-    '' # Remove Info files already provided by Binutils and other packages.
-       rm -v $out/share/info/bfd.info
-    '';
-
-  # TODO: Investigate & fix the test failures.
-  doCheck = false;
+  # Remove Info files already provided by Binutils and other packages.
+  postInstall = ''
+    rm -v $out/share/info
+  '';
 
   meta = with stdenv.lib; {
     description = "The GNU Project debugger";
     homepage = http://www.gnu.org/software/gdb/;
-    license = stdenv.lib.licenses.gpl3Plus;
-    platforms = with platforms; linux;
-    maintainers = with maintainers; [ ];
+    license = licenses.gpl3Plus;
+    maintainers = with maintainers; [
+      wkennington
+    ];
+    platforms = with platforms;
+      x86_64-linux;
   };
 }

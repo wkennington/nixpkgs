@@ -6019,9 +6019,7 @@ zstd = callPackage ../all-pkgs/zstd { };
 #    ruby = ruby_2_2_2;
 #  };
 #
-  gdb = callPackage ../development/tools/misc/gdb {
-    guile = null;
-  };
+  gdb = callPackage ../development/tools/misc/gdb { };
 #
   valgrind = callPackage ../development/tools/analysis/valgrind { };
 #
