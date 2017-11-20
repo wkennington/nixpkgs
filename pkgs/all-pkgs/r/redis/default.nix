@@ -1,5 +1,10 @@
 { stdenv
 , fetchurl
+
+, gdb
+, googletest
+, llvm
+, valgrind
 }:
 
 let
@@ -14,6 +19,13 @@ stdenv.mkDerivation rec {
     hashOutput = false;
     sha256 = "df4f73bc318e2f9ffb2d169a922dec57ec7c73dd07bccf875695dbeecd5ec510";
   };
+
+  buildInputs = [
+    gdb
+    googletest
+    llvm
+    valgrind
+  ];
 
   preBuild = ''
     makeFlagsArray+=(
