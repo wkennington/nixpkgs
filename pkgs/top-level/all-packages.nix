@@ -4315,7 +4315,9 @@ zstd = callPackage ../all-pkgs/z/zstd {
   openjdk8_jdk = pkgs.openjdk8 // { outputs = [ "out" ]; };
   openjdk8_jre = pkgs.openjdk8.jre // { outputs = [ "jre" ]; };
 
-  openjdk = callPackageAlias "openjdk8" { };
+  openjdk_10 = callPackage ../development/compilers/openjdk { };
+
+  openjdk = callPackageAlias "openjdk_10" { };
 #
 #  java7 = openjdk7;
 #  jdk7 = java7 // { outputs = [ "out" ]; };
