@@ -6,7 +6,7 @@
 , python3Packages
 , yasm
 
-, boost_1-66
+, boost
 , curl
 , expat
 , fcgi
@@ -36,7 +36,11 @@
 
 let
   inherit (stdenv.lib)
-    replaceChars;
+    replaceChars
+    optionals
+    optionalString
+    versionAtLeast
+    versionOlder;
 
   sources = (import ./sources.nix)."${channel}";
 
@@ -98,7 +102,7 @@ stdenv.mkDerivation rec {
   ];
 
   buildInputs = [
-    boost_1-66
+    boost
     curl
     expat
     fuse_2
@@ -139,10 +143,17 @@ stdenv.mkDerivation rec {
 
     # Boost doesn't know how to include python libraries
     sed -i '/find_package(Boost/aLIST(APPEND Boost_LIBRARIES ''${PYTHON_LIBRARY})' CMakeLists.txt
-
+  '' + optionalString (versionOlder version "13.0.0") ''
     # Fix for rocksdb api change
     grep -q 'rocksdb::perf_context' src/kv/RocksDBStore.cc
     sed -i 's,rocksdb::perf_context.,rocksdb::get_perf_context()->,g' src/kv/RocksDBStore.cc
+  '' + optionalString (versionAtLeast version "13.0.0") ''
+    # Rocksdb detection code is really broken
+    grep -q '"''${ROCKSDB_INCLUDE_DIR}/version.h"' cmake/modules/Findrocksdb.cmake
+    sed -i 's#"''${ROCKSDB_INCLUDE_DIR}/version.h"#"''${ROCKSDB_INCLUDE_DIR}/rocksdb/version.h"#' \
+      cmake/modules/Findrocksdb.cmake
+    grep -q 'ROCKDB_' cmake/modules/Findrocksdb.cmake
+    sed -i 's,ROCKDB_,ROCKSDB_,g' cmake/modules/Findrocksdb.cmake
   '';
 
   preConfigure = ''
@@ -163,6 +174,9 @@ stdenv.mkDerivation rec {
     "-DWITH_LZ4=ON"
     "-DWITH_BABELTRACE=OFF"
     "-DWITH_SYSTEM_ROCKSDB=ON"
+  ] ++ optionals (versionAtLeast version "13.0.0") [
+    "-DWITH_SPDK=OFF"
+    "-DWITH_BLUEFS=ON"
   ];
 
   # Ensure we have the correct rpath already to work around
