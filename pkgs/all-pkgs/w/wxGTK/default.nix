@@ -26,36 +26,36 @@
 }:
 
 let
-  version = "3.1.0";
+  version = "3.1.1";
 in
 stdenv.mkDerivation rec {
   name = "wxWidgets-${version}";
 
   src = fetchurl {
     url = "https://github.com/wxWidgets/wxWidgets/releases/download/v${version}/${name}.tar.bz2";
-    sha1Confirm = "2170839cfa9d9322e8ee8368b21a15a2497b4f11";
-    sha256 = "e082460fb6bf14b7dd6e8ac142598d1d3d0b08a7b5ba402fdbf8711da7e66da8";
+    sha1Confirm = "f999c3cf1887c0a60e519214c14b15cb9bb5ea6e";
+    sha256 = "c925dfe17e8f8b09eb7ea9bfdcfcc13696a3e14e92750effd839f5e10726159e";
   };
 
   buildInputs = [
-    cairo
-    gconf
-    glu
-    gstreamer
-    gst-plugins-base
-    expat
-    libice
+    #cairo
+    #gconf
+    #glu
+    #gstreamer
+    #gst-plugins-base
+    #expat
+    #libice
     libjpeg
-    libnotify
-    libpng
-    libsm
-    libtiff
-    libx11
-    libxinerama
-    msgpack-c
-    opengl-dummy
-    xorg.libXxf86vm
-    xorgproto
+    #libnotify
+    #libpng
+    #libsm
+    #libtiff
+    #libx11
+    #libxinerama
+    #msgpack-c
+    #opengl-dummy
+    #xorg.libXxf86vm
+    #xorgproto
     xz
     zlib
   ];
@@ -76,11 +76,8 @@ stdenv.mkDerivation rec {
 
   configureFlags = [
     "--enable-monolithic"
-    "--with-gtk=3"
     "--disable-precomp-headers"
-    "--enable-mediactrl"
-    "--enable-unicode"
-    "--with-opengl"
+    "--with-gtk=any"
   ];
 
   postInstall = ''
