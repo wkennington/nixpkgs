@@ -9758,9 +9758,21 @@ let
       sed -i 's,unknown-dev,${rev},g' cmd/syncthing/main.go
     '';
     preBuild = ''
-      pushd go/src/$goPackagePath
-      go run script/genassets.go gui > lib/auto/gui.files.go
-      popd
+      pushd go/src/$goPackagePath >/dev/null
+
+      mkdir -p vendor/${gogo_protobuf.goPackagePath}
+      unpackFile ${gogo_protobuf.src}
+      mv protobuf-*/* vendor/${gogo_protobuf.goPackagePath}
+      rm -r protobuf-*
+
+      mkdir -p vendor/${xdr.goPackagePath}
+      unpackFile ${xdr.src}
+      mv xdr-*/* vendor/${xdr.goPackagePath}
+      rm -r xdr-*
+
+      go list ./... | xargs go generate
+      rm -r vendor
+      popd >/dev/null
     '';
   };
 
