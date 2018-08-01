@@ -29,7 +29,7 @@
 }:
 
 let
-  version = "0.27.4";
+  version = "0.33.0";
 in
 buildPythonPackage {
   name = "synapse-${version}";

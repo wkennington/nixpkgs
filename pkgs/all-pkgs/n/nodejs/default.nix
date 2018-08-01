@@ -29,12 +29,12 @@ let
       sha256 = "b3a534b2ad5e96c6ff67f3a1356b94f7a28ef118eb1d420b314fe5aafe6d62d1";
     };
     "8" = {
-      version = "8.11.1";
-      sha256 = "40a6eb51ea37fafcf0cfb58786b15b99152bec672cccf861c14d1cca0ad4758a";
+      version = "8.11.3";
+      sha256 = "577c751fdca91c46c60ffd8352e5b465881373bfdde212c17c3a3c1bd2616ee0";
     };
     "10" = {
-      version = "10.4.0";
-      sha256 = "b58f5a39253921c668eb7678679df36f9fb5e46c885242d20f13168973603762";
+      version = "10.7.0";
+      sha256 = "a5bf584b52f992b6ce31d8afd8c468945a772431575ad868e4e787f390ad8044";
     };
   };
 

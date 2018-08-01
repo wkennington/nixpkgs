@@ -1,36 +1,70 @@
 { stdenv
 , fetchurl
 
-, gdb
-, googletest
-, llvm
-, valgrind
+, hiredis
+, jemalloc
+, linenoise
+, luajit
 }:
 
 let
-  version = "4.0.9";
+  version = "4.0.10";
+
+  jemalloc' = jemalloc.override {
+    functionPrefix = "je_";
+  };
 in
 stdenv.mkDerivation rec {
   name = "redis-${version}";
 
   src = fetchurl {
     url = "http://download.redis.io/releases/${name}.tar.gz";
-    multihash = "QmScsH717MF1C5AnDzh5vgHSdzSjDbY3qatibYqgo9e8wH";
+    multihash = "QmWahw3oWVegYyg2KN6xtHBKxFQg94gNgJovZQRyrF1wEJ";
     hashOutput = false;
-    sha256 = "df4f73bc318e2f9ffb2d169a922dec57ec7c73dd07bccf875695dbeecd5ec510";
+    sha256 = "1db67435a704f8d18aec9b9637b373c34aa233d65b6e174bdac4c1b161f38ca4";
   };
 
   buildInputs = [
-    gdb
-    googletest
-    llvm
-    valgrind
+    hiredis
+    jemalloc'
+    linenoise
+    luajit
   ];
+
+  NIX_CFLAGS_COMPILE = [
+    "-I${hiredis}/include/hiredis"
+    "-I${luajit}/include/lua"
+  ];
+
+  postPatch = ''
+    rm -r deps
+
+    grep -q 'DEPENDENCY_TARGETS' src/Makefile
+    grep -q 'DEBUG=' src/Makefile
+    sed \
+      -e '/DEPENDENCY_TARGETS/d' \
+      -e '/DEBUG=/d' \
+      -e "s#../deps/jemalloc/lib/libjemalloc.a#-ljemalloc#g" \
+      -e "s#../deps/hiredis/libhiredis.a#-lhiredis#g" \
+      -e "s#../deps/linenoise/linenoise.o#${linenoise}/lib/liblinenoise.a#g" \
+      -e "s#../deps/lua/src/liblua.a#-llua#g" \
+      -i src/Makefile
+  '' /* + Lua 5.3 compat ''
+    grep -q 'lua_strlen' src/scripting.c
+    sed -i 's,lua_strlen,lua_rawlen,g' src/scripting.c
+
+    grep -q 'lua_open' src/scripting.c
+    sed -i 's,lua_open,luaL_newstate,g' src/scripting.c
+
+    grep -q 'luaL_checkint' src/scripting.c
+    sed -i 's,luaL_checkint,(int)luaL_checkinteger,g' src/scripting.c
+  '' */;
 
   preBuild = ''
     makeFlagsArray+=(
       "MALLOC=jemalloc"
       "PREFIX=$out"
+      "V=1"
     )
   '';
 
