@@ -23,6 +23,11 @@ let
       sha1Confirm = "b8d410d5146e914bc2a72cd8957f6d3b68c4ac52";
       sha256 = "8dfdbe573b582d8eb2c328cca2aacff3795b54bb39eb7fd831e3ce05991f81d2";
     };
+    "1.10" = {
+      version = "1.10.2";
+      sha1Confirm = "bc52ef2e671f821998ac9a5f7ebecbbcaaef83b8";
+      sha256 = "5b35e3a858d948de9e8892bf494893c9f7886782f6abbe166c0487c19cf6ed88";
+    };
   };
 
   source = sources."${channel}";
