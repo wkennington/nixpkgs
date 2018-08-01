@@ -29,7 +29,7 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "udisks-2.7.6";
+  name = "udisks-2.7.7";
 
   src = fetchurl {
     url = "https://github.com/storaged-project/udisks/releases/download/"
