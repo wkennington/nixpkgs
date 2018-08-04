@@ -16,7 +16,7 @@
 }:
 
 let
-  version = "1.7.2";
+  version = "1.7.4";
 in
 stdenv.mkDerivation rec {
   name = "opendht-${version}";
@@ -26,7 +26,7 @@ stdenv.mkDerivation rec {
     owner = "savoirfairelinux";
     repo = "opendht";
     rev = version;
-    sha256 = "5718191522bb5192b244da64067a29b3fb7c2425d7b610a9ef16be8ebc08e34c";
+    sha256 = "b86aab06989ecb263113e473a0fd18ce1b57f68934f7a99bdd9ec07b1081b797";
   };
 
   nativeBuildInputs = [
@@ -46,9 +46,9 @@ stdenv.mkDerivation rec {
     restbed
   ];
 
-  postPatch = ''
-    sed -i "s,\''${systemdunitdir},$out/lib/systemd/system,g" tools/CMakeLists.txt
-  '';
+  #postPatch = ''
+  #  sed -i "s,\''${systemdunitdir},$out/lib/systemd/system,g" tools/CMakeLists.txt
+  #'';
 
   cmakeFlags = [
     "-DOPENDHT_STATIC=OFF"
