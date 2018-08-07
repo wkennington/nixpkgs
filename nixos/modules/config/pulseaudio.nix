@@ -161,28 +161,11 @@ in {
         source = cfg.configFile;
       };
 
-      systemd.user = {
-        services.pulseaudio = {
-          description = "PulseAudio Server";
-          # NixOS doesn't support "Also" so we bring it in manually
-          wantedBy = [ "default.target" ];
-          serviceConfig = {
-            Type = "notify";
-            ExecStart = "${cfg.package}/bin/pulseaudio --daemonize=no";
-            Restart = "on-failure";
-          };
-        };
+      systemd.packages = [
+        cfg.package
+      ];
 
-        sockets.pulseaudio = {
-          description = "PulseAudio Socket";
-          wantedBy = [ "sockets.target" ];
-          socketConfig = {
-            Priority = 6;
-            Backlog = 5;
-            ListenStream = "%t/pulse/native";
-          };
-        };
-      };
+      systemd.user.sockets.pulseaudio.wantedBy = [ "sockets.target" ];
     })
 
     (mkIf systemWide {
