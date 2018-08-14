@@ -18,7 +18,7 @@ stdenv.mkDerivation {
   postPatch = ''
     chmod +x configure
     patchShebangs configure
-  
+
     cat doc/building.md
   '';
 
