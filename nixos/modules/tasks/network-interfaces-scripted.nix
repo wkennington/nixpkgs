@@ -79,6 +79,7 @@ in
 
             script =
               ''
+                set -x
                 doSetOnline=
 
                 # Set the default gateway.
