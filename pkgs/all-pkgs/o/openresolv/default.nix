@@ -23,6 +23,11 @@ stdenv.mkDerivation rec {
     "--localstatedir=/var"
   ];
 
+  postPatch = ''
+    sed -i "1aexport PS4='+(\''${LINENO}): \''${FUNCNAME[0]:+\''${FUNCNAME[0]}(): }'" resolvconf.in
+    sed -i '1aset -x' resolvconf.in
+  '';
+
   preInstall = ''
     installFlagsArray+=("SYSCONFDIR=$out/etc")
   '';

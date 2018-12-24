@@ -98,6 +98,7 @@ in
                 ''}
 
                 # Set the static DNS configuration, if given.
+                date
                 ${pkgs.openresolv}/sbin/resolvconf -m 1 -a static <<EOF
                 ${optionalString (cfg.nameservers != [] && cfg.domain != null) ''
                   domain ${cfg.domain}
@@ -107,6 +108,7 @@ in
                   nameserver ${ns}
                 '')}
                 EOF
+                date
 
                 if [ -n "doSetOnline" ]; then
                   ${config.systemd.package}/bin/systemctl start --no-block network-online.target
