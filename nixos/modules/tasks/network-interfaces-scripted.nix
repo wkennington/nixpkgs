@@ -67,7 +67,6 @@ in
           { description = "Networking Setup";
 
             after = [ "network-interfaces.target" "network-pre.target" ];
-            before = [ "network.target" ];
             wantedBy = [ "network.target" ];
 
             unitConfig.ConditionCapability = "CAP_NET_ADMIN";
