@@ -4,10 +4,12 @@
 
 , characteristic
 , foolscap
+, magic-wormhole
 , nevow
 , pyasn1
 , pycrypto
 , pycryptopp
+, pyopenssl
 , pyyaml
 , service-identity
 , simplejson
@@ -16,27 +18,29 @@
 }:
 
 let
-  version = "1.12.1";
+  version = "1.13.0";
 in
 buildPythonPackage {
   name = "tahoe-lafs-${version}";
 
   src = fetchPyPi {
     package = "tahoe-lafs";
+    type = ".tar.bz2";
     inherit version;
-    sha256 = "327b364a702df515fd329d49f052db0fcbf468e20c26d1f8df819f54786ca0ce";
+    sha256 = "82d4d20f2672e67927d91e73e54dbfd7e526eca27dea09a29f131bef7dfaee86";
   };
 
   propagatedBuildInputs = [
     characteristic
     foolscap
+    magic-wormhole
     nevow
-    pyasn1
-    pycrypto
+    #pyasn1
     pycryptopp
+    pyopenssl
     pyyaml
-    service-identity
-    simplejson
+    #service-identity
+    #simplejson
     twisted
     zfec
   ];

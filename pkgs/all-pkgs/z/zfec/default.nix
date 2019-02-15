@@ -6,7 +6,7 @@
 }:
 
 let
-  version = "1.4.24";
+  version = "1.5.3";
 in
 buildPythonPackage {
   name = "zfec-${version}";
@@ -14,11 +14,11 @@ buildPythonPackage {
   src = fetchPyPi {
     package = "zfec";
     inherit version;
-    sha256 = "e3e99e6e67ac9af72c0f918f03d2051e17d41f48ee0134d0d2c81e7fe92749cf";
+    sha256 = "b41bd4b0af9c6b3a78bd6734e1e4511475944164375e6241b53df518a366922b";
   };
 
   propagatedBuildInputs = [
-    pyutil
+    #pyutil
   ];
 
   meta = with stdenv.lib; {
