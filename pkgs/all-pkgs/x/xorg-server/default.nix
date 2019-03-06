@@ -57,6 +57,10 @@
 assert opengl-dummy.glx;
 
 let
+  inherit (lib)
+    optionals
+    versionAtLeast;
+
   sources = {
     "1.20" = {
       version = "1.20.4";
@@ -91,7 +95,6 @@ stdenv.mkDerivation rec {
     libdrm
     libepoxy
     libpciaccess
-    libselinux
     libtirpc
     libx11
     libxau
@@ -124,6 +127,8 @@ stdenv.mkDerivation rec {
     xkbcomp
     xorgproto
     xtrans
+  ] ++ optionals (versionAtLeast source.version "1.21.0") [
+    libselinux
   ];
 
   patches = [
