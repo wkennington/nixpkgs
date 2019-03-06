@@ -171,10 +171,8 @@ stdenv.mkDerivation rec {
     cat ${./xwayland-config.h.meson.in} > include/xwayland-config.h.meson.in
   '';
 
-  postInstall = ''
-    rm -fr $out/share/X11/xkb/compiled
-    ###ln -s /var/tmp $out/share/X11/xkb/compiled  # FIXME
 
+  postInstall = ''
     wrapProgram $out/bin/Xephyr \
       --set XKB_BINDIR "${xkbcomp}/bin" \
       --add-flags "-xkbdir ${xkeyboard-config}/share/X11/xkb"
