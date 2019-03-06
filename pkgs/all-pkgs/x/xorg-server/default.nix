@@ -17,7 +17,6 @@
 , libpciaccess
 , libselinux
 , libtirpc
-, libunwind
 , libx11
 , libxau
 #, libxaw
@@ -94,7 +93,6 @@ stdenv.mkDerivation rec {
     libpciaccess
     libselinux
     libtirpc
-    libunwind
     libx11
     libxau
     xorg.libXaw
