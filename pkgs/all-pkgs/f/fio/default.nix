@@ -12,14 +12,14 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "fio-3.6";
+  name = "fio-3.12";
 
   src = fetchFromGitHub {
     version = 6;
     owner = "axboe";
     repo = "fio";
     rev = name;
-    sha256 = "3cb15d97e9261a151f3b1520a1909ab5dcb779b601bfd307699d0c4cf65e296a";
+    sha256 = "3ca15d97e9261a151f3b1520a1909ab5dcb779b601bfd307699d0c4cf65e29aa";
   };
 
   nativeBuildInputs = [

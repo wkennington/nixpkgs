@@ -43,7 +43,7 @@ let
   inherit (lib)
     boolOn;
 
-  version = "2.0.8";
+  version = "2.0.9";
 in
 stdenv.mkDerivation rec {
   name = "SDL-${version}";
@@ -52,7 +52,7 @@ stdenv.mkDerivation rec {
     url = "https://www.libsdl.org/release/SDL2-${version}.tar.gz";
     multihash = "Qme3L6c5NYSv8eafYPJtBLecqJEJ86Etosk2MsXry7wd6j";
     hashOutput = false;
-    sha256 = "edc77c57308661d576e843344d8638e025a7818bff73f8fbfab09c3c5fd092ec";
+    sha256 = "edca7c57308661d576e843344d8638e025a7818bff73f8fbfab09c3c5fd092ec";
   };
 
   nativeBuildInputs = [

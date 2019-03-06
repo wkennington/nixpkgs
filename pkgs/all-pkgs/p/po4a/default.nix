@@ -9,7 +9,7 @@
 }:
 
 let
-  version = "0.54";
+  version = "0.55";
 in
 stdenv.mkDerivation rec {
   name = "po4a-${version}";

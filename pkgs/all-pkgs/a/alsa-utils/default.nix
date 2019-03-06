@@ -10,12 +10,13 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "alsa-utils-1.1.6";
+  name = "alsa-utils-1.1.8";
 
   src = fetchurl {
     url = "mirror://alsa/utils/${name}.tar.bz2";
-    multihash = "QmT8tfm2fMu3smutKygap17rgQfdXHRta2udkRcCDzQ3m8";
-    sha256 = "155caecc40b2220f686f34ba3655a53e3bdbc0586adb1056733949feaaf7d36e";
+    multihash = "QmZdozgz3BmfMTX8TppasYuSWCqFCfcLKyrivWnreQgNn8";
+    hashOutput = false;
+    sha256 = "fd9bf528922b3829a91913b89a1858c58a0b24271a7b5f529923aa9ea12fa4cf";
   };
 
   buildInputs = [
@@ -41,6 +42,19 @@ stdenv.mkDerivation rec {
       "ASOUND_STATE_DIR=$TMPDIR"
     )
   '';
+
+  passthru = {
+    srcVerification = fetchurl {
+      failEarly = true;
+      inherit (src)
+        urls
+        outputHash
+        outputHashAlgo;
+      fullOpts = {
+        insecureHashOutput = true;
+      };
+    };
+  };
 
   meta = with lib; {
     description = "ALSA, the Advanced Linux Sound Architecture utils";

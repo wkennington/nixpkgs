@@ -13,7 +13,7 @@
 }:
 
 let
-  version = "2.4.34";
+  version = "2.4.37";
 in
 stdenv.mkDerivation rec {
   name = "apache-httpd-${version}";
@@ -21,7 +21,7 @@ stdenv.mkDerivation rec {
   src = fetchurl {
     url = "mirror://apache/httpd/httpd-${version}.tar.bz2";
     hashOutput = false;
-    sha256 = "fa53c95631febb08a9de41fd2864cfff815cf62d9306723ab0d4b8d7aa1638f0";
+    sha256 = "3498dc5c6772fac2eb7307dc7963122ffe243b5e806e0be4fb51974ff759d726";
   };
 
   nativeBuildInputs = [
@@ -37,6 +37,7 @@ stdenv.mkDerivation rec {
   NIX_LDFLAGS = "-lgcc_s";
 
   configureFlags = [
+    "--help"
     "--with-apr=${apr}"
     "--with-apr-util=${apr-util}"
     "--with-z=${zlib}"
@@ -63,9 +64,18 @@ stdenv.mkDerivation rec {
   passthru = {
     srcVerification = fetchurl {
       failEarly = true;
-      pgpsigUrls = map (n: "${n}.asc") src.urls;
-      pgpKeyFingerprint = "A93D 62EC C3C8 EA12 DB22  0EC9 34EA 76E6 7914 85A8";
-      inherit (src) urls outputHash outputHashAlgo;
+      inherit (src)
+        urls
+        outputHash
+        outputHashAlgo;
+      fullOpts = {
+        pgpsigUrls = map (n: "${n}.asc") src.urls;
+        pgpKeyFingerprints = [
+          "A93D 62EC C3C8 EA12 DB22  0EC9 34EA 76E6 7914 85A8"
+          # Daniel Ruggeri
+          "B9E8 213A EFB8 61AF 35A4  1F2C 995E 3522 1AD8 4DFF"
+        ];
+      };
     };
   };
 

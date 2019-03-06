@@ -19,7 +19,7 @@ let
     boolEn;
 in
 stdenv.mkDerivation rec {
-  name = "libosinfo-1.1.0";
+  name = "libosinfo-1.2.0";
 
   src = fetchurl {
     url = "https://releases.pagure.org/libosinfo/${name}.tar.gz";

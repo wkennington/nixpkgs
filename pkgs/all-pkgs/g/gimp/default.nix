@@ -60,7 +60,7 @@
 
 let
   major = "2.10";
-  patch = "6";
+  patch = "8";
 
   version = "${major}.${patch}";
 in
@@ -71,7 +71,7 @@ stdenv.mkDerivation rec {
     url = "https://download.gimp.org/pub/gimp/v${major}/${name}.tar.bz2";
     multihash = "QmUp2FZpWg6KoAYF5mk3KYQAbM2TsaQZGjR4H6niw3vYv6";
     hashOutput = false;
-    sha256 = "4ec8071f828e918384cf7bc7d1219210467c84655123f802bc55a8bf2415101f";
+    sha256 = "4eca071f828e918384cf7bc7d1219210467c84655123f802bc55a8bf2415101f";
   };
 
   nativeBuildInputs = [

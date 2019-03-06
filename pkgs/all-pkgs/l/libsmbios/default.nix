@@ -10,13 +10,13 @@
 }:
 
 let
-  version = "2.4.1";
+  version = "2.4.2";
 in
 stdenv.mkDerivation rec {
   name = "libsmbios-${version}";
 
   src = fetchFromGitHub {
-    version = 5;
+    version = 6;
     owner = "dell";
     repo = "libsmbios";
     rev = "v${version}";

@@ -8,7 +8,7 @@
 }:
 
 let
-  version = "1.17.1";
+  version = "1.18.0";
 in
 stdenv.mkDerivation rec {
   name = "pycairo-${version}";
@@ -16,7 +16,7 @@ stdenv.mkDerivation rec {
   src = fetchPyPi {
     package = "pycairo";
     inherit version;
-    sha256 = "0f0a35ec923d87bc495f6753b1e540fd046d95db56a35250c44089fbce03b698";
+    sha256 = "0f0aa5ec923d87bc495f6753b1e540fd046d95db56a35250c44089fbce03b698";
   };
 
   nativeBuildInputs = [

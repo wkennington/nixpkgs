@@ -2,20 +2,36 @@
 , fetchurl
 }:
 
+let
+  version = "2.12";
+in
 stdenv.mkDerivation rec {
-  name = "mxml-2.10";
+  name = "mxml-${version}";
 
   src = fetchurl {
-    url = "http://www.msweet.org/files/project3/${name}.tar.gz";
-    md5Confirm = "8804c961a24500a95690ef287d150abe";
-    multihash = "QmVB3H25sYwTSgZvMvd8u5fu3dPWz8NpGqAN5ZtDdVaL4a";
-    sha256 = "267ff58b64ddc767170d71dab0c729c06f45e1df9a9b6f75180b564f09767891";
+    url = "https://github.com/michaelrsweet/mxml/releases/download/v${version}/${name}.tar.gz";
+    hashOutput = false;
+    sha256 = "267ff58b64ddc767170a71dab0c729c06f45e1df9a9b6f75180b564f09767891";
   };
 
   configureFlags = [
     "--enable-threads"
     "--enable-shared"
   ];
+
+  passthru = {
+    srcVerification = fetchurl {
+      failEarly = true;
+      inherit (src)
+        urls
+        outputHash
+        outputHashAlgo;
+      fullOpts = {
+        pgpsigUrls = map (n: "${n}.sig") src.urls;
+        pgpKeyFingerprint = "C722 3EBE 4EF6 6513 B892  5989 11A3 0156 E0E6 7611";
+      };
+    };
+  };
 
   meta = with stdenv.lib; {
     homepage = "https://www.msweet.org/downloads.php?L+Z3";

@@ -644,6 +644,8 @@ argyllcms = callPackage ../all-pkgs/a/argyllcms { };
 aria2 = callPackage ../all-pkgs/a/aria2 { };
 aria = callPackageAlias "aria2" { };
 
+arch-install-scripts = callPackage ../all-pkgs/a/arch-install-scripts { };
+
 arkive = callPackage ../all-pkgs/a/arkive { };
 
 asciidoctor_1 = callPackage ../all-pkgs/a/asciidoctor {
@@ -838,6 +840,20 @@ cc = pkgs.cc_gcc;
 
 cc_gcc = wrapCC pkgs.gcc;
 
+cc_gcc_musl = lib.makeOverridable (import ../build-support/cc-wrapper) {
+  nativeTools = false;
+  nativeLibc = false;
+  libc = pkgs.musl;
+  cc = pkgs.gcc;
+  linux-headers = pkgs.linux-headers;
+  binutils = pkgs.binutils;
+  coreutils = pkgs.coreutils_small;
+  gnugrep = pkgs.gnugrep;
+  shell = pkgs.bash_small + pkgs.bash_small.shellPath;
+  name = "cc-wrapper";
+  stdenv = pkgs.stdenv;
+};
+
 cc-regression = callPackage ../all-pkgs/c/cc-regression { };
 
 ccid = callPackage ../all-pkgs/c/ccid { };
@@ -971,6 +987,8 @@ corosync = callPackage ../all-pkgs/c/corosync { };
 
 cpio = callPackage ../all-pkgs/c/cpio { };
 
+cppcheck = callPackage ../all-pkgs/c/cppcheck { };
+
 cpp-netlib = callPackage ../all-pkgs/c/cpp-netlib { };
 
 cppunit = callPackage ../all-pkgs/c/cppunit { };
@@ -1022,10 +1040,7 @@ dbus-glib = callPackage ../all-pkgs/d/dbus-glib { };
 
 dcadec = callPackage ../all-pkgs/d/dcadec { };
 
-dconf_0-30 = callPackage ../all-pkgs/d/dconf {
-  channel = "0.30";
-};
-dconf = callPackageAlias "dconf_0-30" { };
+dconf = callPackage ../all-pkgs/d/dconf { };
 
 dconf-editor_3-26 = callPackage ../all-pkgs/d/dconf-editor {
   channel = "3.26";
@@ -1115,6 +1130,8 @@ double-conversion = callPackage ../all-pkgs/d/double-conversion { };
 dpdk = callPackage ../all-pkgs/d/dpdk { };
 
 dpkg = callPackage ../all-pkgs/d/dpkg { };
+
+dropbear = callPackage ../all-pkgs/d/dropbear{ };
 
 #dropbox = callPackage ../all-pkgs/d/dropbox { };
 
@@ -1539,7 +1556,6 @@ glib-networking = callPackageAlias "glib-networking_2-54" { };
 
 glibmm_2-56 = callPackage ../all-pkgs/g/glibmm {
   channel = "2.56";
-  libsigcxx = pkgs.libsigcxx_2-10;
 };
 glibmm = callPackageAlias "glibmm_2-56" { };
 
@@ -2529,10 +2545,7 @@ libsepol = callPackage ../all-pkgs/l/libsepol { };
 
 libshout = callPackage ../all-pkgs/l/libshout { };
 
-libsigcxx_2-10 = callPackage ../all-pkgs/l/libsigcxx {
-  channel = "2.10";
-};
-libsigcxx = callPackageAlias "libsigcxx_2-10" { };
+libsigcxx = callPackage ../all-pkgs/l/libsigcxx { };
 
 libsigsegv = callPackage ../all-pkgs/l/libsigsegv { };
 
@@ -2574,6 +2587,10 @@ libtiger = callPackage ../all-pkgs/l/libtiger { };
 libtiff = callPackage ../all-pkgs/l/libtiff { };
 
 libtirpc = callPackage ../all-pkgs/l/libtirpc { };
+
+libtomcrypt = callPackage ../all-pkgs/l/libtomcrypt { };
+
+libtommath = callPackage ../all-pkgs/l/libtommath { };
 
 libtool = callPackage ../all-pkgs/l/libtool { };
 
@@ -3105,9 +3122,6 @@ nmap = callPackage ../all-pkgs/n/nmap { };
 nodejs_6 = callPackage ../all-pkgs/n/nodejs {
   channel = "6";
 };
-nodejs_8 = callPackage ../all-pkgs/n/nodejs {
-  channel = "8";
-};
 nodejs_10 = callPackage ../all-pkgs/n/nodejs {
   channel = "10";
 };
@@ -3266,6 +3280,8 @@ p11-kit = callPackage ../all-pkgs/p/p11-kit { };
 p7zip = callPackage ../all-pkgs/p/p7zip { };
 
 pacemaker = callPackage ../all-pkgs/p/pacemaker { };
+
+pacman = callPackage ../all-pkgs/p/pacman { };
 
 pam = callPackage ../all-pkgs/p/pam { };
 
@@ -3473,6 +3489,8 @@ qbittorrent_nox_head = callPackage ../all-pkgs/q/qbittorrent {
 
 qca = callPackage ../all-pkgs/q/qca { };
 
+qemu_system = callPackage ../all-pkgs/q/qemu/system.nix { };
+
 qemu_tools = callPackage ../all-pkgs/q/qemu/tools.nix { };
 
 qemu_user = callPackage ../all-pkgs/q/qemu/user.nix { };
@@ -3630,6 +3648,8 @@ shntool = callPackage ../all-pkgs/s/shntool { };
 
 signify = callPackage ../all-pkgs/s/signify { };
 
+simplecpp = callPackage ../all-pkgs/s/simplecpp { };
+
 sl = callPackage ../all-pkgs/s/sl { };
 
 sleuthkit = callPackage ../all-pkgs/s/sleuthkit { };
@@ -3671,7 +3691,10 @@ spidermonkey_45 = callPackage ../all-pkgs/s/spidermonkey {
 spidermonkey_52 = callPackage ../all-pkgs/s/spidermonkey {
   channel = "52";
 };
-spidermonkey = callPackageAlias "spidermonkey_52" { };
+spidermonkey_60 = callPackage ../all-pkgs/s/spidermonkey {
+  channel = "60";
+};
+spidermonkey = callPackageAlias "spidermonkey_60" { };
 
 split2flac = callPackage ../all-pkgs/s/split2flac { };
 
@@ -3812,6 +3835,8 @@ time = callPackage ../all-pkgs/t/time { };
 
 tinc_1-0 = callPackage ../all-pkgs/t/tinc { channel = "1.0"; };
 tinc_1-1 = callPackage ../all-pkgs/t/tinc { channel = "1.1"; };
+
+tinyxml = callPackage ../all-pkgs/t/tinyxml { };
 
 tk_8-5 = callPackage ../all-pkgs/t/tk {
   channel = "8.5";

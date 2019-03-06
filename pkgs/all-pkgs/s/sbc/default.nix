@@ -5,11 +5,11 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "sbc-1.3";
+  name = "sbc-1.4";
 
   src = fetchurl {
     url = "https://www.kernel.org/pub/linux/bluetooth/${name}.tar.xz";
-    sha256 = "02ckd2z51z0h85qgv7x8vv8ybp5czm9if1z78411j53gaz7j4476";
+    sha256 = "518bf46e6bb3dc808a95e1eabad26fdebe8a099c1e781c27ed7fca6c2f4a54c9";
   };
 
   buildInputs = [

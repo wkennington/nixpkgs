@@ -19,7 +19,7 @@ let
   inherit (stdenv.lib)
     optionals;
 
-  version = "1.4.0";
+  version = "1.5.0";
 in
 stdenv.mkDerivation rec {
   name = "kea-${version}";
@@ -28,7 +28,7 @@ stdenv.mkDerivation rec {
     url = "https://ftp.isc.org/isc/kea/${version}/${name}.tar.gz";
     multihash = "QmNXhX5Gh4G7kzK1rayP5sHKkUzvj9Xc84eNXCEm35J3Rk";
     hashOutput = false;
-    sha256 = "c0f8ecb93657adfc5ab970c91706754e601084828493f053f159661d21b31128";
+    sha256 = "c0faecb93657adfc5ab970c91706754e601084828493f053f159661d21b31128";
   };
 
   nativeBuildInputs = [

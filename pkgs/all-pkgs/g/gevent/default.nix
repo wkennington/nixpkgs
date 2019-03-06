@@ -17,7 +17,7 @@ let
   inherit (lib)
     optionals;
 
-  version = "1.3.7";
+  version = "1.4.0";
 in
 buildPythonPackage rec {
   name = "gevent-${version}";
@@ -25,7 +25,7 @@ buildPythonPackage rec {
   src = fetchPyPi {
     package = "gevent";
     inherit version;
-    sha256 = "3f06f4802824c577272960df003a304ce95b3e82eea01dad2637cc8609c80e2c";
+    sha256 = "3f06f4a02824c577272960df003a304ce95b3e82eea01dad2637cc8609c80e2c";
   };
 
   nativeBuildInputs = [

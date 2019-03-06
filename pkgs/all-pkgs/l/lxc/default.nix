@@ -11,7 +11,7 @@
 }:
 
 let
-  version = "3.0.2";
+  version = "3.1.0";
 in
 stdenv.mkDerivation rec {
   name = "lxc-${version}";
@@ -20,7 +20,7 @@ stdenv.mkDerivation rec {
     url = "https://linuxcontainers.org/downloads/lxc/lxc-${version}.tar.gz";
     multihash = "QmfGbRQruUpZchEoAT4sna9viCUn1o28ZTU8s3YME9azLi";
     hashOutput = false;
-    sha256 = "6ab7117b17066220da450c55ed77953998cf2336d415143b879554364af12f5c";
+    sha256 = "6aba117b17066220da450c55ed77953998cf2336d415143b879554364af12f5c";
   };
 
   nativeBuildInputs = [

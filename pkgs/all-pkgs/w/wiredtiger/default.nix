@@ -12,14 +12,14 @@
 }:
 
 let
-  version = "3.0.0";
+  version = "3.1.0";
 in
 stdenv.mkDerivation rec {
   name = "wiredtiger-${version}";
 
   src = fetchurl {
     url = "https://github.com/wiredtiger/wiredtiger/releases/download/${version}/${name}.tar.bz2";
-    sha256 = "a6662ecedc824ed61895c34821a1f9adbf5d3cf04630fa3d3881cb2b9573a304";
+    sha256 = "aa662ecedc824ed61895c34821a1f9adbf5d3cf04630fa3d3881cb2b9573a304";
   };
 
   buildInputs = [

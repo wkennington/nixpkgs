@@ -1,5 +1,7 @@
 { stdenv
+, binutils
 , fetchurl
+, gcc
 }:
 
 stdenv.mkDerivation rec {
@@ -11,6 +13,11 @@ stdenv.mkDerivation rec {
     hashOutput = false;
     sha256 = "44be8771d0e6c6b5f82dd15662eb2957c9a3173a19a8b49966ac0542bbd40d61";
   };
+
+  nativeBuildInputs = [
+    binutils
+    gcc
+  ];
 
   preConfigure = ''
     configureFlagsArray+=("--syslibdir=$out/lib")
@@ -30,6 +37,10 @@ stdenv.mkDerivation rec {
 
   # Dont depend on a shell potentially from the bootstrap
   dontPatchShebangs = true;
+
+  allowedReferences = [
+    "out"
+  ];
 
   passthru = {
     srcVerification = fetchurl {

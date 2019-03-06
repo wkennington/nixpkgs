@@ -6,12 +6,12 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "gpsd-3.17";
+  name = "gpsd-3.18";
 
   src = fetchurl {
     url = "mirror://savannah/gpsd/${name}.tar.gz";
     hashOutput = false;
-    sha256 = "68e0dbecfb5831997f8b3d6ba48aed812eb465d8c0089420ab68f9ce4d85e77a";
+    sha256 = "6ae0dbecfb5831997f8b3d6ba48aed812eb465d8c0089420ab68f9ce4d85e77a";
   };
 
   nativeBuildInputs = [
@@ -37,9 +37,14 @@ stdenv.mkDerivation rec {
   passthru = {
     srcVerification = fetchurl {
       failEarly = true;
-      pgpsigUrls = map (n: "${n}.sig") src.urls;
-      pgpKeyFingerprint = "4187 6B2F 5794 63A4 9984  3D1D ECC8 208F 8C6C 738D";
-      inherit (src) urls outputHashAlgo outputHash;
+      inherit (src)
+        urls
+        outputHashAlgo
+        outputHash;
+      fullOpts = {
+        pgpsigUrls = map (n: "${n}.sig") src.urls;
+        pgpKeyFingerprint = "4187 6B2F 5794 63A4 9984  3D1D ECC8 208F 8C6C 738D";
+      };
     };
   };
 

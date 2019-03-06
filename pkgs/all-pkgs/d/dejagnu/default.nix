@@ -6,12 +6,12 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "dejagnu-1.6";
+  name = "dejagnu-1.6.2";
 
   src = fetchurl {
     url = "mirror://gnu/dejagnu/${name}.tar.gz";
     hashOutput = false;
-    sha256 = "00b64a618e2b6b581b16eb9131ee80f721baa2669fa0cdee93c500d1a652d763";
+    sha256 = "00b64a61ae2b6b581b16eb9131ee80f721baa2669fa0cdee93c500d1a652d763";
   };
 
   nativeBuildInputs = [

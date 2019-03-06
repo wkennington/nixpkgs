@@ -6,7 +6,7 @@
 }:
 
 let
-  version = "1.1.14";
+  version = "1.1.16";
 in
 stdenv.mkDerivation rec {
   name = "libmtp-${version}";
@@ -14,7 +14,7 @@ stdenv.mkDerivation rec {
   src = fetchurl {
     url = "mirror://sourceforge/libmtp/libmtp/${version}/${name}.tar.gz";
     hashOutput = false;
-    sha256 = "3817d3e296be8f1bc527385585780e70984e8e0d6a0d00349240d67e3df412e8";
+    sha256 = "3817a3e296be8f1bc527385585780e70984e8e0d6a0d00349240d67e3df412e8";
   };
 
   buildInputs = [
@@ -28,12 +28,17 @@ stdenv.mkDerivation rec {
   passthru = {
     srcVerification = fetchurl {
       failEarly = true;
-      pgpsigUrls = map (n: "${n}.asc") src.urls;
-      pgpKeyFingerprints = [
-        "7C4A FD61 D8AA E757 0796  A517 2209 D690 2F96 9C95"
-        "D33B C5C3 C0CC 59B6 3989  D77B EA7B F397 0175 623E"
-      ];
-      inherit (src) urls outputHash outputHashAlgo;
+      inherit (src)
+        urls
+        outputHash
+        outputHashAlgo;
+      fullOpts = {
+        pgpsigUrls = map (n: "${n}.asc") src.urls;
+        pgpKeyFingerprints = [
+          "7C4A FD61 D8AA E757 0796  A517 2209 D690 2F96 9C95"
+          "D33B C5C3 C0CC 59B6 3989  D77B EA7B F397 0175 623E"
+        ];
+      };
     };
   };
 

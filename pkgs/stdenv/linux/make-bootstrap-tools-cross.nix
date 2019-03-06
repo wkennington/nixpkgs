@@ -32,7 +32,6 @@ let
       isl = pkgs.isl.crossDrv;
       libmpc = pkgs.libmpc.crossDrv;
       binutils = pkgs.binutils.crossDrv;
-      libelf = pkgs.libelf.crossDrv;
     };
 in {
   armv5tel = buildFor "armv5tel";

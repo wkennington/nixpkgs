@@ -9,18 +9,18 @@
 }:
 
 let
-  date = "2017-06-14";
-  rev = "f9d54c5e457104fed8886841f0617ee5efc4fb46";
+  date = "2018-10-08";
+  rev = "6fa5eaff13e2826d180a6e1ddb6c79a83c672ad8";
 in
 stdenv.mkDerivation rec {
   name = "libiscsi-${date}";
 
   src = fetchFromGitHub {
-    version = 3;
+    version = 6;
     owner = "sahlberg";
     repo = "libiscsi";
     inherit rev;
-    sha256 = "72bf9647998c5d96929510ee7e704b4ba46350006fbe335bc0363000f5dabbb0";
+    sha256 = "4cb3c12443500f2144e54ef963942a5989a2e6d73a0dcc75c297a3501a079d13";
   };
 
   nativeBuildInputs = [
@@ -39,6 +39,7 @@ stdenv.mkDerivation rec {
   '';
 
   configureFlags = [
+    "--help"
     "--disable-werror"
     "--enable-manpages"
   ];

@@ -1,4 +1,5 @@
 { stdenv
+, docbook_xml_dtd_42
 , docbook-xsl
 , fetchurl
 , gettext
@@ -9,40 +10,36 @@
 , python3
 , vala
 
+, bash-completion
 , dbus-dummy
 , glib
-
-, channel
 }:
 
 let
-  sources = {
-    "0.30" = {
-      version = "0.30.1";
-      sha256 = "549a3a7cc3881318107dc48a7b02ee8f88c9127acaf2d47f7724f78a8f6d02b7";
-    };
-  };
-  source = sources."${channel}";
+  channel = "0.30";
+  version = "${channel}.1";
 in
 stdenv.mkDerivation rec {
-  name = "dconf-${source.version}";
+  name = "dconf-${version}";
 
   src = fetchurl {
     url = "mirror://gnome/sources/dconf/${channel}/${name}.tar.xz";
     hashOutput = false;
-    inherit (source) sha256;
+    sha256 = "549a3a7cc3881318107dc48a7b02ee8f88c9127acaf2d47f7724f78a8f6d02b7";
   };
 
   nativeBuildInputs = [
+    docbook_xml_dtd_42
     docbook-xsl
-    libxslt
     meson
     ninja
+    libxslt
     python3
     vala
   ];
 
   buildInputs = [
+    bash-completion
     dbus-dummy
     glib
   ];
@@ -52,10 +49,6 @@ stdenv.mkDerivation rec {
     patchShebangs meson_post_install.py
   '';
 
-  mesonFlags = [
-    "-Dbash_completion=false"
-  ];
-
   setVapidirInstallFlag = false;
 
   passthru = {
@@ -64,11 +57,11 @@ stdenv.mkDerivation rec {
         outputHash
         outputHashAlgo
         urls;
+      failEarly = true;
       fullOpts = {
         sha256Url = "https://download.gnome.org/sources/dconf/${channel}/"
           + "${name}.sha256sum";
       };
-      failEarly = true;
     };
   };
 

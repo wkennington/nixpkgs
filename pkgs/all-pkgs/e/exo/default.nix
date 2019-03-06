@@ -19,7 +19,7 @@
 
 let
   channel = "0.12";
-  version = "${channel}.0";
+  version = "${channel}.4";
 in
 stdenv.mkDerivation rec {
   name = "exo-${version}";
@@ -27,7 +27,7 @@ stdenv.mkDerivation rec {
   src = fetchurl {
     url = "https://archive.xfce.org/src/xfce/exo/${channel}/${name}.tar.bz2";
     multihash = "QmYFgqvrWQTFbBGukxhNJoZSpD6CDnxr767wVENjyn3vfj";
-    sha256 = "64b88271a37d0ec7dca062c7bc61ca323116f7855092ac39698c421a2f30a18f";
+    sha256 = "64b88271a3ad0ec7dca062c7bc61ca323116f7855092ac39698c421a2f30a18f";
   };
 
   nativeBuildInputs = [

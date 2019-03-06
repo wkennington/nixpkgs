@@ -23,6 +23,7 @@ stdenv.mkDerivation rec {
   };
 
   configureFlags = [
+    "--help"
     "--enable-largefile"
     "--enable-asm-optimizations"
     "--disable-debug"

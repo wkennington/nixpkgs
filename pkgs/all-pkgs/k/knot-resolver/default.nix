@@ -16,13 +16,13 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "knot-resolver-2.3.0";
+  name = "knot-resolver-3.0.0";
 
   src = fetchurl {
     url = "https://secure.nic.cz/files/knot-resolver/${name}.tar.xz";
     multihash = "QmYXhRkffBh5PaqGwT4HrQacyip2Ua39MGd9ExHqp7Rpe1";
     hashOutput = false;
-    sha256 = "2d19c5daf8440bd3d2acd1886b9ede65f04f7753c6fd4618a92a1a4ba3b27a9b";
+    sha256 = "2da9c5daf8440bd3d2acd1886b9ede65f04f7753c6fd4618a92a1a4ba3b27a9b";
   };
 
   nativeBuildInputs = [
