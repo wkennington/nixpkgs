@@ -135,31 +135,6 @@ stdenv.mkDerivation rec {
     ../xorg/xorgserver-xkbcomp-path.patch  # FIXME: use fetchTritonPatch
   ];
 
-  mesonFlags = [
-    "-Dxorg=true"
-    "-Dxephyr=true"
-    "-Dxwayland=true"
-    "-Dglamor=true"
-    "-Dxwayland_eglstream=true"
-    "-Dxnest=true"
-    "-Dxvfb=true"
-    "-Dxwin=false"  # Windows
-    "-Dipv6=true"
-    "-Dinput_thread=true"
-    "-Dhal=false"
-    "-Dsystemd_logind=true"
-    "-Dvbe=true"
-    "-Dvgahw=true"
-    "-Dxselinux=true"
-    "-Dxcsecurity=true"
-    "-Ddga=true"
-    "-Dmitshm=true"
-    "-Dagp=false"
-    "-Ddri1=true"
-    "-Ddri2=true"
-    "-Ddri3=true"
-  ];
-
   postPatch = ''
     # Don't build tests
     grep -q "subdir('test')" meson.build
@@ -171,6 +146,12 @@ stdenv.mkDerivation rec {
     cat ${./xwayland-config.h.meson.in} >include/xwayland-config.h.meson.in
   '';
 
+  mesonFlags = [
+    "-Dxephyr=true"
+    "-Ddmx=true"
+    "-Dxf86bigfont=true"
+    "-Dxcsecurity=true"
+  ];
 
   postInstall = ''
     wrapProgram "$out"/bin/Xephyr \
