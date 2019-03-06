@@ -3473,7 +3473,9 @@ qbittorrent_nox_head = callPackage ../all-pkgs/q/qbittorrent {
 
 qca = callPackage ../all-pkgs/q/qca { };
 
-qemu = callPackage ../all-pkgs/q/qemu { };
+qemu_tools = callPackage ../all-pkgs/q/qemu/tools.nix { };
+
+qemu_user = callPackage ../all-pkgs/q/qemu/user.nix { };
 
 qjackctl = callPackage ../all-pkgs/q/qjackctl { };
 
