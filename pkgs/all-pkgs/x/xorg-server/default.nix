@@ -168,15 +168,15 @@ stdenv.mkDerivation rec {
     # Fix missing file
     ! test -e include/xwayland-config.h.meson.in
     grep -q 'xwayland-config.h.meson.in' include/meson.build
-    cat ${./xwayland-config.h.meson.in} > include/xwayland-config.h.meson.in
+    cat ${./xwayland-config.h.meson.in} >include/xwayland-config.h.meson.in
   '';
 
 
   postInstall = ''
-    wrapProgram $out/bin/Xephyr \
+    wrapProgram "$out"/bin/Xephyr \
       --set XKB_BINDIR "${xkbcomp}/bin" \
       --add-flags "-xkbdir ${xkeyboard-config}/share/X11/xkb"
-    wrapProgram $out/bin/Xvfb \
+    wrapProgram "$out"/bin/Xvfb \
       --set XKB_BINDIR "${xkbcomp}/bin" \
       --set XORG_DRI_DRIVER_PATH ${opengl-dummy.driverSearchPath}/lib/dri \
       --add-flags "-xkbdir ${xkeyboard-config}/share/X11/xkb"
