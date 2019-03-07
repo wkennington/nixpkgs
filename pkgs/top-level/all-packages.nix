@@ -1224,6 +1224,8 @@ evolution-data-server = callPackageAlias "evolution-data-server_3-28" { };
 
 exempi = callPackage ../all-pkgs/e/exempi { };
 
+exe-wrapper = callPackage ../all-pkgs/e/exe-wrapper { };
+
 exfat-utils = callPackage ../all-pkgs/e/exfat-utils { };
 
 exiv2 = callPackage ../all-pkgs/e/exiv2 { };
