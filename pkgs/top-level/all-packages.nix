@@ -1181,6 +1181,8 @@ enca = callPackage ../all-pkgs/e/enca { };
 
 enchant = callPackage ../all-pkgs/e/enchant { };
 
+envoy = callPackage ../all-pkgs/e/envoy { };
+
 eog_3-26 = callPackage ../all-pkgs/e/eog {
   channel = "3.26";
   adwaita-icon-theme = pkgs.adwaita-icon-theme_3-30;
@@ -1241,8 +1243,6 @@ extra-cmake-modules = callPackage ../all-pkgs/e/extra-cmake-modules { };
 f2fs-tools = callPackage ../all-pkgs/f/f2fs-tools { };
 
 faac = callPackage ../all-pkgs/f/faac { };
-
-
 
 factorio_0-15 = callPackage ../all-pkgs/f/factorio {
   channel = "0.15";

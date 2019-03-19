@@ -10,7 +10,7 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "notmuch-0.28.1";
+  name = "notmuch-0.28.3";
 
   src = fetchurl {
     url = "https://notmuchmail.org/releases/${name}.tar.gz";

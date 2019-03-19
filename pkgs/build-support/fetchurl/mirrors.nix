@@ -128,6 +128,7 @@ rec {
   ];
 
   ipfs-cached = [
+    https://cloudflare-ipfs.com
     https://ipfs.wak.io
   ];
 

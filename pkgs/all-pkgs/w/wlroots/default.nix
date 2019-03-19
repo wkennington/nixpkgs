@@ -18,7 +18,7 @@
 }:
 
 let
-  version = "0.4.1";
+  version = "0.5.0";
 in
 stdenv.mkDerivation {
   name = "wlroots-${version}";
@@ -28,7 +28,7 @@ stdenv.mkDerivation {
     owner = "swaywm";
     repo = "wlroots";
     rev = version;
-    sha256 = "973fd1ecdac73041f9e120942b3e3d75eab9da0088bcf60a203fb73dfd0413a8";
+    sha256 = "973ad1ecdac73041f9e120942b3e3d75eab9da0088bcf60a203fb73dfd0413a8";
   };
 
   nativeBuildInputs = [
