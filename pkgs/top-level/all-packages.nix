@@ -2846,6 +2846,8 @@ mediainfo = callPackage ../all-pkgs/m/mediainfo { };
 
 mercurial = pkgs.python2Packages.mercurial;
 
+mes = callPackage ../all-pkgs/m/mes { };
+
 mesa = callPackage ../all-pkgs/m/mesa {
   libglvnd = null;
   buildConfig = "full";
