@@ -4557,6 +4557,8 @@ libstartup_notification =
     kPkgs = {
       inherit kernel;
 
+      bpftool = kCallPackage ../all-pkgs/b/bpftool { };
+
       cryptodev = pkgs.cryptodev_headers.override {
         onlyHeaders = false;
         inherit kernel;  # We shouldn't need this
