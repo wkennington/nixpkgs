@@ -1,19 +1,16 @@
 { stdenv
-, autoconf
-, automake
 , fetchFromGitHub
-, libtool
+, protobuf-cpp
 , which
 
 , c-ares
 , gperftools
 , openssl
-, protobuf-cpp
 , zlib
 }:
 
 let
-  version = "1.18.0";
+  version = "1.20.1";
 in
 stdenv.mkDerivation {
   name = "grpc-${version}";
@@ -23,13 +20,10 @@ stdenv.mkDerivation {
     owner = "grpc";
     repo = "grpc";
     rev = "v${version}";
-    sha256 = "b73961835e1fd9f73e896b67564d4c38a80bf05a9546455d064a4a92bb81e259";
+    sha256 = "1d72dd89643f59831616bef02618f2a7ea0c66a866a73994606b5122ac95068a";
   };
 
   nativeBuildInputs = [
-    autoconf
-    automake
-    libtool
     protobuf-cpp
     which
   ];
@@ -43,25 +37,14 @@ stdenv.mkDerivation {
   ];
 
   postPatch = ''
-    rm -r third_party/{cares,protobuf,zlib,googletest,boringssl}
-    unpackFile ${protobuf-cpp.src}
-    mv -v protobuf* third_party/protobuf
+    rm -r third_party/{cares,protobuf,zlib,gflags,googletest,boringssl}
 
     grep -q '\-Werror' Makefile
-    sed -i 's, -Werror,,g' Makefile
+    sed -i 's,-Werror,,' Makefile
   '';
-
-  NIX_CFLAGS_LINK = [
-    "-pthread"
-  ];
 
   preBuild = ''
-    sed -i 's,\(grpc++.*\.so\.\)6,\11,g' Makefile
     makeFlagsArray+=("prefix=$out")
-  '';
-
-  postInstall = ''
-    test -e "$out"/lib/libgrpc++.so.1
   '';
 
   meta = with stdenv.lib; {
