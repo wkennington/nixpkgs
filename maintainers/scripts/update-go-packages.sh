@@ -129,7 +129,14 @@ do_mod_update() {
   # Update the deps if we need to
   if [ "$updateDeps" != "false" ]; then
     echo "Updating dependencies" >&3
+    cp go.mod go.mod.old
+    go mod tidy
+    cat go.mod >&2
     go get -d -u
+    echo "$BASHOPTS" >&2
+    echo "$SHELLOPTS" >&2
+    diff go.mod go.mod.old >&2
+    exit 1
   else
     echo "Skipping dependency update" >&3
   fi
