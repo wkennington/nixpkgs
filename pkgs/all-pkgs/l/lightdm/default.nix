@@ -21,7 +21,7 @@
 }:
 
 let
-  version = "1.28.0";
+  version = "1.30.0";
 in
 stdenv.mkDerivation rec {
   name = "lightdm-${version}";
