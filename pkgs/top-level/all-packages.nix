@@ -877,16 +877,16 @@ celt = callPackageAlias "celt_0-11" { };
 # Dev should always point to the latest versioned release
 ceph_lib = pkgs.ceph.lib;
 ceph = hiPrio pkgs.ceph_12;
-ceph_12 = callPackage ../all-pkgs/c/ceph {
+ceph_10 = callPackage ../all-pkgs/c/ceph {
+  channel = "10";
+};
+ceph_12 = callPackage ../all-pkgs/c/ceph/cmake.nix {
   channel = "12";
 };
-ceph_14 = callPackage ../all-pkgs/c/ceph {
-  channel = "14";
-};
-ceph_dev = callPackage ../all-pkgs/c/ceph {
+ceph_dev = callPackage ../all-pkgs/c/ceph/cmake.nix {
   channel = "dev";
 };
-ceph_git = callPackage ../all-pkgs/c/ceph {
+ceph_git = callPackage ../all-pkgs/c/ceph/cmake.nix {
   channel = "git";
 };
 

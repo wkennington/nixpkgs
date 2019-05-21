@@ -11,22 +11,22 @@
 , glib
 , expat
 , pam
-, spidermonkey_60
+, spidermonkey_52
 , gobject-introspection
 , systemd_lib
 }:
 
 let
-  version = "0.116";
+  version = "0.115";
 in
 stdenv.mkDerivation rec {
   name = "polkit-${version}";
 
   src = fetchurl {
     url = "https://www.freedesktop.org/software/polkit/releases/${name}.tar.gz";
-    multihash = "Qmf262WJaCdgGQ2SBtAyaPLnDgBJ7duQo7XdV3kh12upmK";
+    multihash = "QmUQ3hjxbm3pQnc2L1iPEW3NJuXnNrwuenfKv69jJRVMzi";
     hashOutput = false;
-    sha256 = "88170c9e711e8db305a12fdb8234fac5706c61969b94e084d0f117d8ec5d34b1";
+    sha256 = "2f87ecdabfbd415c6306673ceadc59846f059b18ef2fce42bac63fe283f12131";
   };
 
   nativeBuildInputs = [
@@ -43,7 +43,7 @@ stdenv.mkDerivation rec {
     glib
     gobject-introspection
     pam
-    spidermonkey_60
+    spidermonkey_52
     systemd_lib
   ];
 
@@ -90,16 +90,11 @@ stdenv.mkDerivation rec {
   passthru = {
     srcVerification = fetchurl {
       failEarly = true;
-      inherit (src)
-        urls
-        outputHash
-        outputHashAlgo;
-      fullOpts = {
-        pgpsigUrls = map (n: "${n}.sign") src.urls;
-        pgpKeyFingerprints = [
-          "7FFB 7D6B D831 47D7 4284  E317 8CEB 3030 FFDC E258"
-        ];
-      };
+      pgpsigUrls = map (n: "${n}.sign") src.urls;
+      pgpKeyFingerprints = [
+        "C197 6D9E D91A 7459 CBCE  5314 5A33 F660 B384 79DF"
+      ];
+      inherit (src) urls outputHash outputHashAlgo;
     };
   };
 

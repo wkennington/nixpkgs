@@ -35,10 +35,6 @@ let
       version = "52.9.0";
       sha256 = "c01d09658c53c1b3a496e353a24dad03b26b81d3b1d099abc26a06f81c199dd6";
     };
-    "60" = {
-      version = "60.6.1";
-      sha256 = "94037fdceb83785ef6748de196eae562d9fa83ab7ec858b07ed13c1f540a04f5";
-    };
   };
   source = sources."${channel}";
 in
