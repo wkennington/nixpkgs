@@ -68,13 +68,6 @@ stdenv.mkDerivation rec {
     sed -i 's,uv-version.h,uv/version.h,' Source/Modules/FindLibUV.cmake
   '' + optionalString (!bootstrap) ''
     sed -i '/CMAKE_USE_SYSTEM_/s,OFF,ON,g' CMakeLists.txt
-  '' + optionalString bootstrap ''
-    sed \
-      -e 's,''${cmake_bootstrap_dir}/cmake,true,' \
-      -e "/\''${CMAKE_BOOTSTRAP_SOURCE_DIR}/iCMAKE_BOOTSTRAP_SOURCE_DIR='$out/share/cmake-${channel}'" \
-      -e "/\''${CMAKE_BOOTSTRAP_BINARY_DIR}/iCMAKE_BOOTSTRAP_BINARY_DIR='$out/bin'" \
-      -i bootstrap
-    cat bootstrap
   '';
 
   preConfigure = optionalString bootstrap ''
@@ -93,17 +86,6 @@ stdenv.mkDerivation rec {
   cmakeFlags = optionals (!bootstrap) [
     "-DCMAKE_USE_SYSTEM_KWIML=OFF"
   ];
-
-  buildPhase = optionalString bootstrap ''
-    true
-  '';
-
-  installPhase = optionalString bootstrap ''
-    mkdir -p "$out"/bin
-    cp Bootstrap.cmk/cmake "$out"/bin
-    mkdir -p "$out"/share/cmake-${channel}
-    cp -r Modules "$out"/share/cmake-${channel}
-  '';
 
   setupHook = ./setup-hook.sh;
   selfApplySetupHook = true;
