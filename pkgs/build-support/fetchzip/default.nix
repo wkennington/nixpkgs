@@ -44,7 +44,7 @@ let
 in
 
 lib.overrideDerivation (fetchurl (rec {
-  name = "${name'}.tar.br";
+  name = "${name'}.tar.${deterministic-zip'.fastExt}";
 
   fullOpts = {
     downloadToTemp = true;

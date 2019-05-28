@@ -17,16 +17,13 @@ let
     };
   };
 
-  inherit (versions."${toString version}")
-    brotli
-    tar
-    xz;
+  pkgs = versions."${toString version}";
 
   inherit (lib)
     concatStringsSep;
 
   tarCmd = concatStringsSep " " [
-    "${tar}/bin/tar"
+    "${pkgs.tar}/bin/tar"
     "--sort=name"
     "--owner=0"
     "--group=0"
@@ -42,17 +39,31 @@ let
   ];
 
   brotliCmd = concatStringsSep " " [
-    "${brotli}/bin/brotli"
+    "${pkgs.brotli}/bin/brotli"
     "-6"
     "-c"
   ];
 
+  zstdCmd = concatStringsSep " " [
+    "${pkgs.zstd}/bin/zstd"
+    "-9"
+    "-c"
+  ];
+
+  fastCmd =
+    if pkgs ? zstd then
+      zstdCmd
+    else
+      brotliCmd;
+
   xzCmd = concatStringsSep " " [
-    "${xz}/bin/xz"
+    "${pkgs.xz}/bin/xz"
     "-9"
     "-e"
     "-c"
   ];
+
+  slowCmd = xzCmd;
 in
 stdenv.mkDerivation {
   name = "deterministic-zip-${toString version}";
@@ -61,21 +72,19 @@ stdenv.mkDerivation {
     mkdir -p "$out"/bin
 
     echo '#! ${stdenv.shell} -e' >>"$out"/bin/deterministic-zip-${toString version}
-    echo '${tarCmd} | ${brotliCmd}' >>"$out"/bin/deterministic-zip-${toString version}
+    echo '${tarCmd} | ${fastCmd}' >>"$out"/bin/deterministic-zip-${toString version}
     chmod +x "$out"/bin/deterministic-zip-${toString version}
     ln -sv deterministic-zip-${toString version} "$out"/bin/deterministic-zip
 
     echo '#! ${stdenv.shell} -e' >>"$out"/bin/deterministic-zip-dist-${toString version}
-    echo '${tarCmd} | ${xzCmd}' >>"$out"/bin/deterministic-zip-dist-${toString version}
+    echo '${tarCmd} | ${slowCmd}' >>"$out"/bin/deterministic-zip-dist-${toString version}
     chmod +x "$out"/bin/deterministic-zip-dist-${toString version}
     ln -sv deterministic-zip-dist-${toString version} "$out"/bin/deterministic-zip-dist
   '';
 
-  passthru = {
-    inherit
-      brotli
-      tar
-      version;
+  passthru = pkgs // {
+    fastExt = if pkgs ? zstd then "zst" else "br";
+    slowExt = "xz";
   };
 
   meta = with lib; {
