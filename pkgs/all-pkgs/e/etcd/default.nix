@@ -19,9 +19,10 @@ buildGo {
     sourceJSON = ./source.json;
   };
 
-  postInstall = ''
-    find "$out"/bin -type f -not -name 'etcd*' -delete
-  '';
+  installedSubmodules = [
+    "."
+    "etcdctl"
+  ];
 
   meta = with lib; {
     maintainers = with maintainers; [

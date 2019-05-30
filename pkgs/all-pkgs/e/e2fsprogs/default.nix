@@ -7,7 +7,7 @@
 }:
 
 let
-  version = "1.45.1";
+  version = "1.45.2";
 in
 stdenv.mkDerivation rec {
   name = "e2fsprogs-${version}";

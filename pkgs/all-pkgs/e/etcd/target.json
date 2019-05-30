@@ -1,5 +1,5 @@
 {
   "path": "go.etcd.io/etcd/v3",
-  "version": "master",
+  "version": "latest",
   "updateDeps": false
 }
