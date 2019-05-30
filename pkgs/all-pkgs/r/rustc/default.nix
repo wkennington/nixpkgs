@@ -71,9 +71,12 @@ stdenv.mkDerivation {
   ];
 
   buildPhase = ''
+    # Ensure our binaries point to our libdir
+    export NIX_LDFLAGS="$NIX_LDFLAGS -rpath $lib/lib"
+
     # Build the initial bootstrapper and tools
     NIX_RUSTFLAGS_OLD="$NIX_RUSTFLAGS"
-    export NIX_RUSTFLAGS="$NIX_RUSTFLAGS -L${rustc.std}/lib"
+    export NIX_RUSTFLAGS="$NIX_RUSTFLAGS -L${rustc.lib}/lib -L${rustc.dev}/lib"
     python3 x.py build -j $NIX_BUILD_CORES --stage 0 src/none || true
     python3 x.py build -j $NIX_BUILD_CORES --stage 0 src/tools/rust-installer
 
@@ -90,16 +93,14 @@ stdenv.mkDerivation {
     # Remove logs and manifests generated during install
     find "$out"/lib/rustlib -mindepth 1 -maxdepth 1 -type f -delete
 
-    # Ensure we ignore linking against compiler libs
-    touch "$out"/lib/.nix-ignore
-
     mkdir -p "$std"
     mv "$(find "$out"/lib/rustlib -name lib -type d)" "$std"/lib
   '';
 
   outputs = [
     "out"
-    "std"
+    "dev"
+    "lib"
   ];
 
   setupHook = ./setup-hook.sh;

@@ -27,15 +27,24 @@ stdenv.mkDerivation rec {
   };
 
   installPhase = ''
-    mkdir -p "$out"
-    cp -r rust-std-*/lib/rustlib/*/lib "$out"
-    FILES=($(find "$out"/lib -type f))
+    mkdir -p "$dev" "$lib"/lib
+    cp -r rust-std-*/lib/rustlib/*/lib "$dev"
+    mv "$dev"/lib/*.so "$lib"/lib
+    FILES=($(find "$lib"/lib -type f))
     for file in "''${FILES[@]}"; do
       echo "Patching $file" >&2
       patchelf --interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" "$file" || true
-      patchelf --set-rpath "${stdenv.cc.cc}/lib:${stdenv.cc.libc}/lib" "$file" || true
+      patchelf --set-rpath "$lib/lib:${stdenv.cc.cc}/lib:${stdenv.cc.libc}/lib" "$file" || true
     done
+
+    mkdir -p "$dev"/nix-support
+    echo "$lib" >"$dev"/nix-support/propagated-native-build-inputs
   '';
+
+  outputs = [
+    "dev"
+    "lib"
+  ];
 
   passthru = {
     srcVerification = fetchurl {

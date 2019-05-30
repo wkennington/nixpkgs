@@ -28,29 +28,36 @@ stdenv.mkDerivation rec {
   };
 
   installPhase = ''
-    mkdir -p "$out"
-    rm rustc/manifest.in
+    mkdir -p "$out"/bin "$dev"/lib "$lib"/lib
     rm rustc/bin/rust-*
     rm -r rustc/lib/rustlib/etc
     rm -r rustc/lib/rustlib/*/{bin,lib}
-    rm -r rustc/share/doc
-    cp -r rustc/* "$out"
-    FILES=($(find $out/{bin,lib} -type f))
+    cp -r rustc/bin/* "$out"/bin
+    cp -r rustc/lib/* "$dev"/lib
+    mv "$dev"/lib/*.so "$dev"/lib/rustlib/*/codegen-backends "$lib"/lib
+    for file in $(find "$lib"/lib "$dev"/lib -type f); do
+      name="$(basename "$file")"
+      if [ -e "${rust-std.lib}/lib/$name" ] || [ -e "${rust-std.dev}/lib/$name" ]; then
+        rm "$file"
+      fi
+    done
+    FILES=($(find "$out"/bin "$lib"/lib -type f))
     for file in "''${FILES[@]}"; do
       echo "Patching $file" >&2
       patchelf --interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" "$file" || true
-      patchelf --set-rpath "$out/lib:${stdenv.cc.cc}/lib:${stdenv.cc.libc}/lib" "$file" || true
+      patchelf --set-rpath "$lib/lib:${rust-std.lib}/lib:${stdenv.cc.cc}/lib:${stdenv.cc.libc}/lib" "$file" || true
     done
 
-    touch "$out"/lib/.nix-ignore
+    ln -sv "$lib"/lib "$out"/lib
 
-    mkdir -p "$std"
-    ln -sv '${rust-std}/lib' "$std/lib"
+    mkdir -p "$dev"/nix-support
+    echo "$lib" >"$dev"/nix-support/propagated-native-build-inputs
   '';
 
   outputs = [
     "out"
-    "std"
+    "dev"
+    "lib"
   ];
 
   setupHook = ./setup-hook.sh;

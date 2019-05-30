@@ -20,7 +20,7 @@ let
         owner = "rust-lang";
         repo = "cargo";
         rev = version;
-        sha256 = "a3c1cfb9d01367bc928f559596e9e8e8fc4e94cf57451d45ad392854416cae72";
+        sha256 = "aaa1cfb9d01367bc928f559596e9e8e8fc4e94cf57451d45ad392854416cae72";
       };
       deps = fetchCargoDeps {
         zipVersion = 6;
@@ -44,7 +44,7 @@ let
         owner = "rust-lang";
         repo = "cargo";
         rev = "0f77ed5f615f61896a19fcc789a716fbca0d71be";
-        sha256 = "07eba5bce846f1e2caed7f9714f87a08d88c9eb8aa7d21addb4d759d6d02a5b9";
+        sha256 = "07eba5ace846f1e2caed7f9714f87a08d88c9eb8aa7d21addb4d759d6d02a5b9";
       };
       deps = fetchCargoDeps {
         zipVersion = 6;

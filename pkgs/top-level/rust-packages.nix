@@ -90,4 +90,6 @@ let
 
   ripgrep = callPackage ../all-pkgs/r/ripgrep { };
 
+  rustfmt = callPackage ../all-pkgs/r/rustfmt { };
+
   }; in self
