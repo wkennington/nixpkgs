@@ -539,12 +539,14 @@ let  # BEGIN let/in 1
 ################################################################################
 
 
-wrapCCWith = ccWrapper: libc: extraBuildCommands: baseCC: ccWrapper {
+wrapCCWith = ccWrapper: libc: extraBuildCommands: baseCC: ccHeaders: ccWrapper {
   nativeTools = pkgs.stdenv.cc.nativeTools or false;
   nativeLibc = pkgs.stdenv.cc.nativeLibc or false;
   nativePrefix = pkgs.stdenv.cc.nativePrefix or "";
   cc = baseCC;
   inherit libc extraBuildCommands;
+  coreutils = pkgs.coreutils_small;
+  cc-headers = ccHeaders;
 };
 
 wrapCC =
@@ -837,8 +839,8 @@ cairomm = callPackage ../all-pkgs/c/cairomm { };
 caribou = callPackage ../all-pkgs/c/caribou { };
 
 cc = pkgs.cc_gcc;
-
-cc_gcc = wrapCC pkgs.gcc;
+cc_gcc = pkgs.wrapCC pkgs.gcc null;
+cc_clang = pkgs.wrapCC pkgs.clang.bin pkgs.clang.cc_headers;
 
 cc-regression = callPackage ../all-pkgs/c/cc-regression { };
 
@@ -904,7 +906,10 @@ civetweb = callPackage ../all-pkgs/c/civetweb { };
 
 cjdns = callPackage ../all-pkgs/c/cjdns { };
 
-clang = wrapCC (callPackageAlias "llvm" { });
+clang_8 = callPackage ../all-pkgs/c/clang {
+  llvm = pkgs.llvm_8;
+};
+clang = callPackageAlias "clang_8" { };
 
 clr-boot-manager = callPackage ../all-pkgs/c/clr-boot-manager { };
 
@@ -4216,6 +4221,8 @@ yelp-xsl = callPackageAlias "yelp-xsl_3-20" { };
 youtube-dl = pkgs.python3Packages.youtube-dl;
 
 yubikey-manager = pkgs.python3Packages.yubikey-manager;
+
+z3 = callPackage ../all-pkgs/z/z3 { };
 
 zeitgeist = callPackage ../all-pkgs/z/zeitgeist { };
 
