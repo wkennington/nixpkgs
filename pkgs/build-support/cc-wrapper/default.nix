@@ -8,7 +8,7 @@
 { name ? "", stdenv, nativeTools, nativeLibc, nativePrefix ? ""
 , cc ? null, libc ? null, linux-headers ? null, libcxx ? null
 , libgcc ? null, libidn2 ? null, binutils ? null, coreutils ? null
-, shell ? stdenv.shell, gnugrep ? null
+, shell ? stdenv.shell
 , extraPackages ? [], extraBuildCommands ? ""
 }:
 
@@ -16,7 +16,7 @@ with stdenv.lib;
 
 assert nativeTools -> nativePrefix != "";
 assert !nativeTools ->
-  cc != null && binutils != null && coreutils != null && gnugrep != null;
+  cc != null && binutils != null && coreutils != null;
 assert !nativeLibc -> libc != null;
 
 let
@@ -61,10 +61,8 @@ stdenv.mkDerivation {
 
   libc = if nativeLibc then null else libc;
   binutils = if nativeTools then "" else binutils;
-  # The wrapper scripts use 'cat' and 'grep', so we may need coreutils
-  # and gnugrep.
+  # The wrapper scripts use 'cat', so we may need coreutils.
   coreutils = if nativeTools then "" else coreutils;
-  gnugrep = if nativeTools then "" else gnugrep;
 
   passthru = rec {
     inherit nativeTools nativeLibc nativePrefix;

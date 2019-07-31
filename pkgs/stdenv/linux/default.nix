@@ -85,7 +85,6 @@ let
           libc = bootstrapTools.glibc;
           binutils = bootstrapTools;
           coreutils = bootstrapTools;
-          gnugrep = bootstrapTools;
           name = "bootstrap-cc-wrapper-stage0";
           stdenv = stage0Pkgs.stdenv;
         };
@@ -158,7 +157,6 @@ let
           linux-headers = stage01Pkgs.linux-headers;
           binutils = stage01Pkgs.binutils;
           coreutils = bootstrapTools;
-          gnugrep = bootstrapTools;
           name = "bootstrap-cc-wrapper-stage01";
           stdenv = pkgs.stdenv;
         };
@@ -190,7 +188,6 @@ let
           linux-headers = stage01Pkgs.linux-headers;
           binutils = stage01Pkgs.binutils;
           coreutils = bootstrapTools;
-          gnugrep = bootstrapTools;
           name = "bootstrap-cc-wrapper-stage03";
           stdenv = pkgs.stdenv;
         };
@@ -267,7 +264,6 @@ let
           libgcc = stage11Pkgs.gcc;
           binutils = stage11Pkgs.binutils;
           coreutils = bootstrapTools;
-          gnugrep = bootstrapTools;
           name = "bootstrap-cc-wrapper-stage12";
           stdenv = pkgs.stdenv;
         };
@@ -344,7 +340,6 @@ let
           libgcc = stage11Pkgs.gcc;
           binutils = stage11Pkgs.binutils;
           coreutils = stage13Pkgs.coreutils_small;
-          gnugrep = stage13Pkgs.gnugrep;
           name = "bootstrap-cc-wrapper-stage13";
           stdenv = pkgs.stdenv;
         };
@@ -392,7 +387,6 @@ let
           linux-headers = stage21Pkgs.linux-headers;
           binutils = stage11Pkgs.binutils;
           coreutils = stage13Pkgs.coreutils_small;
-          gnugrep = stage13Pkgs.gnugrep;
           name = "cc-wrapper-stage21";
           stdenv = pkgs.stdenv;
         };
@@ -440,7 +434,6 @@ let
           libgcc = stage22Pkgs.gcc;
           binutils = stage11Pkgs.binutils;
           coreutils = stage13Pkgs.coreutils_small;
-          gnugrep = stage13Pkgs.gnugrep;
           name = "cc-wrapper-stage22";
           stdenv = pkgs.stdenv;
         };
@@ -484,7 +477,6 @@ let
           libidn2 = stage23Pkgs.libidn2;
           binutils = stage23Pkgs.binutils;
           coreutils = stage23Pkgs.coreutils_small;
-          gnugrep = stage23Pkgs.gnugrep;
           shell = stage23Pkgs.bash_small + stage23Pkgs.bash_small.shellPath;
           name = "cc-wrapper";
           stdenv = pkgs.stdenv;

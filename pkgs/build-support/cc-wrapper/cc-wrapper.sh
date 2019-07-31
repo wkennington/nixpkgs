@@ -1,7 +1,7 @@
 #! @shell@ -e
 path_backup="$PATH"
 if [ -n "@coreutils@" ]; then
-  PATH="@coreutils@/bin:@gnugrep@/bin"
+  PATH="@coreutils@/bin"
 fi
 
 if [ -n "$NIX_CC_WRAPPER_START_HOOK" ]; then
@@ -161,10 +161,16 @@ if [ "$NIX_ENFORCE_PURITY" = 1 ]; then
 fi
 
 if [[ "@prog@" = *++ ]]; then
-    if  echo "$@" | grep -qv -- -nostdlib; then
-        NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE ${NIX_CXXSTDLIB_COMPILE-@default_cxx_stdlib_compile@}"
-        NIX_CFLAGS_LINK="$NIX_CFLAGS_LINK ${NIX_CXXSTDLIB_LINK-@default_cxx_stdlib_link@}"
+  nostdlib=0
+  for arg in "$@"; do
+    if [ "$arg" = "-nostdlib" ]; then
+      nostdlib=1
     fi
+  done
+  if [ "$nostdlib" = "0" ]; then
+    NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE ${NIX_CXXSTDLIB_COMPILE-@default_cxx_stdlib_compile@}"
+    NIX_CFLAGS_LINK="$NIX_CFLAGS_LINK ${NIX_CXXSTDLIB_LINK-@default_cxx_stdlib_link@}"
+  fi
 fi
 
 # Add the flags for the C compiler proper.
