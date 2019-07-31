@@ -5,15 +5,22 @@ if [ -n "@coreutils@" ]; then
 fi
 
 if [ -n "$NIX_CC_WRAPPER_START_HOOK" ]; then
-    source "$NIX_CC_WRAPPER_START_HOOK"
+  source "$NIX_CC_WRAPPER_START_HOOK"
 fi
 
 if [ -z "$NIX_CC_WRAPPER_FLAGS_SET" ]; then
-    source @out@/nix-support/add-flags.sh
+  source @out@/nix-support/add-flags.sh
 fi
 
 source @out@/nix-support/utils.sh
 
+# Optionally print debug info.
+if [ -n "$NIX_DEBUG" ]; then
+  echo "original flags to @prog@:" >&2
+  for i in "${params[@]}"; do
+    echo "  $i" >&2
+  done
+fi
 
 # Figure out if linker flags should be passed.  GCC prints annoying
 # warnings when they are not needed.
@@ -194,25 +201,19 @@ if [ "$*" = -v ]; then
     extraBefore=()
 fi
 
+params=("${extraBefore[@]}" "${params[@]}" "${extraAfter[@]}")
+
 # Optionally print debug info.
 if [ -n "$NIX_DEBUG" ]; then
-  echo "original flags to @prog@:" >&2
+  echo "new flags to @prog@:" >&2
   for i in "${params[@]}"; do
-      echo "  $i" >&2
-  done
-  echo "extraBefore flags to @prog@:" >&2
-  for i in ${extraBefore[@]}; do
-      echo "  $i" >&2
-  done
-  echo "extraAfter flags to @prog@:" >&2
-  for i in ${extraAfter[@]}; do
-      echo "  $i" >&2
+    echo "  $i" >&2
   done
 fi
 
 if [ -n "$NIX_CC_WRAPPER_EXEC_HOOK" ]; then
-    source "$NIX_CC_WRAPPER_EXEC_HOOK"
+  source "$NIX_CC_WRAPPER_EXEC_HOOK"
 fi
 
 PATH="$path_backup"
-exec @prog@ ${extraBefore[@]} "${params[@]}" "${extraAfter[@]}"
+exec @prog@ "${params[@]}"
