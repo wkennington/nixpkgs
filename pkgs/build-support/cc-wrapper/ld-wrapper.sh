@@ -117,14 +117,25 @@ if [ "$NIX_DONT_SET_RPATH" != 1 ]; then
     }
 
     addToRPath() {
+        local link
+        if link="$(readlink "$1")"; then
+            if [ "${link:0:1}" = "/" ]; then
+                addToRPath "$link"
+            else
+                addToRPath "$(realpath -sm "$1/../$link")"
+            fi
+        fi
+
         # If the path is not in the store, don't add it to the rpath.
         # This typically happens for libraries in /tmp that are later
         # copied to $out/lib.  If not, we're screwed.
         if [ "${1:0:${#NIX_STORE}}" != "$NIX_STORE" ]; then return 0; fi
-        case $rpath in
-            *\ $1\ *) return 0 ;;
-        esac
-        rpath="$rpath $1 "
+        local libdir="$(dirname "$1")"
+        local rpath
+        for rpath in "${rpaths[@]}"; do
+            [ "$rpath" = "$libdir" ] && return 0
+        done
+        rpaths+=("$libdir")
     }
 
     libs=""
@@ -132,7 +143,7 @@ if [ "$NIX_DONT_SET_RPATH" != 1 ]; then
         libs="$libs $1"
     }
 
-    rpath=""
+    rpaths=()
 
     # First, find all -L... switches.
     allParams=("${params[@]}" ${extra[@]})
@@ -171,10 +182,7 @@ if [ "$NIX_DONT_SET_RPATH" != 1 ]; then
             # by the linker itself
             n=$((n + 1))
         elif [[ "$p" =~ ^[^-].*\.so($|\.) ]]; then
-            # This is a direct reference to a shared library, so add
-            # its directory to the rpath.
-            path="$(dirname "$p")";
-            addToRPath "${path}"
+            addToRPath "$p"
         fi
         n=$((n + 1))
     done
@@ -187,8 +195,9 @@ if [ "$NIX_DONT_SET_RPATH" != 1 ]; then
 
     for i in $libPath; do
         for j in $libs; do
-            if [ -f "$i/lib$j.so" ]; then
-                addToRPath $i
+            file="$i/lib$j.so"
+            if [ -f "$file" ]; then
+                addToRPath "$file"
                 break
             fi
         done
@@ -196,8 +205,8 @@ if [ "$NIX_DONT_SET_RPATH" != 1 ]; then
 
 
     # Finally, add `-rpath' switches.
-    for i in $rpath; do
-        extra=(${extra[@]} -rpath $i)
+    for i in "${rpaths[@]}"; do
+        extraBefore+=(-rpath "$i")
     done
 fi
 
