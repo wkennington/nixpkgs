@@ -6,7 +6,7 @@
 # compiler and the linker just "work".
 
 { name ? "", stdenv, nativeTools, nativeLibc, nativePrefix ? ""
-, cc ? null, libc ? null, linux-headers ? null, libcxx ? null
+, cc ? null, cc-headers ? null, libc ? null, linux-headers ? null, libcxx ? null
 , libgcc ? null, libidn2 ? null, binutils ? null, coreutils ? null
 , shell ? stdenv.shell
 , extraPackages ? [], extraBuildCommands ? ""
@@ -117,7 +117,11 @@ stdenv.mkDerivation {
       # against the crt1.o from our own glibc, rather than the one in
       # /usr/lib.  (This is only an issue when using an `impure'
       # compiler/linker, i.e., one that searches /usr/lib and so on.)
-      echo -n "-B$libc/lib/ -idirafter $libc/include" >"$out"/nix-support/libc-cflags
+      echo -n "-B$libc/lib/" >"$out"/nix-support/libc-cflags
+      ${optionalString (cc-headers != null) ''
+        echo -n " -idirafter ${cc-headers}/include" >>"$out"/nix-support/libc-cflags
+      ''}
+      echo -n " -idirafter $libc/include" >>"$out"/nix-support/libc-cflags
       ${optionalString (linux-headers != null) ''
         echo -n " -idirafter ${linux-headers}/include" >>"$out"/nix-support/libc-cflags
       ''}
