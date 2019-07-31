@@ -151,15 +151,6 @@ if [ "$NIX_ENFORCE_PURITY" = 1 -a -n "$NIX_STORE" ]; then
     params=("${rest[@]}")
 fi
 
-# Filter out any debug information referring to the NIX_BUILD_TOP
-if [ "$NIX_ENFORCE_PURITY" = 1 ]; then
-  if [ -z "$NIX_BUILD_TOP" ]; then
-    echo "Missing NIX_BUILD_TOP" >&2
-    exit 1
-  fi
-  params+=("@prefixMapFlag@=$NIX_BUILD_TOP=/no-such-path")
-fi
-
 if [[ "@prog@" = *++ ]]; then
   nostdlib=0
   for arg in "$@"; do
@@ -208,6 +199,44 @@ if [ "$*" = -v ]; then
 fi
 
 params=("${extraBefore[@]}" "${params[@]}" "${extraAfter[@]}")
+
+add_filter_path() {
+  if [ "${1:0:${#NIX_STORE}}" != "$NIX_STORE" ]; then
+    return 0
+  fi
+  drv="${1:${#NIX_STORE}+1}"
+  drv="${drv%%/*}"
+  filter_paths["$NIX_STORE/$drv"]=1
+}
+
+# Filter out any debug information referring to the NIX_BUILD_TOP
+if [ "$NIX_ENFORCE_PURITY" = 1 ]; then
+  if [ -z "$NIX_BUILD_TOP" ]; then
+    echo "Missing NIX_BUILD_TOP" >&2
+    exit 1
+  fi
+
+  declare -A filter_paths
+  while [ $n -lt ${#params[*]} ]; do
+    p=${params[n]}
+    p2=${params[$((n+1))]}
+    if [ "${p:0:3}" = -I/ ]; then
+      add_filter_path "${p:2}"
+    elif [ "$p" = -I ]; then
+      n=$((n + 1)); add_filter_path "$p2"
+    elif [ "$p" = -isystem ]; then
+      n=$((n + 1)); add_filter_path "$p2"
+    fi
+    n=$((n + 1))
+  done
+
+  params+=("@prefixMapFlag@=$NIX_BUILD_TOP=/no-such-path/build")
+  for n in "${!filter_paths[@]}"; do
+    name="${n:${#NIX_STORE}}"
+    name="${name#*-}"
+    params+=("@prefixMapFlag@=$n=/no-such-path/$name")
+  done
+fi
 
 # Optionally print debug info.
 if [ -n "$NIX_DEBUG" ]; then
