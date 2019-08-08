@@ -29,6 +29,9 @@ in
     llvm
   ];
 
+  NIX_DEBUG = true;
+  NIX_CFLAGS_COMPILE = " -v";
+
   postPatch = ''
     sed -i 's,^\(llvm_clang =\).*,\1 "${cc_clang}/bin/clang",g' configure.py
     patchShebangs .

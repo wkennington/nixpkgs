@@ -552,6 +552,10 @@ wrapCCWith = ccWrapper: libc: extraBuildCommands: baseCC: ccHeaders: ccWrapper {
 wrapCC =
   wrapCCWith (callPackage ../build-support/cc-wrapper) pkgs.stdenv.cc.libc "";
 
+wrapCCNew = callPackage ../build-support/cc-wrapper-new {
+  coreutils = pkgs.coreutils_small;
+};
+
 ################################################################################
 ################################################################################
 ################################################################################
@@ -840,7 +844,100 @@ caribou = callPackage ../all-pkgs/c/caribou { };
 
 cc = pkgs.cc_gcc;
 cc_gcc = pkgs.wrapCC pkgs.gcc null;
-cc_clang = pkgs.wrapCC pkgs.clang.bin pkgs.clang.cc_headers;
+cc_gcc_new = pkgs.wrapCCNew {
+  compiler = pkgs.gcc;
+  tools = [ pkgs.binutils ];
+  inputs = [
+    (pkgs.stdenv.mkDerivation {
+      name = "libstdcxx";
+      buildCommand = ''
+        mkdir -p "$out"/nix-support
+        exec 3>"$out"/nix-support/cxxflags-compile
+        echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*)" >&3
+        echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/*-linux-*)" >&3
+        echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/backward)" >&3
+      '';
+    })
+    (pkgs.stdenv.mkDerivation {
+      name = "gcc-headers";
+      buildCommand = ''
+        mkdir -p "$out"/nix-support
+        exec 3>"$out"/nix-support/cflags-compile
+        echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include)" >&3
+        echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include-fixed)" >&3
+      '';
+    })
+    (pkgs.stdenv.mkDerivation {
+      name = "gcclib";
+      buildCommand = ''
+        mkdir -p "$out"/nix-support
+        libs="$(echo '${pkgs.gcc}'/lib/gcc/*/*)"
+        echo "-B$libs" >"$out"/nix-support/cflags-compile
+        echo "-L$libs -L${pkgs.gcc}/lib" >"$out"/nix-support/ldflags
+      '';
+    })
+    pkgs.musl
+    (pkgs.stdenv.mkDerivation {
+      name = "linux-headers";
+      buildCommand = ''
+        mkdir -p "$out"/nix-support
+        echo "-idirafter ${pkgs.linux-headers}/include" >"$out"/nix-support/cflags-compile
+      '';
+    })
+  ];
+};
+cc_clang = pkgs.wrapCCNew {
+  compiler = pkgs.clang.bin;
+  tools = [
+    pkgs.binutils
+  ];
+  inputs = [
+    (pkgs.stdenv.mkDerivation {
+      name = "libstdcxx";
+      buildCommand = ''
+        mkdir -p "$out"/nix-support
+        exec 3>"$out"/nix-support/cxxflags-compile
+        echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*)" >&3
+        echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/*-linux-*)" >&3
+        echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/backward)" >&3
+      '';
+    })
+    (pkgs.stdenv.mkDerivation {
+      name = "clang-headers";
+      buildCommand = ''
+        mkdir -p "$out"/nix-support
+        echo "-idirafter ${pkgs.clang.cc_headers}/include" >"$out"/nix-support/cflags-compile
+      '';
+    })
+    (pkgs.stdenv.mkDerivation {
+      name = "gcclib";
+      buildCommand = ''
+        mkdir -p "$out"/nix-support
+        libs="$(echo '${pkgs.gcc}'/lib/gcc/*/*)"
+        echo "-B$libs" >"$out"/nix-support/cflags-compile
+        echo "-L$libs -L${pkgs.gcc}/lib" >"$out"/nix-support/ldflags
+      '';
+    })
+    (pkgs.stdenv.mkDerivation {
+      name = "glibc";
+      buildCommand = ''
+        mkdir -p "$out"/nix-support
+        echo "-idirafter ${pkgs.glibc}/include" >"$out"/nix-support/cflags-compile
+        echo "-B${pkgs.glibc}/lib" >"$out"/nix-support/cflags-link
+        dyld="$(echo '${pkgs.glibc}'/lib/ld-*.so)"
+        echo "-dynamic-linker $dyld" >"$out"/nix-support/ldflags-before
+        echo "-L${pkgs.glibc}/lib -L${pkgs.libidn2}/lib --push-state --no-as-needed -lidn2 -lgcc_s --pop-state" >"$out"/nix-support/ldflags
+      '';
+    })
+    (pkgs.stdenv.mkDerivation {
+      name = "linux-headers";
+      buildCommand = ''
+        mkdir -p "$out"/nix-support
+        echo "-idirafter ${pkgs.linux-headers}/include" >"$out"/nix-support/cflags-compile
+      '';
+    })
+  ];
+};
 
 cc-regression = callPackage ../all-pkgs/c/cc-regression { };
 
@@ -945,6 +1042,30 @@ collectd = callPackage ../all-pkgs/c/collectd {
 collectd_plugins = callPackage ../all-pkgs/c/collectd {
   type = "plugins";
 };
+
+compiler-rt_8 = callPackage ../all-pkgs/c/compiler-rt {
+  llvm = pkgs.llvm_8;
+  target_cc = pkgs.wrapCCNew {
+    compiler = pkgs.clang_8.bin;
+    inputs = [
+      (pkgs.stdenv.mkDerivation {
+        name = "clang-headers";
+        buildCommand = ''
+          mkdir -p "$out"/nix-support
+          echo "-idirafter ${pkgs.clang.cc_headers}/include" >"$out"/nix-support/cflags-compile
+        '';
+      })
+      (pkgs.stdenv.mkDerivation {
+        name = "libc-headers";
+        buildCommand = ''
+          mkdir -p "$out"/nix-support
+          echo "-idirafter ${pkgs.glibc}/include" >"$out"/nix-support/cflags-compile
+        '';
+      })
+    ];
+  };
+};
+compiler-rt = callPackageAlias "compiler-rt_8" { };
 
 colord = callPackage ../all-pkgs/c/colord { };
 
@@ -2296,6 +2417,54 @@ libfpx = callPackage ../all-pkgs/l/libfpx { };
 
 libftdi = callPackage ../all-pkgs/l/libftdi { };
 
+libgcc_bootstrap = callPackage ../all-pkgs/l/libgcc {
+  stdenv = pkgs.stdenv.override {
+    cc = pkgs.wrapCCNew {
+      compiler = pkgs.gcc;
+      tools = [ pkgs.binutils ];
+      inputs = [
+        (pkgs.stdenv.mkDerivation {
+          name = "libstdcxx";
+          buildCommand = ''
+            mkdir -p "$out"/nix-support
+            exec 3>"$out"/nix-support/cxxflags-compile
+            echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*)" >&3
+            echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/*-linux-*)" >&3
+            echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/backward)" >&3
+          '';
+        })
+        (pkgs.stdenv.mkDerivation {
+          name = "gcc-headers";
+          buildCommand = ''
+            mkdir -p "$out"/nix-support
+            exec 3>"$out"/nix-support/cflags-compile
+            echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include)" >&3
+            echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include-fixed)" >&3
+          '';
+        })
+        (pkgs.stdenv.mkDerivation {
+          name = "gcclib";
+          buildCommand = ''
+            mkdir -p "$out"/nix-support
+            libs="$(echo '${pkgs.gcc}'/lib/gcc/*/*)"
+            echo "-B$libs" >"$out"/nix-support/cflags-compile
+            echo "-L$libs -L${pkgs.gcc}/lib" >"$out"/nix-support/ldflags
+          '';
+        })
+        pkgs.musl
+        (pkgs.stdenv.mkDerivation {
+          name = "linux-headers";
+          buildCommand = ''
+            mkdir -p "$out"/nix-support
+            echo "-idirafter ${pkgs.linux-headers}/include" >"$out"/nix-support/cflags-compile
+          '';
+        })
+      ];
+    };
+  };
+  type = "bootstrap";
+};
+
 libgcrypt = callPackage ../all-pkgs/l/libgcrypt { };
 
 libgd = callPackage ../all-pkgs/l/libgd { };
@@ -2781,6 +2950,11 @@ lirc = callPackage ../all-pkgs/l/lirc { };
 
 live555 = callPackage ../all-pkgs/l/live555 { };
 
+lld_8 = callPackage ../all-pkgs/l/lld {
+  llvm = pkgs.llvm_8;
+};
+lld = callPackageAlias "lld_8" { };
+
 llvm_8 = callPackage ../all-pkgs/l/llvm {
   channel = "8";
 };
@@ -2992,7 +3166,43 @@ murmur = callPackageAlias "murmur_git" { };
 
 musepack = callPackage ../all-pkgs/m/musepack { };
 
-musl = callPackage ../all-pkgs/m/musl { };
+musl = callPackage ../all-pkgs/m/musl {
+  stdenv = pkgs.stdenv.override {
+    cc = pkgs.wrapCCNew {
+      compiler = pkgs.gcc;
+      tools = [
+        pkgs.binutils
+      ];
+      inputs = [
+        (pkgs.stdenv.mkDerivation {
+          name = "gcc-headers";
+          buildCommand = ''
+            mkdir -p "$out"/nix-support
+            exec 3>"$out"/nix-support/cflags-compile
+            echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include)" >&3
+            echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include-fixed)" >&3
+          '';
+        })
+        (pkgs.stdenv.mkDerivation {
+          name = "gcclib";
+          buildCommand = ''
+            mkdir -p "$out"/nix-support
+            libs="$(echo '${pkgs.gcc}'/lib/gcc/*/*)"
+            echo "-B$libs" >"$out"/nix-support/cflags-compile
+            echo "-L$libs -L${pkgs.gcc}/lib" >"$out"/nix-support/ldflags
+          '';
+        })
+        (pkgs.stdenv.mkDerivation {
+          name = "linux-headers";
+          buildCommand = ''
+            mkdir -p "$out"/nix-support
+            echo "-idirafter ${pkgs.linux-headers}/include" >"$out"/nix-support/cflags-compile
+          '';
+        })
+      ];
+    };
+  };
+};
 
 mutter_3-26 = callPackage ../all-pkgs/m/mutter {
   channel = "3.26";

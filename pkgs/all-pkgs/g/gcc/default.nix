@@ -226,6 +226,13 @@ stdenv.mkDerivation (rec {
   passthru = {
     inherit version;
     impl = "gcc";
+
+    cc = "gcc";
+    cpp = "cpp";
+    cxx = "g++";
+    optFlags = [ ];
+    prefixMapFlag = "-ffile-prefix-map";
+    canStackClashProtect = true;
   };
 
   meta = with stdenv.lib; {

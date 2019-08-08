@@ -54,7 +54,13 @@ stdenv.mkDerivation {
     zlib
   ];
 
-  patches = map (d: fetchTritonPatch d) patches;
+  patches = [
+    (fetchTritonPatch {
+      rev = "b178552fe5e7431bfa98025cb8e4fe2e4927bd69";
+      file = "l/llvm/fix-llvm-config.patch";
+      sha256 = "7cbe2b2d1127c0995cb1af5d7d758e1a9a600ee17045f3a3341a68726ba8f0e8";
+    })
+  ];
 
   postPatch = ''
     # Remove impurities from llvm-config
@@ -65,10 +71,6 @@ stdenv.mkDerivation {
       -e "s,ActiveBinDir =.*;,ActiveBinDir = \"$bin/bin\";," \
       -e "/SharedDir =/aSharedDir = \"$lib/lib\";" \
       -i tools/llvm-config/llvm-config.cpp
-  '';
-
-  preConfigure = ''
-    prefix="$dev"
   '';
 
   cmakeFlags = [
@@ -96,22 +98,25 @@ stdenv.mkDerivation {
   postInstall = ''
     mkdir -p "$lib"/lib
     mv -v "$dev"/lib/*.so* "$lib"/lib
-
-    # The cmake files require that we symlink to the real libraries
-    for f in "$lib"/lib/*; do
-      ln -sv "$f" "$dev"/lib
-    done
+    ln -sv "$lib"/lib/* "$dev"/lib
 
     mkdir -p "$bin"/bin
     mv -v "$dev"/bin/* "$bin"/bin
     mv -v "$bin"/bin/llvm-config "$dev"/bin
-
-    # The cmake files require that we symlink to the real utilties
-    export PATH="$PATH:$bin/bin"
-    for f in "$(dirname "$(type -tP llvm-tblgen)")"/*; do
-      ln -sv "$f" "$dev"/bin
-    done
+    ln -sv "$bin"/bin/* "$dev"/bin
   '';
+
+  preFixup = ''
+    replace_lib() {
+      sed -i "s,\\([\";]\\)$1\\([\";]\\),\1$(readlink -f "$2")\2,g" "$dev"/lib/cmake/llvm/LLVMExports.cmake
+    }
+
+    replace_lib xml2 '${libxml2}/lib/libxml2.so'
+    replace_lib ncurses '${ncurses}/lib/libncurses.so'
+    replace_lib z '${zlib}/lib/libz.so'
+  '';
+
+  prefix = placeholder "dev";
 
   outputs = [
     "dev"

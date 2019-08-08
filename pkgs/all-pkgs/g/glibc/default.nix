@@ -27,7 +27,7 @@ let
 
   version = "2.29";
 in
-stdenv.mkDerivation (rec {
+(stdenv.override { cc = null; }).mkDerivation (rec {
   name = "glibc-${version}";
 
   src = fetchurl {

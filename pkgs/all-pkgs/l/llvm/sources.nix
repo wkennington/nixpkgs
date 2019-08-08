@@ -36,12 +36,5 @@
         sha256 = "e8a1f7e8af238b32ce39ab5de1f3317a2e3f7d71a8b1b8bbacbd481ac76fd2d1";
       };
     };
-    patches = [
-      {
-        rev = "b178552fe5e7431bfa98025cb8e4fe2e4927bd69";
-        file = "l/llvm/fix-llvm-config.patch";
-        sha256 = "7cbe2b2d1127c0995cb1af5d7d758e1a9a600ee17045f3a3341a68726ba8f0e8";
-      }
-    ];
   };
 }

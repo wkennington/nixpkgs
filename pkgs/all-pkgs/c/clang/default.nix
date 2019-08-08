@@ -2,15 +2,12 @@
 , cmake
 , fetchTritonPatch
 , fetchurl
-, gcc
 , ninja
 , python3
 
 , llvm
-, ncurses
 , perl
 , z3
-, zlib
 }:
 
 let
@@ -36,18 +33,19 @@ stdenv.mkDerivation {
 
   buildInputs = [
     llvm
-    ncurses
     perl
     z3
-    zlib
   ];
 
-  preConfigure = ''
-    prefix="$dev"
-  '';
+  patches = [
+    (fetchTritonPatch {
+      rev = "ddebe9803d7749e08b04ef98c9d6514d520df1ee";
+      file = "c/clang/0001-Remove-hard-coded-search-paths.patch";
+      sha256 = "61ab7ac43b9487b068c6c538437d1a0e368057f1b56d2ecbae79764d6ae50d41";
+    })
+  ];
 
   cmakeFlags = [
-    "-DGCC_INSTALL_PREFIX=${gcc}"
     "-DCLANG_ANALYZER_Z3_INSTALL_DIR=${z3}"
   ];
 
@@ -58,13 +56,13 @@ stdenv.mkDerivation {
   postInstall = ''
     mkdir -p "$lib"/lib
     mv "$dev"/lib/*.so* "$lib"/lib
-    mv "$dev"/libexec "$lib"
+    ln -sv "$lib"/lib/* "$dev"/lib
 
     mkdir -p "$bin"
     mv -v "$dev"/bin "$bin"
     ln -sv clang++ "$bin"/bin/c++
     ln -sv clang "$bin"/bin/cc
-    ln -sv "$lib"/libexec "$bin"
+    mv "$dev"/libexec "$bin"
 
     mkdir -p "$man"/share
     mv -v "$dev"/share/man "$man"/share
@@ -75,6 +73,8 @@ stdenv.mkDerivation {
     rmdir "$dev"/lib/clang
   '';
 
+  prefix = placeholder "dev";
+
   outputs = [
     "dev"
     "bin"
@@ -82,6 +82,15 @@ stdenv.mkDerivation {
     "lib"
     "cc_headers"
   ];
+
+  passthru = {
+    cc = "clang";
+    cxx = "clang++";
+    cpp = "clang -E";
+    optFlags = [ ];
+    prefixMapFlag = "-fdebug-prefix-map";
+    canStackClashProtect = false;
+  };
 
   meta = with stdenv.lib; {
     maintainers = with maintainers; [

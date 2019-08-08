@@ -3,18 +3,16 @@
 }:
 
 stdenv.mkDerivation rec {
-  name = "musl-1.1.22";
+  name = "musl-1.1.23";
 
   src = fetchurl {
     url = "https://www.musl-libc.org/releases/${name}.tar.gz";
-    multihash = "QmeCwx4n3waAyk6cEcg8g67zQm1nDyRwQW9dt24qToTxRR";
+    multihash = "QmdJfuZf7VdcfVW6vixRgCvWKAGedbxoTnwi2qm2cKQfBs";
     hashOutput = false;
-    sha256 = "8b0941a48d2f980fd7036cfbd24aa1d414f03d9a0652ecbd5ec5c7ff1bee29e3";
+    sha256 = "8a0feb41cef26c97dde382c014e68b9bb335c094bbc1356f6edaaf6b79bd14aa";
   };
 
-  preConfigure = ''
-    configureFlagsArray+=("--syslibdir=$out/lib")
-  '';
+  prefix = placeholder "dev";
 
   configureFlags = [
     "--enable-shared"
@@ -22,14 +20,36 @@ stdenv.mkDerivation rec {
   ];
 
   postInstall = ''
-   ln -rsv "$out"/lib/ld*.so* "$out"/bin/ldd
+    mkdir -p "$lib"/lib
+    mv "$dev"/lib/*.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib
+
+    mkdir -p "$bin"/bin
+    ln -sv "$lib"/lib/libc.so "$bin"/bin/ldd
+
+    mkdir -p "$dev"/nix-support
+    echo "-idirafter $dev/include" >"$dev"/nix-support/cflags-compile
+    echo "-B$dev/lib" >"$dev"/nix-support/cflags-link
+    echo "-dynamic-linker $lib/lib/libc.so" >"$dev"/nix-support/ldflags-before
+    echo "-L$dev/lib" >"$dev"/nix-support/ldflags
   '';
+
+  # Can't force the libc to use this
+  stackProtector = false;
 
   # We need this for embedded things like busybox
   disableStatic = false;
 
   # Dont depend on a shell potentially from the bootstrap
   dontPatchShebangs = true;
+
+  outputs = [
+    "dev"
+    "bin"
+    "lib"
+  ];
+
+  allowedReferences = outputs;
 
   passthru = {
     srcVerification = fetchurl {

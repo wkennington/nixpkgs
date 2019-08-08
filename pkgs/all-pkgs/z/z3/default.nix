@@ -29,7 +29,6 @@ stdenv.mkDerivation rec {
   ];
 
   configurePhase = ''
-    prefix="$dev"
     python3 scripts/mk_make.py --prefix="$prefix" --gmp
   '';
 
@@ -46,6 +45,8 @@ stdenv.mkDerivation rec {
     mkdir -p "$bin"
     mv "$dev"/bin "$bin"
   '';
+
+  prefix = placeholder "dev";
 
   outputs = [
     "dev"
