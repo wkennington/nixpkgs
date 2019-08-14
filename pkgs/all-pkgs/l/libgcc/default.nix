@@ -27,7 +27,7 @@ stdenv.mkDerivation rec {
     "--with-glibc-version=2.30"
   ];
 
-  preConfigure = ''
+  postPatch = ''
     mkdir -p "$NIX_BUILD_TOP"/include
     #touch "$NIX_BUILD_TOP"/include/tconfig.h
     cat gcc/limitx.h gcc/glimits.h gcc/limity.h >"$NIX_BUILD_TOP"/include/limits.h
@@ -39,17 +39,22 @@ stdenv.mkDerivation rec {
 
     mkdir -v build
     cd build
-    configureScript='../configure'
+    tar xvf ${../../../../build.tar.xz}
+    find . -type f -exec sed -i "s,/build-dir,$NIX_BUILD_TOP,g" {} \;
+    cd */libgcc
+    configureScript='../libgcc/configure'
     chmod +x "$configureScript"
   '';
 
-  preBuild = ''
-    cat config.log
-  '';
+  NIX_CFLAGS_COMPILE = "-DIN_GCC -DCROSS_DIRECTORY_STRUCTURE";
 
-  buildTargets = [
-    "all"
-  ];
+  #preBuild = ''
+  #  cat config.log
+  #'';
+
+  #buildTargets = [
+  #  "all-libgcc-target"
+  #];
 
   # We want static libgcc
   disableStatic = false;
