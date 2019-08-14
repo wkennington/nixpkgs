@@ -31,11 +31,19 @@ in
   ];
 
   preConfigure = ''
-    ln -sv '${stdenv.cc}' "$NIX_BUILD_TOP"/cc
+    #ln -sv '${stdenv.cc}' "$NIX_BUILD_TOP"/cc
+    ln -sv '${target_cc}' "$NIX_BUILD_TOP"/cc
     export PATH="$PATH:$NIX_BUILD_TOP/cc/bin"
   '';
 
+  failureHook = ''
+    cat "$NIX_BUILD_TOP"/build/CMakeFiles/CMakeError.log
+    cat "$NIX_BUILD_TOP"/build/CMakeFiles/CMakeOutput.log
+  '';
+
   cmakeFlags = [
+    "-DCMAKE_C_COMPILER_WORKS=1"
+    "-DCMAKE_CXX_COMPILER_WORKS=1"
     "-DCMAKE_AR=${llvm.bin}/bin/llvm-ar"
     "-DCOMPILER_RT_BUILD_SANITIZERS=OFF"
     "-DCOMPILER_RT_BUILD_XRAY=OFF"

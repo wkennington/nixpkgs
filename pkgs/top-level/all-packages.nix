@@ -1047,6 +1047,7 @@ compiler-rt_8 = callPackage ../all-pkgs/c/compiler-rt {
   llvm = pkgs.llvm_8;
   target_cc = pkgs.wrapCCNew {
     compiler = pkgs.clang_8.bin;
+    tools = [ pkgs.lld_8.bin ];
     inputs = [
       (pkgs.stdenv.mkDerivation {
         name = "clang-headers";
@@ -1654,6 +1655,24 @@ glfw = callPackage ../all-pkgs/g/glfw { };
 glib = callPackage ../all-pkgs/g/glib { };
 
 glibc = callPackage ../all-pkgs/g/glibc { };
+
+glibc_headers = callPackage ../all-pkgs/g/glibc/headers.nix {
+  stdenv = pkgs.stdenv.override {
+    cc = pkgs.wrapCCNew {
+      compiler = pkgs.gcc;
+      tools = [ pkgs.binutils ];
+      inputs = [
+        (pkgs.stdenv.mkDerivation {
+          name = "linux-headers";
+          buildCommand = ''
+            mkdir -p "$out"/nix-support
+            echo "-idirafter ${pkgs.linux-headers}/include" >"$out"/nix-support/cflags-compile
+          '';
+        })
+      ];
+    };
+  };
+};
 
 glibc_locales = callPackage ../all-pkgs/g/glibc/locales.nix { };
 
@@ -2423,35 +2442,35 @@ libgcc_bootstrap = callPackage ../all-pkgs/l/libgcc {
       compiler = pkgs.gcc;
       tools = [ pkgs.binutils ];
       inputs = [
-        (pkgs.stdenv.mkDerivation {
-          name = "libstdcxx";
-          buildCommand = ''
-            mkdir -p "$out"/nix-support
-            exec 3>"$out"/nix-support/cxxflags-compile
-            echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*)" >&3
-            echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/*-linux-*)" >&3
-            echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/backward)" >&3
-          '';
-        })
-        (pkgs.stdenv.mkDerivation {
-          name = "gcc-headers";
-          buildCommand = ''
-            mkdir -p "$out"/nix-support
-            exec 3>"$out"/nix-support/cflags-compile
-            echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include)" >&3
-            echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include-fixed)" >&3
-          '';
-        })
-        (pkgs.stdenv.mkDerivation {
-          name = "gcclib";
-          buildCommand = ''
-            mkdir -p "$out"/nix-support
-            libs="$(echo '${pkgs.gcc}'/lib/gcc/*/*)"
-            echo "-B$libs" >"$out"/nix-support/cflags-compile
-            echo "-L$libs -L${pkgs.gcc}/lib" >"$out"/nix-support/ldflags
-          '';
-        })
-        pkgs.musl
+        #(pkgs.stdenv.mkDerivation {
+        #  name = "libstdcxx";
+        #  buildCommand = ''
+        #    mkdir -p "$out"/nix-support
+        #    exec 3>"$out"/nix-support/cxxflags-compile
+        #    echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*)" >&3
+        #    echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/*-linux-*)" >&3
+        #    echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/backward)" >&3
+        #  '';
+        #})
+        #(pkgs.stdenv.mkDerivation {
+        #  name = "gcc-headers";
+        #  buildCommand = ''
+        #    mkdir -p "$out"/nix-support
+        #    exec 3>"$out"/nix-support/cflags-compile
+        #    echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include)" >&3
+        #    echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include-fixed)" >&3
+        #  '';
+        #})
+        #(pkgs.stdenv.mkDerivation {
+        #  name = "gcclib";
+        #  buildCommand = ''
+        #    mkdir -p "$out"/nix-support
+        #    libs="$(echo '${pkgs.gcc}'/lib/gcc/*/*)"
+        #    echo "-B$libs" >"$out"/nix-support/cflags-compile
+        #    echo "-L$libs -L${pkgs.gcc}/lib" >"$out"/nix-support/ldflags
+        #  '';
+        #})
+        pkgs.glibc_headers
         (pkgs.stdenv.mkDerivation {
           name = "linux-headers";
           buildCommand = ''
@@ -3192,6 +3211,24 @@ musl = callPackage ../all-pkgs/m/musl {
             echo "-L$libs -L${pkgs.gcc}/lib" >"$out"/nix-support/ldflags
           '';
         })
+        (pkgs.stdenv.mkDerivation {
+          name = "linux-headers";
+          buildCommand = ''
+            mkdir -p "$out"/nix-support
+            echo "-idirafter ${pkgs.linux-headers}/include" >"$out"/nix-support/cflags-compile
+          '';
+        })
+      ];
+    };
+  };
+};
+
+musl_headers = callPackage ../all-pkgs/m/musl/headers.nix {
+  stdenv = pkgs.stdenv.override {
+    cc = pkgs.wrapCCNew {
+      compiler = pkgs.gcc;
+      tools = [ pkgs.binutils ];
+      inputs = [
         (pkgs.stdenv.mkDerivation {
           name = "linux-headers";
           buildCommand = ''

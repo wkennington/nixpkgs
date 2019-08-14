@@ -141,7 +141,7 @@ in
 
   passthru = {
     impl = "glibc";
-    inherit version;
+    inherit host version;
   };
 
   meta = with stdenv.lib; {

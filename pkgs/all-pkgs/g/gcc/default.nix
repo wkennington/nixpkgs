@@ -229,7 +229,7 @@ stdenv.mkDerivation (rec {
   disableStatic = false;
 
   passthru = {
-    inherit version;
+    inherit target version;
     impl = "gcc";
 
     cc = "gcc";

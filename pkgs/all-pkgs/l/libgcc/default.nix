@@ -15,22 +15,23 @@ stdenv.mkDerivation rec {
 
   inherit (gcc.override { inherit type; })
     src
-    patches
-    configureFlags;
+    patches;
 
   prefix = placeholder "dev";
 
-  /*configureFlags = optionals (type == "bootstrap") [
+  configureFlags = optionals (type == "bootstrap") [
+    "--host=${gcc.target}"
     "--disable-shared"
     "--disable-gcov"
     "--disable-maintainer-mode"
-    "--disable-decimal-float"
-    "--with-glibc-version=2.28"
+    "--with-glibc-version=2.30"
   ];
 
   preConfigure = ''
     mkdir -p "$NIX_BUILD_TOP"/include
-    touch "$NIX_BUILD_TOP"/include/limits.h
+    #touch "$NIX_BUILD_TOP"/include/tconfig.h
+    cat gcc/limitx.h gcc/glimits.h gcc/limity.h >"$NIX_BUILD_TOP"/include/limits.h
+    cp gcc/gsyslimits.h "$NIX_BUILD_TOP"/include/syslimits.h
     export NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE -isystem $NIX_BUILD_TOP/include"
 
     mkdir -p ../gcc
@@ -38,12 +39,16 @@ stdenv.mkDerivation rec {
 
     mkdir -v build
     cd build
-    configureScript='../libgcc/configure'
+    configureScript='../configure'
     chmod +x "$configureScript"
-  '';*/
+  '';
 
-  buildFlags = [
-    "all-target-libgcc"
+  preBuild = ''
+    cat config.log
+  '';
+
+  buildTargets = [
+    "all"
   ];
 
   # We want static libgcc
