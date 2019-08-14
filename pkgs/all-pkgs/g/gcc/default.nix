@@ -182,6 +182,11 @@ stdenv.mkDerivation (rec {
       rm -fv "$tool"
       ln -srv "$bin" "$tool"
     done
+
+    find . -not -type d -and -not -name '*'.mvars -and -not -name Makefile -and -not -name '*'.h -delete
+    find . -type f -exec sed -i "s,$NIX_BUILD_TOP,/build-dir,g" {} \;
+    mkdir -p "$out"
+    tar Jvcf "$out"/build.tar.xz .
   '' + optionalString (type != "bootstrap") ''
     # CC does not get installed for some reason
     ln -srv "$out"/bin/gcc "$out"/bin/cc
