@@ -2436,52 +2436,8 @@ libfpx = callPackage ../all-pkgs/l/libfpx { };
 
 libftdi = callPackage ../all-pkgs/l/libftdi { };
 
-libgcc_bootstrap = callPackage ../all-pkgs/l/libgcc {
-  stdenv = pkgs.stdenv.override {
-    cc = pkgs.wrapCCNew {
-      compiler = pkgs.gcc;
-      tools = [ pkgs.binutils ];
-      inputs = [
-        #(pkgs.stdenv.mkDerivation {
-        #  name = "libstdcxx";
-        #  buildCommand = ''
-        #    mkdir -p "$out"/nix-support
-        #    exec 3>"$out"/nix-support/cxxflags-compile
-        #    echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*)" >&3
-        #    echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/*-linux-*)" >&3
-        #    echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/backward)" >&3
-        #  '';
-        #})
-        #(pkgs.stdenv.mkDerivation {
-        #  name = "gcc-headers";
-        #  buildCommand = ''
-        #    mkdir -p "$out"/nix-support
-        #    exec 3>"$out"/nix-support/cflags-compile
-        #    echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include)" >&3
-        #    echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include-fixed)" >&3
-        #  '';
-        #})
-        #(pkgs.stdenv.mkDerivation {
-        #  name = "gcclib";
-        #  buildCommand = ''
-        #    mkdir -p "$out"/nix-support
-        #    libs="$(echo '${pkgs.gcc}'/lib/gcc/*/*)"
-        #    echo "-B$libs" >"$out"/nix-support/cflags-compile
-        #    echo "-L$libs -L${pkgs.gcc}/lib" >"$out"/nix-support/ldflags
-        #  '';
-        #})
-        pkgs.glibc_headers
-        (pkgs.stdenv.mkDerivation {
-          name = "linux-headers";
-          buildCommand = ''
-            mkdir -p "$out"/nix-support
-            echo "-idirafter ${pkgs.linux-headers}/include" >"$out"/nix-support/cflags-compile
-          '';
-        })
-      ];
-    };
-  };
-  type = "bootstrap";
+libgcc_nolibc = callPackage ../all-pkgs/l/libgcc {
+  type = "nolibc";
 };
 
 libgcrypt = callPackage ../all-pkgs/l/libgcrypt { };

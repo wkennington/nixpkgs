@@ -1,5 +1,6 @@
 { stdenv
 , fetchurl
+, fetchTritonPatch
 , lib
 
 , zlib
@@ -36,6 +37,14 @@ stdenv.mkDerivation (rec {
     zlib
   ];
 
+  patches = [
+    (fetchTritonPatch {
+      rev = "9f59f6dd9aa320bc642aaa2a679823f7f08b2190";
+      file = "b/binutils/0001-bfd-No-bundled-bfd-plugin-support.patch";
+      sha256 = "da0b9a2d537929db24a4bf4cbf4e5b588f64fac47d1534b72aaf37291ee55edb";
+    })
+  ];
+
   postPatch = ''
     # Don't rebuild the docs for bfd
     sed -i '/SUBDIRS/s, doc,,' bfd/Makefile.in
@@ -51,69 +60,84 @@ stdenv.mkDerivation (rec {
     echo 'NATIVE_LIB_DIRS=' >> ld/configure.tgt
   '';
 
+  prefix = placeholder "dev";
+
+  NIX_LDFLAGS = "-rpath ${placeholder "lib"}/lib";
+
   configureFlags = [
+    "--exec-prefix=${placeholder "bin"}"
     "--target=${target}"
     "--enable-shared"
-    # Autodetection is not working for binutils because of how the nested
-    # configure system works
-    "--disable-static"
+    "--enable-static"
     "--${boolEn (type != "bootstrap")}-nls"
     "--disable-werror"
     "--enable-deterministic-archives"
     "--${boolEn (type != "bootstrap")}-gold"
     "--${boolWt (type != "bootstrap")}-system-zlib"
+    "--with-separate-debug-dir=/no-such-path/debug"
   ];
 
-  preBuild = ''
-    # Needed otherwise it defaults to $prefix/$archtriple
-    makeFlagsArray+=("tooldir=$out")
-  '';
-
   postInstall = ''
-    # Ensure we have all of the non-prefixed tools
-    for bin in "$out"/bin/${target}-*; do
-      base="$(basename "$bin")"
-      tool="$out/bin/''${base:${toString (stringLength (target + "-"))}}"
-      rm -fv "$tool"
-      ln -srv "$bin" "$tool"
-    done
-
     # Invert ld links so that ld.bfd / ld.gold are the proper tools
-    ld="$out"/bin/${target}-ld
-    if [ ! -e "$ld" ]; then
-      ld="$out"/bin/ld
-    fi
-    for bin in "$ld".*; do
-      if [ -L "$bin" ]; then
-        if [ "$(readlink -f "$bin")" = "$ld" ]; then
-          rm -v "$bin"
-          mv -v "$ld" "$bin"
-          ln -srv "$bin" "$ld"
+    ld="$bin"/${target}/bin/ld
+    for prog in "$ld".*; do
+      if [ -L "$prog" ]; then
+        if [ "$(readlink -f "$prog")" = "$ld" ]; then
+          rm -v "$prog"
+          mv -v "$ld" "$prog"
+          ln -srv "$prog" "$ld"
         fi
       else
-        if cmp "$bin" "$ld"; then
+        if cmp "$prog" "$ld"; then
           rm -v "$ld"
-          ln -srv "$bin" "$ld"
+          ln -srv "$prog" "$ld"
         fi
       fi
     done
+
+    # Make all duplicate binaries symlinks
+    declare -A progMap
+    for prog in "$bin"/${target}/bin/* "$bin"/bin/*; do
+      if [ -L "$prog" ]; then
+        continue
+      fi
+      checksum="$(cksum "$prog" | cut -d ' ' -f1)"
+      oProg="''${progMap["$checksum"]}"
+      if [ -z "$oProg" ]; then
+        progMap["$checksum"]="$prog"
+      elif cmp "$prog" "$oProg"; then
+        rm "$prog"
+        ln -srv "$oProg" "$prog"
+      fi
+    done
+
+    # Move outputs to their final locations
+    mkdir -p "$lib"/lib
+    mv "$bin"/lib*/*.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$bin"/lib
+    mv "$bin"/lib "$dev"
+
+    mkdir -p "$bin"/nix-support
+    echo "-B$bin/${target}/bin" >>"$bin"/nix-support/cflags-compile
   '';
 
   preFixup = optionalString (type != "full") ''
     # Remove unused files from bootstrap
-    rm -r "$out"/share
+    rm -r "$dev"/share
   '' + ''
-    # Libtool files reference intermediate static libraries in the build
-    # like libiberty. We don't need them anyway
-    rm "$out"/lib/*.la
-
-    # We don't build against binutils libraries so we don't need their headers
-    rm -r "$out"/include
-
-    # Make sure the cc-wrapper doesn't pick this up automagically
-    mkdir -p "$out"/nix-support
-    touch "$out"/nix-support/cc-wrapper-ignored
+    # Missing install of private static libraries
+    rm "$dev"/lib/*.la
   '';
+
+  outputs = [
+    "dev"
+    "bin"
+    "lib"
+  ] ++ optionals (type == "full") [
+    "man"
+  ];
+
+  dontDisableStatic = true;
 
   meta = with lib; {
     description = "Tools for manipulating binaries (linker, assembler, etc.)";

@@ -10,12 +10,13 @@
 }:
 
 { compiler
+, target ? null
 , tools ? [ ]
 , inputs ? [ ]
 }:
 
 (stdenv.override { cc = null; }).mkDerivation {
-  name = "cc-wapper";
+  name = "cc-wrapper";
 
   inherit (compiler)
     cc
@@ -24,6 +25,8 @@
     optFlags
     prefixMapFlag
     canStackClashProtect;
+
+  pfx = if target == null then "" else "${target}-";
 
   inherit
     coreutils
@@ -38,31 +41,50 @@
       local prog="$1"
       local wrapper="$2"
 
-      local target="$out"/bin/"$(basename "$prog")"
+      local pname="''${prog##*/}"
+      local pdir="''${prog%/*}"
+      if [ "''${pname:0:''${#pfx}}" = "$pfx" ]; then
+        pname="''${pname:''${#pfx}}"
+      fi
+
+      local target="$out"/bin/"$pfx$pname"
       if [ -e "$target" ]; then
         echo "WARNING: $target already exists" >&2
         return 0
       fi
 
+      prog="$pdir/$pfx$pname"
+      if [ ! -e "$prog" ]; then
+        prog="$pdir/$pname"
+        if [ ! -e "$prog" ]; then
+          echo "ERROR: Missing $prog" >&2
+          exit 1
+        fi
+      fi
+
       export prog
+      echo "Wrapping $prog -> $target" >&2
       substituteAll "$wrapper" "$target"
       chmod +x "$target"
       unset prog
     }
 
+    maybeWrap() {
+      local prog="$1"
+
+      wrap "$@"
+    }
+
     wrap "$compiler"/bin/"$cc" '${./cc-wrapper.sh}'
-    ln -sv "$cc" "$out"/bin/cc
+    ln -sv "$pfx$cc" "$out"/bin/"$pfx"cc
     wrap "$compiler"/bin/"$cxx" '${./cc-wrapper.sh}'
-    ln -sv "$cxx" "$out"/bin/c++
-    if [ -e "$compiler"/bin/cpp ]; then
+    ln -sv "$pfx$cxx" "$out"/bin/"$pfx"c++
+    if [ -e "$compiler"/bin/"$pfx"cpp -o -e "$compiler"/bin/cpp ]; then
       wrap "$compiler"/bin/cpp '${./cc-wrapper.sh}'
     fi
 
     for bin in "$compiler" $tools; do
-      echo "$bin" >>"$out"/nix-support/propagated-user-env-packages
-      echo "$bin" >>"$out"/nix-support/propagated-native-build-inputs
-
-      for prog in "$bin"/bin/ld*; do
+      for prog in "$bin"/bin/"$pfx"ld* "$bin"/bin/ld*; do
         wrap "$prog" '${./ld-wrapper.sh}'
       done
 

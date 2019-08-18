@@ -20,7 +20,7 @@ addCVars () {
 
 envHooks+=(addCVars)
 
-export CC='@cc@'
-export CXX='@cxx@'
-export CPP='@cpp@'
-export LD='ld'
+export CC='@pfx@@cc@'
+export CXX='@pfx@@cxx@'
+export CPP='@pfx@@cpp@'
+export LD='@pfx@ld'

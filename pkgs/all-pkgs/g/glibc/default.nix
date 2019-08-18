@@ -1,9 +1,8 @@
 { stdenv
-, binutils
 , bison
+, cc
 , fetchurl
 , fetchTritonPatch
-, gcc
 , linux-headers
 , python_tiny
 
@@ -25,7 +24,7 @@ let
     else
       "x86_64-pc-linux-gnu";
 
-  version = "2.29";
+  version = "2.30";
 in
 (stdenv.override { cc = null; }).mkDerivation (rec {
   name = "glibc-${version}";
@@ -33,13 +32,12 @@ in
   src = fetchurl {
     url = "mirror://gnu/glibc/${name}.tar.xz";
     hashOutput = false;
-    sha256 = "f3eeb8d57e25ca9fc13c2af3dae97754f9f643bc69229546828e3a240e2af04b";
+    sha256 = "e2c4114e569afbe7edbc29131a43be833850ab9a459d81beb2588016d2bbb8af";
   };
 
   nativeBuildInputs = [
     bison
-    binutils
-    gcc
+    cc
     python_tiny
   ];
 
@@ -99,8 +97,6 @@ in
     "--enable-kernel=${linux-headers.channel}"
     "--disable-werror"
     "--${boolEn (type == "full")}-build-nscd"
-    "--with-binutils=${binutils}"
-    "--with-headers=${linux-headers}/include"
   ];
 
   preConfigure = ''
@@ -109,10 +105,19 @@ in
     configureScript='../configure'
   '';
 
+  prefix = placeholder "dev";
+
+  makeFlags = [
+    "complocaledir=${placeholder "lib"}/lib/locale"
+  ];
+
   preBuild = ''
     # We don't want to use the ld.so.cache from the system
     grep -q '#define USE_LDCONFIG' config.h
     echo '#undef USE_LDCONFIG' >>config.h
+
+    # Don't build programs
+    echo "build-programs=no" >>configparms
   '';
 
   preInstall = ''
@@ -124,25 +129,36 @@ in
 
   postInstall = ''
     # Ensure we always have a fallback C.UTF-8 locale-archive
-    export LOCALE_ARCHIVE="$out"/lib/locale/locale-archive
-    mkdir -p "$(dirname "$LOCALE_ARCHIVE")"
-    "$out"/bin/localedef -i C -f UTF-8 C.UTF-8
-
-    # Make sure the cc-wrapper doesn't pick this up automagically
-    mkdir -p "$out"/nix-support
-    touch "$out"/nix-support/cc-wrapper-ignored
+    #export LOCALE_ARCHIVE="$out"/lib/locale/locale-archive
+    #mkdir -p "$(dirname "$LOCALE_ARCHIVE")"
+    #"$out"/bin/localedef -i C -f UTF-8 C.UTF-8
   '';
+
+  outputs = [
+    "dev"
+    "lib"
+  ];
 
   # Don't retain shell referencs
   dontPatchShebangs = true;
 
+  # Early libs can't use some of our hardening flags
+  fortifySource = false;
+  stackProtector = false;
+  extraCCFlags = false;
+
   # We can't have references to any of our bootstrapping derivations
-  allowedReferences = [ "out" ];
+  allowedReferences = [
+    "dev"
+    "lib"
+  ];
 
   passthru = {
     impl = "glibc";
     inherit host version;
   };
+
+  preferLocalBuild = true;
 
   meta = with stdenv.lib; {
     maintainers = with maintainers; [

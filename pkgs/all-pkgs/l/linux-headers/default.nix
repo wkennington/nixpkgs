@@ -71,13 +71,18 @@ stdenv.mkDerivation rec {
 
   installTargets = "headers_install";
 
+  postInstall = ''
+    mkdir -p "$out"/nix-support
+    echo "-idirafter $out/include" >"$out"/nix-support/cflags-compile
+  '';
+
   preFixup = ''
     # Cleanup some unneeded files
     find "$out"/include \( -name .install -o -name ..install.cmd \) -delete
   '';
 
   # The linux-headers do not need to maintain any references
-  allowedReferences = [ ];
+  allowedReferences = [ "out" ];
 
   passthru = {
     inherit channel;

@@ -42,7 +42,7 @@ let
     else
       "release";
 
-  version = "9.1.0";
+  version = "9.2.0";
 in
 stdenv.mkDerivation (rec {
   name = "gcc-${version}";
@@ -50,8 +50,12 @@ stdenv.mkDerivation (rec {
   src = fetchurl {
     url = "mirror://gnu/gcc/${name}/${name}.tar.xz";
     hashOutput = false;
-    sha256 = "79a66834e96a6050d8fe78db2c3b32fb285b230b855d0a66288235bc04b327a0";
+    sha256 = "ea6ef08f121239da5695f76c9b33637a118dcf63e24164422231917fa61fb206";
   };
+
+  nativeBuildInputs = [
+    binutils.bin
+  ];
 
   buildInputs = optionals (type != "bootstrap") [
     gmp
@@ -123,19 +127,14 @@ stdenv.mkDerivation (rec {
     "--${boolEn (type != "bootstrap")}-lto"
     "--with-glibc-version=2.28"
     (optional (type == "bootstrap") "--without-headers")
-    (optional (type == "bootstrap") "--with-newlib")
-    "--with-build-time-tools=${binutils}/bin"
     "--${boolWt (type != "bootstrap")}-system-libunwind"
     "--${boolWt (type != "bootstrap")}-system-zlib"
+    "--with-local-prefix=/no-such-path/local-prefix"
+    "--with-native-system-header-dir=/no-such-path/native-headers"
+    "--with-debug-prefix-map=$NIX_BUILD_TOP=/no-such-path"
   ];
 
   preConfigure = ''
-    configureFlagsArray+=(
-      "--with-local-prefix=/no-such-path/local-prefix"
-      "--with-native-system-header-dir=${nativeHeaders}"
-      "--with-debug-prefix-map=$NIX_BUILD_TOP=/no-such-path"
-    )
-
     mkdir -v build
     cd build
     configureScript='../configure'
@@ -168,62 +167,100 @@ stdenv.mkDerivation (rec {
     IFS="$oldifs"
   '';
 
-  postInstall = optionalString (type == "bootstrap") ''
+  buildTargets = [
+    "all-host"
+  ];
+
+  installTargets = [
+    "install-host"
+  ];
+
+  postInstall = ''
+    rm "$dev"/bin/*-${version}
+  '' + optionalString (type == "bootstrap") ''
     # GCC won't include our libc limits.h if we don't fix it
-    cat ../gcc/{limitx.h,glimits.h,limity.h} >"$out"/lib/gcc/*/*/include-fixed/limits.h
+    cat ../gcc/{limitx.h,glimits.h,limity.h} >"$dev"/lib/gcc/*/*/include-fixed/limits.h
+
+    rm -r "$dev"/lib/gcc/*/*/install-tools
+
+    mkdir -p "$cc_headers"
+    mv "$dev"/lib/gcc/*/*/include "$cc_headers"
+    mv "$dev"/lib/gcc/*/*/include-fixed "$cc_headers"
+    mkdir -p "$cc_headers"/nix-support
+    echo "-idirafter $cc_headers/include" >>"$cc_headers"/nix-support/cflags-compile
+    echo "-idirafter $cc_headers/include-fixed" >>"$cc_headers"/nix-support/cflags-compile
+
+    mkdir -p "$lib"/lib
+    ls -la "$dev" "$dev"/lib*
+    mv "$dev"/lib*/*.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib
+
+    mkdir -p "$bin"/lib
+    mv -v "$dev"/{bin,libexec} "$bin"
+    mv -v "$dev"/lib/gcc "$bin"/lib
 
     # CC does not get installed for some reason
-    ln -srv "$out"/bin/${target}-gcc "$out"/bin/${target}-cc
+    ln -srv "$bin"/bin/${target}-gcc "$bin"/bin/${target}-cc
 
     # Ensure we have all of the non-prefixed tools
-    for bin in "$out"/bin/${target}-*; do
-      base="$(basename "$bin")"
-      tool="$out/bin/''${base:${toString (stringLength (target + "-"))}}"
-      rm -fv "$tool"
-      ln -srv "$bin" "$tool"
-    done
+    #for prog in "$bin"/bin/${target}-*; do
+    #  base="$(basename "$prog")"
+    #  tool="$bin/bin/''${base:${toString (stringLength (target + "-"))}}"
+    #  rm -fv "$tool"
+    #  ln -srv "$prog" "$tool"
+    #done
 
     find . -not -type d -and -not -name '*'.mvars -and -not -name Makefile -and -not -name '*'.h -delete
     find . -type f -exec sed -i "s,$NIX_BUILD_TOP,/build-dir,g" {} \;
-    mkdir -p "$out"
-    tar Jvcf "$out"/build.tar.xz .
+    mkdir -p "$internal"
+    tar Jcf "$internal"/build.tar.xz .
   '' + optionalString (type != "bootstrap") ''
     # CC does not get installed for some reason
-    ln -srv "$out"/bin/gcc "$out"/bin/cc
+    ln -srv "$bin"/bin/gcc "$bin"/bin/cc
   '' + ''
     # Hash the tools and deduplicate
-    declare -A binMap
-    for bin in "$out"/bin/*; do
-      if [ -L "$bin" ]; then
+    declare -A progMap
+    for prog in "$bin"/bin/*; do
+      if [ -L "$prog" ]; then
         continue
       fi
-      checksum="$(cksum "$bin" | cut -d ' ' -f1)"
-      oBin="''${binMap["$checksum"]}"
-      if [ -z "$oBin" ]; then
-        binMap["$checksum"]="$bin"
-      elif cmp "$bin" "$oBin"; then
-        rm "$bin"
-        ln -srv "$oBin" "$bin"
+      checksum="$(cksum "$prog" | cut -d ' ' -f1)"
+      oProg="''${progMap["$checksum"]}"
+      if [ -z "$oProg" ]; then
+        progMap["$checksum"]="$prog"
+      elif cmp "$prog" "$oProg"; then
+        rm "$prog"
+        ln -srv "$oProg" "$prog"
       fi
     done
 
     # We don't need the install-tools for anything
     # They sometimes hold references to interpreters
-    rm -rv "$out"/libexec/gcc/*/*/install-tools
-
-    # Make sure the cc-wrapper doesn't pick this up automagically
-    mkdir -p "$out"/nix-support
-    touch "$out"/nix-support/cc-wrapper-ignored
+    rm -rv "$bin"/libexec/gcc/*/*/install-tools
   '';
 
   preFixup = optionalString (type != "full") ''
     # Remove unused files from bootstrap
-    rm -r "$out"/share
-  '' + optionalString (type != "bootstrap") ''
+    rm -r "$dev"/share
+  '' + ''
     # We don't need the libtool archive files so purge them
     # TODO: Fixup libtool archives so we don't reference an old compiler
-    find "$out"/lib* -name '*'.la -delete
+    find "$dev"/lib* -name '*'.la -delete
   '';
+
+  prefix = placeholder "dev";
+
+  NIX_LDFLAGS = "-rpath ${placeholder "lib"}/lib";
+
+  outputs = [
+    "dev"
+    "bin"
+    "lib"
+    "cc_headers"
+    "internal"
+  ] ++ optionals (type == "full") [
+    "man"
+  ];
 
   # We want static libgcc_s
   disableStatic = false;

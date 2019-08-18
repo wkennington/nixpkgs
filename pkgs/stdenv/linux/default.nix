@@ -78,6 +78,10 @@ let
             callPackage;
         };
 
+        wrapCCNew = pkgs.wrapCCNew.override {
+          coreutils = bootstrapTools;
+        };
+
         cc_gcc = lib.makeOverridable (import ../../build-support/cc-wrapper) {
           nativeTools = false;
           nativeLibc = false;
@@ -94,7 +98,7 @@ let
 
   # This is the first package set and real stdenv using only the bootstrap tools
   # for building.
-  # This stage produces the first bootstrapped compiler and binutils/.
+  # This stage produces the first bootstrapped compiler and binutils.
   stage01Pkgs = allPackages {
     inherit targetSystem hostSystem config;
     stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
@@ -103,7 +107,7 @@ let
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage01Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
-        inherit (pkgs) stdenv linux-headers linux-headers_4-14 python_tiny;
+        inherit (pkgs) stdenv linux-headers linux-headers_4-14 libgcc_nolibc python_tiny;
 
         binutils = pkgs.binutils.override {
           type = "bootstrap";
@@ -111,6 +115,45 @@ let
 
         gcc = pkgs.gcc.override {
           type = "bootstrap";
+        };
+
+        glibc = pkgs.glibc.override {
+          type = "bootstrap";
+          cc = stage0Pkgs.wrapCCNew {
+            compiler = stage01Pkgs.gcc.bin;
+            tools = [ stage01Pkgs.binutils.bin ];
+            inputs = [
+              stage01Pkgs.libgcc_nolibc
+              stage01Pkgs.gcc.cc_headers
+              stage01Pkgs.linux-headers
+            ];
+            target = "x86_64-tritonboot-linux-gnu";
+          };
+        };
+
+        musl = pkgs.musl.override {
+          cc = stage0Pkgs.wrapCCNew {
+            compiler = stage01Pkgs.gcc.bin;
+            tools = [ stage01Pkgs.binutils.bin ];
+            inputs = [
+              stage01Pkgs.libgcc_nolibc
+              stage01Pkgs.gcc.cc_headers
+              stage01Pkgs.linux-headers
+            ];
+            target = "x86_64-tritonboot-linux-gnu";
+          };
+        };
+
+        cc_musl = stage0Pkgs.wrapCCNew {
+          compiler = stage01Pkgs.gcc.bin;
+          tools = [ stage01Pkgs.binutils.bin ];
+          inputs = [
+            stage01Pkgs.libgcc_nolibc
+            stage01Pkgs.gcc.cc_headers
+            stage01Pkgs.musl
+            stage01Pkgs.linux-headers
+          ];
+          target = "x86_64-tritonboot-linux-gnu";
         };
 
         bison = pkgs.bison.override {
@@ -122,7 +165,7 @@ let
         };
 
         # These are only needed to evaluate
-        inherit (stage0Pkgs) fetchurl fetchTritonPatch;
+        inherit (stage0Pkgs) fetchurl fetchTritonPatch wrapCCNew;
         inherit (pkgs) gmp libmpc mpfr zlib;
       };
     });
