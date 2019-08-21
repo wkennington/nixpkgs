@@ -1,8 +1,8 @@
 { stdenv
-, binutils
+, cc
 , fetchurl
 , gcc
-, wrapCCNew
+, libc
 
 , type ? null
 }:
@@ -11,13 +11,6 @@ let
   inherit (stdenv.lib)
     optionals
     optionalString;
-
-  cc = wrapCCNew {
-    compiler = gcc.bin;
-    tools = [ binutils.bin ];
-    inputs = [ gcc.cc_headers ];
-    target = gcc.target;
-  };
 in
 (stdenv.override { cc = null; }).mkDerivation rec {
   name = "libgcc${optionalString (type != null) "-${type}"}-${gcc.version}";
@@ -33,7 +26,6 @@ in
   prefix = placeholder "dev";
 
   configureFlags = [
-    "--host=${gcc.target}"
     "--disable-maintainer-mode"
     "--with-glibc-version=2.30"
   ] ++ optionals (type == "nolibc") [
@@ -60,34 +52,36 @@ in
     "thread_header=gthr-single.h"
   ];
 
-  postInstall = optionalString (type == "nolibc") ''
-    mkdir -p "$lib"
-  '' + ''
+  postInstall = ''
     mv -v "$dev"/lib/gcc/*/*/* "$dev"/lib
     rm -r "$dev"/lib/gcc
 
+    mv "$dev"/lib/include "$dev"
+
+    mkdir -p "$lib"/lib
+    for file in "$dev"/lib*/*; do
+      elf=1
+      readelf -h "$file" >/dev/null 2>&1 || elf=0
+      if [[ "$file" == *.so* && "$elf" == 1 ]]; then
+        mv "$file" "$lib"/lib
+      fi
+    done
+    ln -sv "$lib"/lib/* "$dev"/lib
+
     mkdir -p "$dev"/nix-support
     echo "-B$dev/lib" >>"$dev"/nix-support/cflags-compile
+    echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags-compile
+    # We need to inject this rpath since some of our shared objects are
+    # linker scripts like libc.so and our linker script doesn't interpret
+    # ld scripts
+    echo "-rpath $lib/lib" >>"$dev"/nix-support/ldflags
     echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
-  '';
-
-  preFixup = ''
-    strip() {
-      ${gcc.target}-strip "$@"
-    }
-    set -x
   '';
 
   # We want static libgcc
   disableStatic = false;
 
   outputs = [
-    "dev"
-    "lib"
-  ];
-
-  # Ensure we don't depend on anything unexpected
-  allowedReferences = [
     "dev"
     "lib"
   ];

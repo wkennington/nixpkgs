@@ -13,7 +13,7 @@ let
 
   version = "1.4.18";
 in
-stdenv.mkDerivation (rec {
+stdenv.mkDerivation rec {
   name = "gnum4-${version}";
 
   src = fetchurl {
@@ -62,8 +62,4 @@ stdenv.mkDerivation (rec {
       x86_64-linux
       ++ i686-linux;
   };
-} // optionalAttrs (type != "bootstrap") {
-  allowedReferences = [
-    "out"
-  ] ++ stdenv.cc.runtimeLibcxxLibs;
-})
+}

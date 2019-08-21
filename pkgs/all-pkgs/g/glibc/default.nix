@@ -3,6 +3,8 @@
 , cc
 , fetchurl
 , fetchTritonPatch
+, gcc_lib_glibc
+, libidn2_glibc
 , linux-headers
 , python_tiny
 
@@ -17,12 +19,6 @@ let
     optionals
     optionalAttrs
     optionalString;
-
-  host =
-    if type == "bootstrap" then
-      "x86_64-tritonboot-linux-gnu"
-    else
-      "x86_64-pc-linux-gnu";
 
   version = "2.30";
 in
@@ -86,10 +82,11 @@ in
     find sysdeps -name configure -exec sed -i '/^ldd_rewrite_script=/d' {} \;
   '';
 
+  prefix = placeholder "lib";
+
   configureFlags = [
     "--sysconfdir=/etc"
     "--localstatedir=/var"
-    "--host=${host}"
     "--disable-maintainer-mode"
     "--enable-stackguard-randomization"
     "--enable-bind-now"
@@ -104,13 +101,7 @@ in
     cd build
     configureScript='../configure'
   '';
-
-  prefix = placeholder "dev";
-
-  makeFlags = [
-    "complocaledir=${placeholder "lib"}/lib/locale"
-  ];
-
+  
   preBuild = ''
     # We don't want to use the ld.so.cache from the system
     grep -q '#define USE_LDCONFIG' config.h
@@ -122,16 +113,43 @@ in
 
   preInstall = ''
     installFlagsArray+=(
-      "sysconfdir=$out/etc"
+      "sysconfdir=$dev/etc"
       "localstatedir=$TMPDIR"
     )
   '';
 
   postInstall = ''
+    mkdir -p "$dev"/lib
+
+    for file in "$lib"/lib/*; do
+      elf=1
+      readelf -h "$file" >/dev/null 2>&1 || elf=0
+      if [[ "$file" == *.so* && "$elf" == 1 ]]; then
+        ln -s "$file" "$dev"/lib
+      else
+        if [[ "$elf" == 0 ]] && grep -q 'ld script' "$file"; then
+          sed -i "s,$lib,$dev,g" "$file"
+        fi
+        mv "$file" "$dev"/lib
+      fi
+    done
+    mv "$lib"/{include,share} "$dev"
+
+    mkdir -p "$dev"/nix-support
+    echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags-compile
+    echo "-B$dev/lib" >>"$dev"/nix-support/cflags-compile
+    dyld="$lib"/lib/ld-*.so
+    echo "-dynamic-linker $dyld" >>"$dev"/nix-support/ldflags-before
+    # We need to inject this rpath since some of our shared objects are
+    # linker scripts like libc.so and our linker script doesn't interpret
+    # ld scripts
+    echo "-rpath $lib/lib" >>"$dev"/nix-support/ldflags
+    echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
+  '' + optionalString (type != "bootstrap") ''
     # Ensure we always have a fallback C.UTF-8 locale-archive
-    #export LOCALE_ARCHIVE="$out"/lib/locale/locale-archive
-    #mkdir -p "$(dirname "$LOCALE_ARCHIVE")"
-    #"$out"/bin/localedef -i C -f UTF-8 C.UTF-8
+    export LOCALE_ARCHIVE="$lib"/lib/locale/locale-archive
+    mkdir -p "$(dirname "$LOCALE_ARCHIVE")"
+    localedef -i C -f UTF-8 C.UTF-8
   '';
 
   outputs = [
@@ -143,22 +161,23 @@ in
   dontPatchShebangs = true;
 
   # Early libs can't use some of our hardening flags
-  fortifySource = false;
-  stackProtector = false;
-  extraCCFlags = false;
-
-  # We can't have references to any of our bootstrapping derivations
-  allowedReferences = [
-    "dev"
-    "lib"
-  ];
+  NIX_CC_FORTIFY_SOURCE = false;
+  NIX_CC_STACK_PROTECTOR = false;
+  NIX_LD_HARDEN = false;
+  NIX_LD_ADD_RPATH = false;
 
   passthru = {
     impl = "glibc";
-    inherit host version;
-  };
+    inherit version;
+    cc_reqs = stdenv.mkDerivation {
+      name = "glibc-cc_reqs-${version}";
 
-  preferLocalBuild = true;
+      buildCommand = ''
+        mkdir -p "$out"/nix-support
+        echo "-L${gcc_lib_glibc}/lib -L${libidn2_glibc}/lib --push-state --no-as-needed -lidn2 -lgcc_s --pop-state" >"$out"/nix-support/ldflags-dynamic
+      '';
+    };
+  };
 
   meta = with stdenv.lib; {
     maintainers = with maintainers; [

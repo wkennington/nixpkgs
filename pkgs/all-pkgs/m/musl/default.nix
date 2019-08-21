@@ -40,7 +40,7 @@
   '';
 
   # Can't force the libc to use this
-  stackProtector = false;
+  NIX_CC_STACK_PROTECTOR = false;
 
   # We need this for embedded things like busybox
   disableStatic = false;

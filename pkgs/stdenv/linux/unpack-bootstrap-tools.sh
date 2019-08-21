@@ -58,6 +58,16 @@ mkdir -p $glibc
 ln -s $out/lib $glibc/lib
 ln -s $out/include-glibc $glibc/include
 
-# Make sure the cc-wrapper doesn't pick this up automagically
+# Make sure the cc-wrapper picks up the right thing
 mkdir -p "$glibc"/nix-support
-touch "$glibc"/nix-support/cc-wrapper-ignored
+cxxinc="$(dirname "$(dirname "$out"/include/c++/*/*/bits/c++config.h)")"
+echo "-idirafter $cxxinc" >>"$glibc"/nix-support/cxxflags-compile
+echo "-idirafter $(dirname "$cxxinc")" >>"$glibc"/nix-support/cxxflags-compile
+gccinc="$glibc"/lib/gcc/*/*/include
+echo "-idirafter $gccinc" >>"$glibc"/nix-support/cflags-compile
+echo "-idirafter $gccinc-fixed" >>"$glibc"/nix-support/cflags-compile
+echo "-idirafter $glibc/include" >>"$glibc"/nix-support/cflags-compile
+echo "-B$glibc/lib" >>"$glibc"/nix-support/cflags-compile
+dyld="$glibc"/lib/ld-*.so
+echo "-dynamic-linker $dyld" >>"$glibc"/nix-support/ldflags-before
+echo "-L$glibc/lib" >>"$glibc"/nix-support/ldflags

@@ -1,4 +1,5 @@
 { stdenv
+, cc
 , fetchurl
 }:
 
@@ -9,7 +10,7 @@ let
 
   version = "0.9.10";
 in
-stdenv.mkDerivation rec {
+(stdenv.override { cc = null; }).mkDerivation rec {
   name = "libunistring-${version}";
 
   src = fetchurl {
@@ -18,9 +19,27 @@ stdenv.mkDerivation rec {
     sha256 = "eb8fb2c3e4b6e2d336608377050892b54c3c983b646c561836550863003c05d7";
   };
 
-  # One of the tests fails to compile for 0.9.6 when run in parallel
-  doCheck = true;
-  checkParallel = false;
+  nativeBuildInputs = [
+    cc
+  ];
+
+  prefix = placeholder "dev";
+
+  postInstall = ''
+    mkdir -p "$lib"/lib
+    mv "$dev"/lib*/*.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib
+  '';
+
+  # Needed to prevent libunistring.so from referencing dev
+  NIX_CFLAGS_COMPILE = "-DLIBDIR=\"${placeholder "lib"}/lib\"";
+
+  disableStatic = false;
+
+  outputs = [
+    "dev"
+    "lib"
+  ];
 
   passthru = {
     srcVerification = fetchurl rec {

@@ -842,7 +842,7 @@ cairomm = callPackage ../all-pkgs/c/cairomm { };
 
 caribou = callPackage ../all-pkgs/c/caribou { };
 
-cc = pkgs.cc_gcc;
+cc = null;
 cc_gcc = pkgs.wrapCC pkgs.gcc null;
 cc_gcc_new = pkgs.wrapCCNew {
   compiler = pkgs.gcc;
@@ -1582,6 +1582,43 @@ gawk_small = callPackage ../all-pkgs/g/gawk {
 gcab = callPackage ../all-pkgs/g/gcab { };
 
 gcc = callPackage ../all-pkgs/g/gcc { };
+
+gcc_lib_glibc = callPackage ../all-pkgs/g/gcc/lib.nix {
+  cc = wrapCCNew {
+    compiler = pkgs.gcc.bin;
+    tools = [ pkgs.binutils.bin ];
+    inputs = [
+      pkgs.gcc_lib_nolibc
+      pkgs.gcc.cc_headers
+      pkgs.glibc
+      pkgs.linux-headers
+    ];
+  };
+};
+
+gcc_lib_musl = callPackage ../all-pkgs/g/gcc/lib.nix {
+  cc = wrapCCNew {
+    compiler = pkgs.gcc.bin;
+    tools = [ pkgs.binutils.bin ];
+    inputs = [
+      pkgs.gcc_lib_nolibc
+      pkgs.gcc.cc_headers
+      pkgs.musl
+      pkgs.linux-headers
+    ];
+  };
+};
+
+gcc_lib_nolibc = callPackage ../all-pkgs/g/gcc/lib.nix {
+  cc = wrapCCNew {
+    compiler = pkgs.gcc.bin;
+    tools = [ pkgs.binutils.bin ];
+    inputs = [ pkgs.gcc.cc_headers ];
+  };
+  type = "nolibc";
+};
+
+gcc_runtime = callPackage ../all-pkgs/g/gcc/runtime.nix { };
 
 gconf = callPackage ../all-pkgs/g/gconf { };
 
@@ -2360,7 +2397,7 @@ libburn = callPackage ../all-pkgs/l/libburn { };
 
 libbytesize = callPackage ../all-pkgs/l/libbytesize { };
 
-libc = pkgs.glibc;
+libc = null;
 
 libcacard = callPackage ../all-pkgs/l/libcacard { };
 
@@ -2436,10 +2473,6 @@ libfpx = callPackage ../all-pkgs/l/libfpx { };
 
 libftdi = callPackage ../all-pkgs/l/libftdi { };
 
-libgcc_nolibc = callPackage ../all-pkgs/l/libgcc {
-  type = "nolibc";
-};
-
 libgcrypt = callPackage ../all-pkgs/l/libgcrypt { };
 
 libgd = callPackage ../all-pkgs/l/libgd { };
@@ -2513,6 +2546,20 @@ libidl = callPackage ../all-pkgs/l/libidl { };
 libidn = callPackage ../all-pkgs/l/libidn { };
 
 libidn2 = callPackage ../all-pkgs/l/libidn2 { };
+
+libidn2_glibc = callPackage ../all-pkgs/l/libidn2 {
+  cc = stage0Pkgs.wrapCCNew {
+    compiler = pkgs.gcc.bin;
+    tools = [ pkgs.binutils.bin ];
+    inputs = [
+      pkgs.gcc_lib_nolibc
+      pkgs.gcc.cc_headers
+      pkgs.glibc
+      pkgs.linux-headers
+    ];
+  };
+  libunistring = pkgs.libunistring_glibc;
+};
 
 libimagequant = callPackage ../all-pkgs/l/libimagequant { };
 
@@ -2759,6 +2806,19 @@ libuninameslist = callPackage ../all-pkgs/l/libuninameslist { };
 libunique = callPackage ../all-pkgs/l/libunique { };
 
 libunistring = callPackage ../all-pkgs/l/libunistring { };
+
+libunistring_glibc = callPackage ../all-pkgs/l/libunistring {
+  cc = stage0Pkgs.wrapCCNew {
+    compiler = pkgs.gcc.bin;
+    tools = [ pkgs.binutils.bin ];
+    inputs = [
+      pkgs.gcc_lib_nolibc
+      pkgs.gcc.cc_headers
+      pkgs.glibc
+      pkgs.linux-headers
+    ];
+  };
+};
 
 libunwind = callPackage ../all-pkgs/l/libunwind { };
 

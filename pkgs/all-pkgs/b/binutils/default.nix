@@ -116,9 +116,6 @@ stdenv.mkDerivation (rec {
     mv "$bin"/lib*/*.so* "$lib"/lib
     ln -sv "$lib"/lib/* "$bin"/lib
     mv "$bin"/lib "$dev"
-
-    mkdir -p "$bin"/nix-support
-    echo "-B$bin/${target}/bin" >>"$bin"/nix-support/cflags-compile
   '';
 
   preFixup = optionalString (type != "full") ''

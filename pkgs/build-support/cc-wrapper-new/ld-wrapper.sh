@@ -19,17 +19,6 @@ if [ -n "${NIX_DEBUG-}" ]; then
   done
 fi
 
-nonFlagArgs=
-for i in "$@"; do
-  if [ "${i:0:1}" != - ]; then
-    nonFlagArgs=1
-  fi
-done
-
-if [ -z "$nonFlagArgs" ]; then
-  exec @prog@ "$@"
-fi
-
 if [ -z "${NIX_LD_WRAPPER_FLAGS_SET-}" ]; then
   export NIX_LD_WRAPPER_FLAGS_SET=1
 
@@ -39,19 +28,18 @@ if [ -z "${NIX_LD_WRAPPER_FLAGS_SET-}" ]; then
 fi
 
 params=($NIX_LDFLAGS_BEFORE)
-: ${extraCCFlags=}
+: ${NIX_LD_HARDEN=1}
 
-params+=('-z' 'nodefaultlib')
-if [ "${dtRpath-$extraCCFlags}" = "1" ]; then
+if [ "${NIX_LD_ADD_RPATH-1}" = "1" ]; then
   params+=('--enable-new-dtags')
 fi
-if [ "${noexecstack-$extraCCFlags}" = "1" ]; then
+if [ "${NIX_LD_NOEXECSTACK-$NIX_LD_HARDEN}" = "1" ]; then
   params+=('-z' 'noexecstack')
 fi
-if [ "${relro-$extraCCFlags}" = "1" ]; then
+if [ "${NIX_LD_RELRO-$NIX_LD_HARDEN}" = "1" ]; then
   params+=('-z' 'relro')
 fi
-if [ "${bindnow-$extraCCFlags}" = "1" ]; then
+if [ "${NIX_LD_BINDNOW-$NIX_LD_HARDEN}" = "1" ]; then
   params+=('-z' 'now')
 fi
 # Remove compiler passed runtime paths
@@ -67,10 +55,6 @@ for (( i = 1; i <= "$#" ; i++ )); do
   p2="${!n-}"
   if [ "$p" = -g ]; then
     compilerFlags=
-  elif [ -n "$compilerFlags" -a "${p:0:3}" = -L/ ]; then
-    continue
-  elif [ -n "$compilerFlags" -a "$p" = -L ]; then
-    i=$((i + 1))
   elif [ -n "$compilerFlags" -a "$p" = -rpath ]; then
     i=$((i + 1))
   elif [ -n "$compilerFlags" -a "$p" = -dynamic-linker ]; then
@@ -129,7 +113,7 @@ done
 params=("${filtered_params[@]}")
 
 # Add all used dynamic libraries to the rpath.
-if [ -n "${NIX_SET_RPATH-1}" ]; then
+if [ -n "${NIX_LD_ADD_RPATH-1}" ]; then
   addToRPath() {
     # We need to follow library symlinks in order to pick the best rpath
     local link

@@ -1,5 +1,7 @@
 { stdenv
+, cc
 , fetchurl
+, libunistring
 }:
 
 let
@@ -9,7 +11,7 @@ let
     "mirror://gnu/libidn/libidn2-${version}.tar.gz"
   ];
 in
-stdenv.mkDerivation rec {
+(stdenv.override { cc = null; }).mkDerivation rec {
   name = "libidn2-${version}";
 
   src = fetchurl {
@@ -18,8 +20,29 @@ stdenv.mkDerivation rec {
     sha256 = "fc734732b506d878753ec6606982bf7b936e868c25c30ddb0d83f7d7056381fe";
   };
 
+  nativeBuildInputs = [
+    cc
+  ];
+
+  buildInputs = [
+    libunistring
+  ];
+
+  prefix = placeholder "dev";
+
   configureFlags = [
     "--disable-doc"
+  ];
+
+  postInstall = ''
+    mkdir -p "$lib"/lib
+    mv "$dev"/lib*/*.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib
+  '';
+
+  outputs = [
+    "dev"
+    "lib"
   ];
 
   passthru = {
@@ -34,10 +57,6 @@ stdenv.mkDerivation rec {
       };
     };
   };
-
-  allowedReferences = [
-    "out"
-  ] ++ stdenv.cc.runtimeLibcLibs;
 
   meta = with stdenv.lib; {
     homepage = http://www.gnu.org/software/libidn/;

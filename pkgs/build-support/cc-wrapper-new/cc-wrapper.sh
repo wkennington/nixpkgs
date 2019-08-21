@@ -67,12 +67,9 @@ for i in "$@"; do
   fi
 done
 
-# As a very special hack, if the arguments are just `-v', then don't
-# add anything.  This is to prevent `gcc -v' (which normally prints
-# out the version number and returns exit code 0) from printing out
-# `No input files specified' and returning exit code 1.
+# If we don't have any input files, we won't call the linker
 if [ -z "$nonFlagArgs" ]; then
-  exec @prog@ "$@"
+  dontLink=1
 fi
 
 if [ -z "${NIX_CC_WRAPPER_FLAGS_SET-}" ]; then
@@ -80,6 +77,7 @@ if [ -z "${NIX_CC_WRAPPER_FLAGS_SET-}" ]; then
 
   # `-B@out@/bin' forces cc to use ld-wrapper.sh when calling ld.
   appendFlags NIX_CFLAGS_COMPILE '-B@out@/bin'
+  appendFlags NIX_CFLAGS_COMPILE '-B@out@/@target@/bin'
 
   if [ -z "$noStdInc" ]; then
     maybeAppendFlagsFromFile NIX_CFLAGS_COMPILE '@out@'/nix-support/cflags-compile
@@ -95,59 +93,59 @@ params=('-nostdinc')
 if [ -z "$dontLink" ]; then
   params+=('-Wl,-g')
 fi
-: ${extraCCFlags=1}
+: ${NIX_CC_HARDEN=1}
 
-if [ -n "${optFlags-$extraCCFlags}" ]; then
+if [ -n "${NIX_CC_CPU_OPT-$NIX_CC_HARDEN}" ]; then
   params+=(@optFlags@)
 fi
 
-if [ -n "${pie-$extraCCFlags}" -a -z "$dontLink" -a -n "$shared" ]; then
+if [ -n "${NIX_CC_PIC-$NIX_CC_HARDEN}" -a -z "$dontLink" -a -n "$shared" ]; then
   params+=("-pie")
 fi
 
-if [ -n "${fpic-$extraCCFlags}" ]; then
+if [ -n "${NIX_CC_PIC-$NIX_CC_HARDEN}" ]; then
   params+=("-fPIC")
 fi
 
-if [ -n "${noStrictOverflow-$extraCCFlags}" ]; then
+if [ -n "${NIX_CC_NO_STRICT_OVERFLOW-$NIX_CC_HARDEN}" ]; then
   params+=("-fno-strict-overflow")
 fi
 
-if [ -n "${fortifySource-$extraCCFlags}" ]; then
+if [ -n "${NIX_CC_FORTIFY_SOURCE-$NIX_CC_HARDEN}" ]; then
   params+=("-D_FORTIFY_SOURCE=2")
 fi
 
-if [ -n "${stackProtector-$extraCCFlags}" ]; then
+if [ -n "${NIX_CC_STACK_PROTECTOR-$NIX_CC_HARDEN}" ]; then
   params+=("-fstack-protector-strong")
 fi
 
-if [ -n "@canStackClashProtect@" -a -n "${stackClashProtection-$extraCCFlags}" ]; then
+if [ -n "@canStackClashProtect@" -a -n "${NIX_CC_STACK_CLASH_PROTECTION-$NIX_CC_HARDEN}" ]; then
   params+=("-fstack-clash-protection")
 fi
 
-if [ -n "${optimize-$extraCCFlags}" ]; then
+if [ -n "${NIX_CC_OPTIMIZE-$NIX_CC_HARDEN}" ]; then
   params+=("-O2")
 fi
 
 # Remove any flags which may interfere with hardening
 for (( i = 1; i <= "$#"; i++ )); do
   p="${!i}"
-  if [ -n "${fortifySource-$extraCCFlags}" ] && [[ "$p" =~ ^-D_FORTIFY_SOURCE ]]; then
+  if [ -n "${NIX_CC_FORTIFY_SOURCE-$NIX_CC_HARDEN}" ] && [[ "$p" =~ ^-D_FORTIFY_SOURCE ]]; then
     continue
   fi
-  if [ -n "${noStrictOverflow-$extraCCFlags}" ] && [[ "$p" =~ ^-f.*strict-overflow ]]; then
+  if [ -n "${NIX_CC_NO_STRICT_OVERFLOW-$NIX_CC_HARDEN}" ] && [[ "$p" =~ ^-f.*strict-overflow ]]; then
     continue
   fi
-  if [ -n "${stackProtector-$extraCCFlags}" ] && [[ "$p" =~ ^-f.*stack-protector.* ]]; then
+  if [ -n "${NIX_CC_STACK_PROTECTOR-$NIX_CC_HARDEN}" ] && [[ "$p" =~ ^-f.*stack-protector.* ]]; then
     continue
   fi
   if [[ "$p" =~ ^-m(arch|tune)=native$ ]]; then
     continue
   fi
-  if [ -n "${fpic-$extraCCFlags}" ] && [[ "$p" =~ ^-f(pic|PIC|pie|PIE)$ ]]; then
+  if [ -n "${NIX_CC_PIC-$NIX_CC_HARDEN}" ] && [[ "$p" =~ ^-f(pic|PIC|pie|PIE)$ ]]; then
     continue
   fi
-  if [ -n "${optimize-$extraCCFlags}" ] && [[ "$p" =~ ^-O([0-9]|s|g|fast)$ ]]; then
+  if [ -n "${NIX_CC_OPTIMIZE-$NIX_CC_HARDEN}" ] && [[ "$p" =~ ^-O([0-9]|s|g|fast)$ ]]; then
     continue
   fi
   params+=("$p")

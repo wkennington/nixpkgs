@@ -43,7 +43,7 @@ buildAbsoluteLdflags() {
 
   # Get the paths to the ldflags files in the cc-wrapper
   local LDFLAGS_FILES
-  LDFLAGS_FILES=$(dirname $(type -P cc))/../nix-support/*-ldflags
+  LDFLAGS_FILES="$NIX_CC"/nix-support/ldflags*
 
   # Add them to the LDFLAGS variable
   local FILE

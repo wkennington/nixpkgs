@@ -10,7 +10,7 @@
 }:
 
 { compiler
-, target ? null
+, target ? ""
 , tools ? [ ]
 , inputs ? [ ]
 }:
@@ -26,13 +26,14 @@
     prefixMapFlag
     canStackClashProtect;
 
-  pfx = if target == null then "" else "${target}-";
-
   inherit
     coreutils
     compiler
     tools
-    inputs;
+    inputs
+    target;
+
+  pfx = if target == "" then "" else "${target}-";
 
   buildCommand = ''
     mkdir -p "$out"/bin "$out"/nix-support
@@ -47,9 +48,9 @@
         pname="''${pname:''${#pfx}}"
       fi
 
-      local target="$out"/bin/"$pfx$pname"
-      if [ -e "$target" ]; then
-        echo "WARNING: $target already exists" >&2
+      local link="$out"/bin/"$pfx$pname"
+      if [ -e "$link" ]; then
+        echo "WARNING: $link already exists" >&2
         return 0
       fi
 
@@ -63,9 +64,9 @@
       fi
 
       export prog
-      echo "Wrapping $prog -> $target" >&2
-      substituteAll "$wrapper" "$target"
-      chmod +x "$target"
+      echo "Wrapping $prog -> $link" >&2
+      substituteAll "$wrapper" "$link"
+      chmod +x "$link"
       unset prog
     }
 
@@ -93,6 +94,17 @@
       done
     done
 
+    if [ -n "$target" ]; then
+      mkdir -p "$out"/"$target"/bin
+      for prog in "$out"/bin/*; do
+        local pname="''${prog##*/}"
+        if [ "''${pname:0:''${#pfx}}" = "$pfx" ]; then
+          pname="''${pname:''${#pfx}}"
+        fi
+        ln -sv "$prog" "$out"/"$target"/bin/"$pname"
+      done
+    fi
+
     maybeAppend() {
       local file="$1"
       local input="$2"
@@ -110,6 +122,8 @@
       maybeAppend ldflags-before "$inc"
       maybeAppend ldflags-dynamic "$inc"
     done
+
+    export strip="$out"/bin/*strip
 
     substituteAll '${./setup-hook.sh}' "$out"/nix-support/setup-hook
     substituteAll '${./utils.sh}' "$out"/nix-support/utils.sh

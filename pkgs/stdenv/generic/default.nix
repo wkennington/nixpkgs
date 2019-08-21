@@ -262,8 +262,6 @@ let
       userHook = config.stdenv.userHook or null;
       __ignoreNulls = true;
 
-      extraCCFlags = true;
-
       # Inputs built by the cross compiler.
       buildInputs =
         if targetSystem != hostSystem then

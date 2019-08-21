@@ -34,7 +34,7 @@ stripDirs() {
         files=($(find $dirs -type f))
         for file in "${files[@]}"; do
           echo "Stripping: $file" >&2
-          strip $commonStripFlags $stripFlags "$file" || true
+          ${STRIP-strip} $commonStripFlags $stripFlags "$file" || true
         done
         stopNest
     fi
