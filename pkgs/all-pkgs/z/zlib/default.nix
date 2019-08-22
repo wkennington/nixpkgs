@@ -25,7 +25,12 @@ stdenv.mkDerivation rec {
 
   prefix = placeholder "dev";
 
-  addHost = false;
+  preConfigure = ''
+    if "$NIX_SYSTEM_HOST"-cc -v >/dev/null 2>&1; then
+      export AR="$NIX_SYSTEM_HOST"-gcc-ar
+      export RANLIB="$NIX_SYSTEM_HOST"-ranlib
+    fi
+  '';
 
   postInstall = ''
     mkdir -p "$lib"/lib

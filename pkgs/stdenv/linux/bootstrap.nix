@@ -10,26 +10,7 @@ let
       inherit multihash sha256 executable;
     };
 in
-if [ hostSystem ] == lib.platforms.x86_64-linux then {
-  busybox = makeUrls {
-    file = "bootstrap-busybox";
-    nix-hash = "84md38hwv6v4vy0g7cdccnw4x87nkf6i";
-    multihash = "QmQ5isT1tEmJhuQ6KNPdtamANEcppBDhv3EyAZE7PHYj1p";
-    sha256 = "0ks3flp1kl2dgakzmrj2rw81r54j7wkbm2g176lqki1syzi9wd1c";
-    executable = true;
-  };
-
-  bootstrapTools = makeUrls {
-    file = "bootstrap-tools.tar.xz";
-    nix-hash = "84md38hwv6v4vy0g7cdccnw4x87nkf6i";
-    multihash = "QmVwrewK92FSgVPkbHbSL7V4UnYfyVvjA9mWkfJAudvGDH";
-    sha256 = "f11d55d5cf13189186c9dab09d887a14dd8a6c749178bbcad634b6cfbece92a8";
-  };
-
-  langC = true;
-  langCC = true;
-  isGNU = true;
-} else if [ hostSystem ] == lib.platforms.i686-linux then {
+if [ hostSystem ] == lib.platforms.x86_64-linux || [ hostSystem ] == lib.platforms.i686-linux then {
   busybox = makeUrls {
     file = "bootstrap-busybox";
     nix-hash = "794m4bqyvkniwy14axhbvvlwn0nfkvgg";
@@ -44,9 +25,5 @@ if [ hostSystem ] == lib.platforms.x86_64-linux then {
     multihash = "QmWq525ugaE6MWjVMCz8xUjxxGa9nLdw9ibwxH8b1qJdr6";
     sha256 = "86774a1d77dec741652a162a3003a3cddfa40cef8b168f3a954c877fe8a81164";
   };
-
-  langC = true;
-  langCC = true;
-  isGNU = true;
 } else
   throw "Unsupported System ${hostSystem}"

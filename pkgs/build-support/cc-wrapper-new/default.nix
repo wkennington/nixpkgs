@@ -94,14 +94,14 @@
       done
     done
 
-    if [ -n "$target" ]; then
-      mkdir -p "$out"/"$target"/bin
+    if [ -n "${target}" ]; then
+      mkdir -p "$out"/"${target}"/bin
       for prog in "$out"/bin/*; do
         local pname="''${prog##*/}"
         if [ "''${pname:0:''${#pfx}}" = "$pfx" ]; then
           pname="''${pname:''${#pfx}}"
         fi
-        ln -sv "$prog" "$out"/"$target"/bin/"$pname"
+        ln -sv "$prog" "$out"/"${target}"/bin/"$pname"
       done
     fi
 

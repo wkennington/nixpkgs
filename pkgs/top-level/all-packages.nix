@@ -1598,6 +1598,19 @@ gcc_lib_glibc = callPackage ../all-pkgs/g/gcc/lib.nix {
   };
 };
 
+gcc_lib_glibc_static = callPackage ../all-pkgs/g/gcc/lib.nix {
+  cc = wrapCCNew {
+    compiler = pkgs.gcc.bin;
+    tools = [ pkgs.binutils.bin ];
+    inputs = [
+      pkgs.gcc.cc_headers
+      pkgs.glibc_headers
+      pkgs.linux-headers
+    ];
+  };
+  type = "nolibc";
+};
+
 gcc_lib_musl = callPackage ../all-pkgs/g/gcc/lib.nix {
   cc = wrapCCNew {
     compiler = pkgs.gcc.bin;
@@ -1611,11 +1624,15 @@ gcc_lib_musl = callPackage ../all-pkgs/g/gcc/lib.nix {
   };
 };
 
-gcc_lib_nolibc = callPackage ../all-pkgs/g/gcc/lib.nix {
+gcc_lib_musl_static = callPackage ../all-pkgs/g/gcc/lib.nix {
   cc = wrapCCNew {
     compiler = pkgs.gcc.bin;
     tools = [ pkgs.binutils.bin ];
-    inputs = [ pkgs.gcc.cc_headers ];
+    inputs = [
+      pkgs.gcc.cc_headers
+      pkgs.musl_headers
+      pkgs.linux-headers
+    ];
   };
   type = "nolibc";
 };

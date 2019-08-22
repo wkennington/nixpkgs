@@ -21,6 +21,9 @@
   configureFlags = gcc.commonConfigureFlags;
 
   preConfigure = ''
+    # We need to avoid linking stdc++ by using the gcc executable for c++ code
+    export CXX="$CC"
+
     mkdir -v build
     cd build
     tar xf '${gcc_lib.internal}'/build.tar.xz
@@ -29,13 +32,6 @@
     cd x/libstdc++-v3
     configureScript='../../../libstdc++-v3/configure'
     chmod +x "$configureScript"
-  '';
-
-  NIX_DEBUG = true;
-
-  postConfigure = ''
-    cat config.log
-    exit 1
   '';
 
   postInstall = ''

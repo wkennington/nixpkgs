@@ -1,5 +1,4 @@
 export NIX_CC='@out@'
-export NIX_CC_TARGET='@target@'
 
 addCVars () {
   if [ -e $1/nix-support/cc-wrapper-ignored ]; then
@@ -28,10 +27,6 @@ export STRIP='@strip@'
 
 if [ -z "${nix_cc_done-}" ]; then
   nix_cc_done=1
-
-  if [ -n "$NIX_CC_TARGET" -a -n "${addHost-1}" ]; then
-    configureFlagsArray+=("--host=$NIX_CC_TARGET")
-  fi
 
   # Add the output as an rpath.
   if [ -n "${NIX_LD_ADD_RPATH-1}" ]; then

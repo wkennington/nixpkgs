@@ -476,6 +476,20 @@ configurePhase() {
     done
   fi
 
+  : ${addSystem=true}
+
+  if [ -n "${addBuild-$addSystem}" -a -n "${NIX_SYSTEM_BUILD-}" ]; then
+    if grep -q '\--build' "$configureScript" 2>/dev/null; then
+      configureFlags="--build=$NIX_SYSTEM_BUILD $configureFlags"
+    fi
+  fi
+
+  if [ -n "${addHost-$addSystem}" -a -n "${NIX_SYSTEM_HOST-}" ]; then
+    if grep -q '\--host' "$configureScript" 2>/dev/null; then
+      configureFlags="--host=$NIX_SYSTEM_HOST $configureFlags"
+    fi
+  fi
+
   if [ -n "${addPrefix-true}" ]; then
     configureFlags="${prefixKey:---prefix=}$prefix $configureFlags"
   fi

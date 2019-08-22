@@ -65,6 +65,10 @@ let
 
   };
 
+  # TODO: Implement mapping for this
+  bootstrapTarget = "x86_64-tritonboot-linux-gnu";
+  finalTarget = "x86_64-pc-linux-gnu";
+
   # This is not a real set of packages or stdenv.
   # This is just enough for us to use stdenv.mkDerivation to build our
   # first cc-wrapper and fetchurlBoot.
@@ -98,7 +102,7 @@ let
     });
   };
 
-  # This stage produces the first bootstrapped compiler + target libraries
+  # This stage produces the first bootstrapped compiler tooling
   stage01Pkgs = allPackages {
     inherit targetSystem hostSystem config;
     stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
@@ -111,112 +115,12 @@ let
 
         binutils = pkgs.binutils.override {
           type = "bootstrap";
+          target = bootstrapTarget;
         };
 
         gcc = pkgs.gcc.override {
           type = "bootstrap";
-        };
-
-        cc_gcc_early = stage0Pkgs.wrapCCNew {
-          compiler = stage01Pkgs.gcc.bin;
-          tools = [ stage01Pkgs.binutils.bin ];
-          inputs = [
-            stage01Pkgs.gcc.cc_headers
-            stage01Pkgs.linux-headers
-          ];
-          target = stage01Pkgs.gcc.target;
-        };
-
-        glibc_headers = pkgs.glibc_headers.override {
-          cc = stage01Pkgs.cc_gcc_early;
-          python3 = stage01Pkgs.python_tiny;
-        };
-
-        cc_gcc_headers = stage0Pkgs.wrapCCNew {
-          compiler = stage01Pkgs.gcc.bin;
-          tools = [ stage01Pkgs.binutils.bin ];
-          inputs = [
-            stage01Pkgs.gcc.cc_headers
-            stage01Pkgs.glibc_headers
-            stage01Pkgs.linux-headers
-          ];
-          target = stage01Pkgs.gcc.target;
-        };
-
-        gcc_lib_nolibc = pkgs.gcc_lib_nolibc.override {
-          cc = stage01Pkgs.cc_gcc_headers;
-        };
-
-        cc_gcc_nolibc = stage0Pkgs.wrapCCNew {
-          compiler = stage01Pkgs.gcc.bin;
-          tools = [ stage01Pkgs.binutils.bin ];
-          inputs = [
-            stage01Pkgs.gcc_lib_nolibc
-            stage01Pkgs.gcc.cc_headers
-            stage01Pkgs.linux-headers
-          ];
-          target = stage01Pkgs.gcc.target;
-        };
-
-        glibc = pkgs.glibc.override {
-          type = "bootstrap";
-          cc = stage01Pkgs.cc_gcc_nolibc;
-          python3 = stage01Pkgs.python_tiny;
-        };
-
-        cc_gcc_glibc_nolibgcc = stage0Pkgs.wrapCCNew {
-          compiler = stage01Pkgs.gcc.bin;
-          tools = [ stage01Pkgs.binutils.bin ];
-          inputs = [
-            stage01Pkgs.gcc_lib_nolibc
-            stage01Pkgs.gcc.cc_headers
-            stage01Pkgs.glibc
-            stage01Pkgs.linux-headers
-          ];
-          target = stage01Pkgs.gcc.target;
-        };
-
-        gcc_lib_glibc = pkgs.gcc_lib_glibc.override {
-          cc = stage01Pkgs.cc_gcc_glibc_nolibgcc;
-        };
-
-        cc_gcc_glibc_early = stage0Pkgs.wrapCCNew {
-          compiler = stage01Pkgs.gcc.bin;
-          tools = [ stage01Pkgs.binutils.bin ];
-          inputs = [
-            stage01Pkgs.gcc_lib_glibc
-            stage01Pkgs.gcc.cc_headers
-            stage01Pkgs.glibc
-            stage01Pkgs.linux-headers
-          ];
-          target = stage01Pkgs.gcc.target;
-        };
-
-        libstdcxx_glibc = pkgs.libstdcxx_glibc.override {
-          cc = stage01Pkgs.cc_gcc_glibc_early;
-          gcc_lib = stage01Pkgs.gcc_lib_glibc;
-        };
-
-        libunistring_glibc = pkgs.libunistring_glibc.override {
-          cc = stage01Pkgs.cc_gcc_glibc_early;
-        };
-
-        libidn2_glibc = pkgs.libidn2_glibc.override {
-          cc = stage01Pkgs.cc_gcc_glibc_early;
-        };
-
-        cc_gcc_glibc = stage0Pkgs.wrapCCNew {
-          compiler = stage01Pkgs.gcc.bin;
-          tools = [ stage01Pkgs.binutils.bin ];
-          inputs = [
-            stage01Pkgs.libstdcxx_glibc
-            stage01Pkgs.gcc_lib_glibc
-            stage01Pkgs.gcc.cc_headers
-            stage01Pkgs.glibc.cc_reqs
-            stage01Pkgs.glibc
-            stage01Pkgs.linux-headers
-          ];
-          target = stage01Pkgs.gcc.target;
+          target = bootstrapTarget;
         };
 
         bison = pkgs.bison.override {
@@ -234,25 +138,122 @@ let
     });
   };
 
-  # This is the first package set and real stdenv using only the bootstrap tools
-  # for building.
-  # This stage produces the first libc.
+  # This stage produces all of the target libraries needed for a working compiler
   stage02Pkgs = allPackages {
     inherit targetSystem hostSystem config;
     stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
       name = "stdenv-linux-boot-stage02";
-      cc = stage01Pkgs.cc_gcc_glibc;
+      cc = null;
+
+      preHook = commonBootstrapOptions.preHook + ''
+        export NIX_SYSTEM_HOST='${bootstrapTarget}'
+      '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage02Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
-        inherit (pkgs) stdenv cc libc;
+        inherit (pkgs) stdenv;
+        inherit (stage01Pkgs) gcc linux-headers bison;
 
-        binutils = pkgs.binutils.override {
-          type = "minimal";
+        cc_gcc_early = stage0Pkgs.wrapCCNew {
+          compiler = stage01Pkgs.gcc.bin;
+          tools = [ stage01Pkgs.binutils.bin ];
+          inputs = [
+            stage01Pkgs.gcc.cc_headers
+            stage01Pkgs.linux-headers
+          ];
+          target = bootstrapTarget;
         };
 
-        zlib = pkgs.zlib.override {
-          type = "minimal";
+        glibc_headers = pkgs.glibc_headers.override {
+          cc = stage02Pkgs.cc_gcc_early;
+          python3 = stage01Pkgs.python_tiny;
+        };
+
+        cc_gcc_glibc_headers = stage0Pkgs.wrapCCNew {
+          compiler = stage01Pkgs.gcc.bin;
+          tools = [ stage01Pkgs.binutils.bin ];
+          inputs = [
+            stage01Pkgs.gcc.cc_headers
+            stage02Pkgs.glibc_headers
+            stage01Pkgs.linux-headers
+          ];
+          target = bootstrapTarget;
+        };
+
+        gcc_lib_glibc_static = pkgs.gcc_lib_glibc_static.override {
+          cc = stage02Pkgs.cc_gcc_glibc_headers;
+        };
+
+        cc_gcc_glibc_nolibc = stage0Pkgs.wrapCCNew {
+          compiler = stage01Pkgs.gcc.bin;
+          tools = [ stage01Pkgs.binutils.bin ];
+          inputs = [
+            stage02Pkgs.gcc_lib_glibc_static
+            stage01Pkgs.gcc.cc_headers
+            stage01Pkgs.linux-headers
+          ];
+          target = bootstrapTarget;
+        };
+
+        glibc = pkgs.glibc.override {
+          type = "bootstrap";
+          cc = stage02Pkgs.cc_gcc_glibc_nolibc;
+          python3 = stage01Pkgs.python_tiny;
+        };
+
+        cc_gcc_glibc_nolibgcc = stage0Pkgs.wrapCCNew {
+          compiler = stage01Pkgs.gcc.bin;
+          tools = [ stage01Pkgs.binutils.bin ];
+          inputs = [
+            stage02Pkgs.gcc_lib_glibc_static
+            stage01Pkgs.gcc.cc_headers
+            stage02Pkgs.glibc
+            stage01Pkgs.linux-headers
+          ];
+          target = bootstrapTarget;
+        };
+
+        gcc_lib_glibc = pkgs.gcc_lib_glibc.override {
+          cc = stage02Pkgs.cc_gcc_glibc_nolibgcc;
+        };
+
+        cc_gcc_glibc_early = stage0Pkgs.wrapCCNew {
+          compiler = stage01Pkgs.gcc.bin;
+          tools = [ stage01Pkgs.binutils.bin ];
+          inputs = [
+            stage02Pkgs.gcc_lib_glibc
+            stage01Pkgs.gcc.cc_headers
+            stage02Pkgs.glibc
+            stage01Pkgs.linux-headers
+          ];
+          target = bootstrapTarget;
+        };
+
+        libstdcxx_glibc = pkgs.libstdcxx_glibc.override {
+          cc = stage02Pkgs.cc_gcc_glibc_early;
+          gcc_lib = stage02Pkgs.gcc_lib_glibc;
+        };
+
+        libunistring_glibc = pkgs.libunistring_glibc.override {
+          cc = stage02Pkgs.cc_gcc_glibc_early;
+        };
+
+        libidn2_glibc = pkgs.libidn2_glibc.override {
+          cc = stage02Pkgs.cc_gcc_glibc_early;
+        };
+
+        cc_gcc_glibc = stage0Pkgs.wrapCCNew {
+          compiler = stage01Pkgs.gcc.bin;
+          tools = [ stage01Pkgs.binutils.bin ];
+          inputs = [
+            stage02Pkgs.libstdcxx_glibc
+            stage02Pkgs.gcc_lib_glibc
+            stage01Pkgs.gcc.cc_headers
+            stage02Pkgs.glibc.cc_reqs
+            stage02Pkgs.glibc
+            stage01Pkgs.linux-headers
+          ];
+          target = bootstrapTarget;
         };
 
         # These are only needed to evaluate
@@ -261,34 +262,39 @@ let
     });
   };
 
-  # This stage is used just to build a libstdcxx which is needed to rebuild
-  # the toolchain again.
+  # This stage is used to rebuild the rest of the toolchain targetting tritonboot
   stage03Pkgs = allPackages {
     inherit targetSystem hostSystem config;
     stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
       name = "stdenv-linux-boot-stage03";
-      cc = stage02Pkgs.cc;
+      cc = stage02Pkgs.cc_gcc_glibc;
+
+      preHook = commonBootstrapOptions.preHook + ''
+        export NIX_SYSTEM_BUILD='${bootstrapTarget}'
+        export NIX_SYSTEM_HOST='${bootstrapTarget}'
+      '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage03Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
-        inherit (pkgs) stdenv cc libstdcxx;
+        inherit (pkgs) stdenv;
 
-        cc_gcc = lib.makeOverridable (import ../../build-support/cc-wrapper) {
-          nativeTools = false;
-          nativeLibc = false;
-          libc = stage02Pkgs.libc;
-          cc = stage01Pkgs.gcc;
-          libcxx = stage03Pkgs.libstdcxx;
-          linux-headers = stage01Pkgs.linux-headers;
-          binutils = stage01Pkgs.binutils;
-          coreutils = bootstrapTools;
-          name = "bootstrap-cc-wrapper-stage03";
-          stdenv = pkgs.stdenv;
+        binutils = pkgs.binutils.override {
+          type = "small";
+          target = finalTarget;
         };
+
+        gcc = pkgs.gcc.override {
+          type = "small";
+          libc = stage02Pkgs.libc;
+        };
+
+        zlib = pkgs.zlib.override {
+          type = "small";
+        };
+
 
         # These are only needed to evaluate
         inherit (stage0Pkgs) fetchurl fetchTritonPatch;
-        inherit (pkgs) gcc;
       };
     });
   };

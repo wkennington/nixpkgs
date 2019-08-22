@@ -5,6 +5,7 @@
 
 , zlib
 
+, target ? null
 , type ? "full"
 }:
 
@@ -17,14 +18,8 @@ let
     optionalAttrs
     optionalString
     stringLength;
-
-  target =
-    if type == "bootstrap" then
-      "x86_64-tritonboot-linux-gnu"
-    else
-      "x86_64-pc-linux-gnu";
 in
-stdenv.mkDerivation (rec {
+stdenv.mkDerivation rec {
   name = "binutils-2.32";
 
   src = fetchurl {
@@ -52,6 +47,9 @@ stdenv.mkDerivation (rec {
     # Fix host lib install directory
     find . -name configure -exec sed -i \
       's,^\([[:space:]]*bfd\(lib\|include\)dir=\).*$,\1"\\''${\2dir}",' {} \;
+
+    # We don't want our ld to reference "dev"
+    sed -i 's,"[^"]*/etc/ld.so.conf","/no-such-path/etc/ld.so.conf",' ld/emultempl/elf32.em
   '';
 
   preConfigure = ''
@@ -68,20 +66,23 @@ stdenv.mkDerivation (rec {
 
   configureFlags = [
     "--exec-prefix=${placeholder "bin"}"
-    "--target=${target}"
+    (optionalString (target != null) "--target=${target}")
     "--enable-shared"
     "--enable-static"
     "--${boolEn (type != "bootstrap")}-nls"
     "--disable-werror"
     "--enable-deterministic-archives"
-    "--${boolEn (type != "bootstrap")}-gold"
+    "--${boolEn (type != "bootstrap")}-gold${optionalString (type != "bootstrap") "=default"}"
     "--${boolWt (type != "bootstrap")}-system-zlib"
     "--with-separate-debug-dir=/no-such-path/debug"
   ];
 
   postInstall = ''
     # Invert ld links so that ld.bfd / ld.gold are the proper tools
-    ld="$bin"/${target}/bin/ld
+    ld="$(echo "$bin"/*/bin/ld)"
+    if [ -z "$ld" ]; then
+      ld="$bin"/bin/ld
+    fi
     for prog in "$ld".*; do
       if [ -L "$prog" ]; then
         if [ "$(readlink -f "$prog")" = "$ld" ]; then
@@ -99,7 +100,7 @@ stdenv.mkDerivation (rec {
 
     # Make all duplicate binaries symlinks
     declare -A progMap
-    for prog in "$bin"/${target}/bin/* "$bin"/bin/*; do
+    for prog in "$bin"/*/bin/* "$bin"/bin/*; do
       if [ -L "$prog" ]; then
         continue
       fi
@@ -128,6 +129,10 @@ stdenv.mkDerivation (rec {
     rm "$dev"/lib/*.la
   '';
 
+  postFixup = ''
+    ln -sv "$bin"/bin "$dev"
+  '';
+
   outputs = [
     "dev"
     "bin"
@@ -148,10 +153,4 @@ stdenv.mkDerivation (rec {
     platforms = with platforms;
       x86_64-linux;
   };
-} // optionalAttrs (type != "bootstrap") {
-  # Ensure we don't depend on anything unexpected
-  allowedReferences = [
-    "out"
-    zlib
-  ] ++ stdenv.cc.runtimeLibcLibs;
-})
+}

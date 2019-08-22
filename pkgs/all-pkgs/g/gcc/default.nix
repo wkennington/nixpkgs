@@ -11,6 +11,7 @@
 , mpfr
 , zlib
 
+, target ? null
 , type ? "full"
 }:
 
@@ -24,12 +25,6 @@ let
     optionalString
     stringLength;
 
-  target =
-    if type == "bootstrap" then
-      "x86_64-tritonboot-linux-gnu"
-    else
-      "x86_64-pc-linux-gnu";
-
   checking =
     if type == "bootstrap" then
       "yes"
@@ -37,7 +32,7 @@ let
       "release";
 
   commonConfigureFlags = [
-    "--target=${target}"
+    (optionalString (target != null) "--target=${target}")
     "--${boolEn (type != "bootstrap")}-gcov"
     "--disable-multilib"
     "--disable-maintainer-mode"
@@ -56,7 +51,7 @@ let
 
   version = "9.2.0";
 in
-stdenv.mkDerivation (rec {
+stdenv.mkDerivation rec {
   name = "gcc-${version}";
 
   src = fetchurl {
@@ -112,6 +107,8 @@ stdenv.mkDerivation (rec {
     mv mpfr-* mpfr
   '';
 
+  prefix = placeholder "bin";
+
   configureFlags = commonConfigureFlags ++ [
     "--enable-host-shared"
     "--${boolEn (type != "bootstrap")}-lto"
@@ -142,47 +139,42 @@ stdenv.mkDerivation (rec {
   ];
 
   postInstall = ''
-    rm "$dev"/bin/*-${version}
+    rm -v "$bin"/bin/*-${version}
   '' + optionalString (type == "bootstrap") ''
     # GCC won't include our libc limits.h if we don't fix it
-    cat ../gcc/{limitx.h,glimits.h,limity.h} >"$dev"/lib/gcc/*/*/include-fixed/limits.h
+    cat ../gcc/{limitx.h,glimits.h,limity.h} >"$bin"/lib/gcc/*/*/include-fixed/limits.h
 
-    rm -r "$dev"/lib/gcc/*/*/install-tools
+    rm -rv "$bin"/lib/gcc/*/*/install-tools
 
     mkdir -p "$cc_headers"
-    mv "$dev"/lib/gcc/*/*/include "$cc_headers"
-    mv "$dev"/lib/gcc/*/*/include-fixed "$cc_headers"
+    mv -v "$bin"/lib/gcc/*/*/include "$cc_headers"
+    mv -v "$bin"/lib/gcc/*/*/include-fixed "$cc_headers"
     mkdir -p "$cc_headers"/nix-support
     echo "-idirafter $cc_headers/include" >>"$cc_headers"/nix-support/cflags-compile
     echo "-idirafter $cc_headers/include-fixed" >>"$cc_headers"/nix-support/cflags-compile
 
-    mkdir -p "$lib"/lib
-    mv "$dev"/lib*/*.so* "$lib"/lib
+    mkdir -p "$lib"/lib "$dev"/lib
+    mv -v "$bin"/lib*/*.so* "$lib"/lib
     ln -sv "$lib"/lib/* "$dev"/lib
 
-    mkdir -p "$bin"/lib
-    mv -v "$dev"/{bin,libexec} "$bin"
-    mv -v "$dev"/lib/gcc "$bin"/lib
+    find "$bin"/lib -name '*'.la
 
+    mv "$bin"/{include,share} "$dev"
+
+    pfx=
+  '' + optionalString (target != null) ''
+    if [ -e "$bin"/bin/${target}-gcc ]; then
+      pfx=${target}-
+    fi
+  '' + ''
     # CC does not get installed for some reason
-    ln -srv "$bin"/bin/${target}-gcc "$bin"/bin/${target}-cc
-
-    # Ensure we have all of the non-prefixed tools
-    #for prog in "$bin"/bin/${target}-*; do
-    #  base="$(basename "$prog")"
-    #  tool="$bin/bin/''${base:${toString (stringLength (target + "-"))}}"
-    #  rm -fv "$tool"
-    #  ln -srv "$prog" "$tool"
-    #done
+    ln -srv "$bin"/bin/''${pfx}gcc "$bin"/bin/''${pfx}cc
 
     find . -not -type d -and -not -name '*'.mvars -and -not -name Makefile -and -not -name '*'.h -delete
     find . -type f -exec sed -i "s,$NIX_BUILD_TOP,/build-dir,g" {} \;
     mkdir -p "$internal"
     tar Jcf "$internal"/build.tar.xz .
-  '' + optionalString (type != "bootstrap") ''
-    # CC does not get installed for some reason
-    ln -srv "$bin"/bin/gcc "$bin"/bin/cc
-  '' + ''
+
     # Hash the tools and deduplicate
     declare -A progMap
     for prog in "$bin"/bin/*; do
@@ -213,7 +205,10 @@ stdenv.mkDerivation (rec {
     find "$dev"/lib* -name '*'.la -delete
   '';
 
-  prefix = placeholder "dev";
+  postFixup = ''
+    ln -sv "$cc_headers" "$dev"/cc_headers
+    ln -sv "$bin"/bin "$dev"
+  '';
 
   outputs = [
     "dev"
@@ -247,16 +242,4 @@ stdenv.mkDerivation (rec {
     platforms = with platforms;
       x86_64-linux;
   };
-} // optionalAttrs (type != "bootstrap") {
-  # Ensure we don't depend on anything unexpected
-  allowedReferences = [
-    "out"
-    gmp
-    isl
-    libc
-    libmpc
-    linux-headers
-    mpfr
-    zlib
-  ] ++ stdenv.cc.runtimeLibcxxLibs;
-})
+}
