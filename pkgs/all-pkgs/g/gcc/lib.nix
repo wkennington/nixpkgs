@@ -25,32 +25,21 @@ in
 
   prefix = placeholder "dev";
 
-  configureFlags = [
-    "--disable-maintainer-mode"
-    "--with-glibc-version=2.30"
-  ] ++ optionals (type == "nolibc") [
+  configureFlags = gcc.commonConfigureFlags ++ optionals (type == "nolibc") [
     "--disable-shared"
     "--disable-gcov"
   ];
 
-  postPatch = optionalString (type == "nolibc") ''
-    # We need a fake limits file to pass configure
-    mkdir -p "$NIX_BUILD_TOP"/include
-    touch "$NIX_BUILD_TOP"/include/limits.h
-    export NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE -isystem $NIX_BUILD_TOP/include"
-  '' + ''
+  postPatch = ''
     mkdir -v build
     cd build
     tar xf '${gcc.internal}'/build.tar.xz
     find . -type f -exec sed -i "s,/build-dir,$NIX_BUILD_TOP,g" {} \;
-    cd */libgcc
+    mkdir -p x/libgcc
+    cd x/libgcc
     configureScript='../../../libgcc/configure'
     chmod +x "$configureScript"
   '';
-
-  makeFlags = optionals (type == "nolibc") [
-    "thread_header=gthr-single.h"
-  ];
 
   postInstall = ''
     mv -v "$dev"/lib/gcc/*/*/* "$dev"/lib
@@ -71,11 +60,22 @@ in
     mkdir -p "$dev"/nix-support
     echo "-B$dev/lib" >>"$dev"/nix-support/cflags-compile
     echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags-compile
+    echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
+  '' + optionalString (type != "nolibc") ''
     # We need to inject this rpath since some of our shared objects are
     # linker scripts like libc.so and our linker script doesn't interpret
     # ld scripts
     echo "-rpath $lib/lib" >>"$dev"/nix-support/ldflags
-    echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
+
+    find . -not -type d -and -not -name '*'.h -delete
+    find . -type f -exec sed -i "s,$NIX_BUILD_TOP,/build-dir,g" {} \;
+    mkdir -p "$internal"
+    cd ../..
+    tar Jcf "$internal"/build.tar.xz x/libgcc
+  '' + optionalString (type == "nolibc") ''
+    # GCC will pull in gcc_eh during linking, but a libc shouldn't need
+    # the exception handling symbols
+    ln -sv libgcc.a "$dev"/lib/libgcc_eh.a
   '';
 
   # We want static libgcc
@@ -84,6 +84,8 @@ in
   outputs = [
     "dev"
     "lib"
+  ] ++ optionals (type != "nolibc") [
+    "internal"
   ];
 
   meta = with stdenv.lib; {

@@ -1,11 +1,12 @@
 { stdenv
+, cc
 , bison
 , glibc
 , linux-headers
 , python3
 }:
 
-stdenv.mkDerivation {
+(stdenv.override { cc = null; }).mkDerivation {
   name = "${glibc.name}-headers";
 
   inherit (glibc)
@@ -13,6 +14,7 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [
     bison
+    cc
     python3
   ];
 
@@ -23,7 +25,6 @@ stdenv.mkDerivation {
   '';
 
   configureFlags = [
-    "--host=${glibc.host}"
     "--disable-maintainer-mode"
     "--enable-kernel=${linux-headers.channel}"
   ];

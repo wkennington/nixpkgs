@@ -30,17 +30,29 @@ let
     else
       "x86_64-pc-linux-gnu";
 
-  nativeHeaders =
-    if type == "bootstrap" then
-      "/no-such-path/native-headers"
-    else
-      "${libc}/include";
-
   checking =
     if type == "bootstrap" then
       "yes"
     else
       "release";
+
+  commonConfigureFlags = [
+    "--target=${target}"
+    "--${boolEn (type != "bootstrap")}-gcov"
+    "--disable-multilib"
+    "--disable-maintainer-mode"
+    "--disable-bootstrap"
+    "--enable-languages=c,c++"
+    "--disable-werror"
+    "--enable-checking=${checking}"
+    "--${boolEn (type != "bootstrap")}-nls"
+    "--enable-cet=auto"
+    "--with-glibc-version=2.28"
+  ];
+
+  runtimeConfigureFlags = [
+    "--${boolWt (type != "bootstrap")}-system-libunwind"
+  ];
 
   version = "9.2.0";
 in
@@ -100,35 +112,12 @@ stdenv.mkDerivation (rec {
     mv mpfr-* mpfr
   '';
 
-  configureFlags = [
-    "--target=${target}"
-    "--${boolEn (type != "bootstrap")}-shared"
+  configureFlags = commonConfigureFlags ++ [
     "--enable-host-shared"
-    "--${boolEn (type != "bootstrap")}-gcov"
-    "--disable-multilib"
-    "--${boolEn (type != "bootstrap")}-threads"
-    "--disable-maintainer-mode"
-    "--disable-bootstrap"
-    "--enable-languages=c,c++"
-    "--${boolEn (type != "bootstrap")}-libsanitizer"
-    (optional (type == "bootstrap") "--disable-libssp")
-    "--${boolEn (type != "bootstrap")}-libquadmath"
-    "--${boolEn (type != "bootstrap")}-libgomp"
-    "--${boolEn (type != "bootstrap")}-libvtv"
-    "--${boolEn (type != "bootstrap")}-libatomic"
-    "--${boolEn (type != "bootstrap")}-libitm"
-    "--${boolEn (type != "bootstrap")}-libmpx"
-    "--${boolEn (type != "bootstrap")}-libhsail-rt"
-    "--${boolEn (type != "bootstrap")}-libstdcxx"
-    "--disable-werror"
-    "--enable-checking=${checking}"
-    "--${boolEn (type != "bootstrap")}-nls"
-    (optional (type == "bootstrap") "--disable-decimal-float")
     "--${boolEn (type != "bootstrap")}-lto"
-    "--with-glibc-version=2.28"
-    (optional (type == "bootstrap") "--without-headers")
-    "--${boolWt (type != "bootstrap")}-system-libunwind"
+    "--enable-linker-build-id"
     "--${boolWt (type != "bootstrap")}-system-zlib"
+    (optional (type == "bootstrap") "--without-headers")
     "--with-local-prefix=/no-such-path/local-prefix"
     "--with-native-system-header-dir=/no-such-path/native-headers"
     "--with-debug-prefix-map=$NIX_BUILD_TOP=/no-such-path"
@@ -142,32 +131,9 @@ stdenv.mkDerivation (rec {
 
   preBuild = ''
     sed -i '/^TOPLEVEL_CONFIGURE_ARGUMENTS=/d' Makefile
-  '' + optionalString (type != "bootstrap") ''
-    # Our compiler needs to get libc objects
-    # Normally using -B${libc}/lib works but libtool filters
-    # that out for some of the runtime library builds
-    mkdir gcc
-    ln -sv "${libc}"/lib/*.o gcc/
-
-    # Our libc needs linux/limits.h for its limits.h
-    makeFlagsArray+=("CPPFLAGS_FOR_TARGET=-idirafter ${linux-headers}/include")
-    flags=(
-      "-idirafter" "${linux-headers}/include"
-
-      # Libc library configs
-      "-L${libc}/lib"
-      "-Wl,-dynamic-linker=$(echo ${libc}/lib/ld-linux-*.so*)"
-      "-Wl,-rpath=${libc}/lib"
-    )
-    oldifs="$IFS"
-    IFS=" "
-    makeFlagsArray+=("CFLAGS_FOR_TARGET=''${flags[*]}")
-    makeFlagsArray+=("CXXFLAGS_FOR_TARGET=''${flags[*]}")
-    makeFlagsArray+=("LDFLAGS_FOR_TARGET=''${flags[*]}")
-    IFS="$oldifs"
   '';
 
-  buildTargets = [
+  buildFlags = [
     "all-host"
   ];
 
@@ -191,7 +157,6 @@ stdenv.mkDerivation (rec {
     echo "-idirafter $cc_headers/include-fixed" >>"$cc_headers"/nix-support/cflags-compile
 
     mkdir -p "$lib"/lib
-    ls -la "$dev" "$dev"/lib*
     mv "$dev"/lib*/*.so* "$lib"/lib
     ln -sv "$lib"/lib/* "$dev"/lib
 
@@ -250,8 +215,6 @@ stdenv.mkDerivation (rec {
 
   prefix = placeholder "dev";
 
-  NIX_LDFLAGS = "-rpath ${placeholder "lib"}/lib";
-
   outputs = [
     "dev"
     "bin"
@@ -266,7 +229,7 @@ stdenv.mkDerivation (rec {
   disableStatic = false;
 
   passthru = {
-    inherit target version;
+    inherit target version commonConfigureFlags;
     impl = "gcc";
 
     cc = "gcc";

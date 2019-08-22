@@ -6,7 +6,7 @@
 , gcc_lib_glibc
 , libidn2_glibc
 , linux-headers
-, python_tiny
+, python3
 
 , type ? "full"
 }:
@@ -34,7 +34,7 @@ in
   nativeBuildInputs = [
     bison
     cc
-    python_tiny
+    python3
   ];
 
   # Some of the tools depend on a shell. Set to impure /bin/sh to

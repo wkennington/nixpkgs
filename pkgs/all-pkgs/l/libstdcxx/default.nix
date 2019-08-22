@@ -1,37 +1,65 @@
 { stdenv
+, cc
 , fetchurl
 , gcc
+, gcc_lib
 }:
 
-stdenv.mkDerivation rec {
+(stdenv.override { cc = null; }).mkDerivation rec {
   name = "libstdcxx-${gcc.version}";
 
   src = gcc.src;
 
   patches = gcc.patches;
 
-  configureFlags = [
-    "--disable-multilib"
+  nativeBuildInputs = [
+    cc
   ];
+
+  prefix = placeholder "dev";
+
+  configureFlags = gcc.commonConfigureFlags;
 
   preConfigure = ''
     mkdir -v build
     cd build
-    configureScript='../libstdc++-v3/configure'
+    tar xf '${gcc_lib.internal}'/build.tar.xz
+    find . -type f -exec sed -i "s,/build-dir,$NIX_BUILD_TOP,g" {} \;
+    mkdir -p x/libstdc++-v3
+    cd x/libstdc++-v3
+    configureScript='../../../libstdc++-v3/configure'
+    chmod +x "$configureScript"
+  '';
+
+  NIX_DEBUG = true;
+
+  postConfigure = ''
+    cat config.log
+    exit 1
   '';
 
   postInstall = ''
-    rm -r "$out"/share
+    rm -r "$dev"/share
+
+    mkdir -p "$lib"/lib
+    mv "$dev"/lib*/*.so* "$lib"/lib
+    mv "$lib"/lib/*.py "$dev"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib
+
+    mkdir -p "$dev"/nix-support
+    cxxinc="$(dirname "$(dirname "$dev"/include/c++/*/*/bits/c++config.h)")"
+    echo "-idirafter $(dirname "$cxxinc")" >>"$dev"/nix-support/cxxflags-compile
+    echo "-idirafter $cxxinc" >>"$dev"/nix-support/cxxflags-compile
+    echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
   '';
+
+  outputs = [
+    "dev"
+    "lib"
+  ];
 
   # We want static libstdc++
   disableStatic = false;
-
-  # Ensure we don't depend on anything unexpected
-  allowedReferences = [
-    "out"
-    stdenv.cc.libc
-  ];
 
   meta = with stdenv.lib; {
     maintainers = with maintainers; [

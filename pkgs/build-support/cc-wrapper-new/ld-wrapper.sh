@@ -30,7 +30,7 @@ fi
 params=($NIX_LDFLAGS_BEFORE)
 : ${NIX_LD_HARDEN=1}
 
-if [ "${NIX_LD_ADD_RPATH-1}" = "1" ]; then
+if [ "${NIX_LD_NEW_DTAGS-1}" = "1" ]; then
   params+=('--enable-new-dtags')
 fi
 if [ "${NIX_LD_NOEXECSTACK-$NIX_LD_HARDEN}" = "1" ]; then

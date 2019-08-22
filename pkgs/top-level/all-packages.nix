@@ -1583,6 +1583,8 @@ gcab = callPackage ../all-pkgs/g/gcab { };
 
 gcc = callPackage ../all-pkgs/g/gcc { };
 
+gcc_lib = null;
+
 gcc_lib_glibc = callPackage ../all-pkgs/g/gcc/lib.nix {
   cc = wrapCCNew {
     compiler = pkgs.gcc.bin;
@@ -1693,23 +1695,7 @@ glib = callPackage ../all-pkgs/g/glib { };
 
 glibc = callPackage ../all-pkgs/g/glibc { };
 
-glibc_headers = callPackage ../all-pkgs/g/glibc/headers.nix {
-  stdenv = pkgs.stdenv.override {
-    cc = pkgs.wrapCCNew {
-      compiler = pkgs.gcc;
-      tools = [ pkgs.binutils ];
-      inputs = [
-        (pkgs.stdenv.mkDerivation {
-          name = "linux-headers";
-          buildCommand = ''
-            mkdir -p "$out"/nix-support
-            echo "-idirafter ${pkgs.linux-headers}/include" >"$out"/nix-support/cflags-compile
-          '';
-        })
-      ];
-    };
-  };
-};
+glibc_headers = callPackage ../all-pkgs/g/glibc/headers.nix { };
 
 glibc_locales = callPackage ../all-pkgs/g/glibc/locales.nix { };
 
@@ -2767,6 +2753,8 @@ libssh = callPackage ../all-pkgs/l/libssh { };
 libssh2 = callPackage ../all-pkgs/l/libssh2 { };
 
 libstdcxx = callPackage ../all-pkgs/l/libstdcxx { };
+
+libstdcxx_glibc = callPackage ../all-pkgs/l/libstdcxx { };
 
 libstoragemgmt = callPackage ../all-pkgs/l/libstoragemgmt { };
 

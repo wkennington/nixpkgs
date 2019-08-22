@@ -23,14 +23,22 @@ stdenv.mkDerivation rec {
     sha256 = "4ff941449631ace0d4d203e3483be9dbc9da454084111f97ea0a2114e19bf066";
   };
 
-  postInstall = optionalString (type != "full") ''
-    rm -r "$out"/share
+  prefix = placeholder "dev";
+
+  addHost = false;
+
+  postInstall = ''
+    mkdir -p "$lib"/lib
+    mv "$dev"/lib*/*.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib
+  '' + optionalString (type != "full") ''
+    rm -r "$dev"/share
   '';
 
-  # Ensure we don't depend on anything unexpected
-  allowedReferences = [
-    "out"
-  ] ++ stdenv.cc.runtimeLibcLibs;
+  outputs = [
+    "dev"
+    "lib"
+  ];
 
   passthru = {
     srcVerification = fetchurl rec {
