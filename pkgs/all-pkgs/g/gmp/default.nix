@@ -31,6 +31,8 @@ stdenv.mkDerivation rec {
     gnum4
   ];
 
+  prefix = placeholder "dev";
+
   configureFlags = [
     "--with-pic"
     "--enable-fat"
@@ -39,8 +41,17 @@ stdenv.mkDerivation rec {
 
   # Only provides some info files
   postInstall = ''
-    rm -r "$out"/share
+    rm -r "$dev"/share
+
+    mkdir -p "$lib"/lib
+    mv -v "$dev"/lib*/*.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib
   '';
+
+  outputs = [
+    "dev"
+    "lib"
+  ];
 
   passthru = {
     srcVerification = fetchurl rec {
@@ -52,12 +63,6 @@ stdenv.mkDerivation rec {
       outputHash = "87b565e89a9a684fe4ebeeddb8399dce2599f9c9049854ca8c0dfbdea0e21912";
     };
   };
-
-  # Ensure we don't depend on anything unexpected
-  allowedReferences = [
-    "out"
-  ] ++ stdenv.cc.runtimeLibcLibs
-    ++ optionals cxx stdenv.cc.runtimeLibcxxLibs;
 
   meta = with stdenv.lib; {
     homepage = "http://gmplib.org/";

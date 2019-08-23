@@ -6,10 +6,12 @@
 # compiler and the linker just "work".
 
 { stdenv
+, lib
 , coreutils
 }:
 
-{ compiler
+lib.makeOverridable
+({ compiler
 , target ? ""
 , tools ? [ ]
 , inputs ? [ ]
@@ -131,4 +133,4 @@
 
   allowSubstitutes = false;
   preferLocalBuild = true;
-}
+})

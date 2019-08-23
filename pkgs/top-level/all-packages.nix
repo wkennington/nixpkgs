@@ -843,99 +843,78 @@ cairomm = callPackage ../all-pkgs/c/cairomm { };
 caribou = callPackage ../all-pkgs/c/caribou { };
 
 cc = null;
-cc_gcc = pkgs.wrapCC pkgs.gcc null;
-cc_gcc_new = pkgs.wrapCCNew {
-  compiler = pkgs.gcc;
-  tools = [ pkgs.binutils ];
+cc_early = null;
+
+cc_clang_early = pkgs.wrapCCNew {
+  compiler = pkgs.clang.bin;
+  tools = [ pkgs.llvm.bin ];
   inputs = [
-    (pkgs.stdenv.mkDerivation {
-      name = "libstdcxx";
-      buildCommand = ''
-        mkdir -p "$out"/nix-support
-        exec 3>"$out"/nix-support/cxxflags-compile
-        echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*)" >&3
-        echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/*-linux-*)" >&3
-        echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/backward)" >&3
-      '';
-    })
-    (pkgs.stdenv.mkDerivation {
-      name = "gcc-headers";
-      buildCommand = ''
-        mkdir -p "$out"/nix-support
-        exec 3>"$out"/nix-support/cflags-compile
-        echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include)" >&3
-        echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include-fixed)" >&3
-      '';
-    })
-    (pkgs.stdenv.mkDerivation {
-      name = "gcclib";
-      buildCommand = ''
-        mkdir -p "$out"/nix-support
-        libs="$(echo '${pkgs.gcc}'/lib/gcc/*/*)"
-        echo "-B$libs" >"$out"/nix-support/cflags-compile
-        echo "-L$libs -L${pkgs.gcc}/lib" >"$out"/nix-support/ldflags
-      '';
-    })
-    pkgs.musl
-    (pkgs.stdenv.mkDerivation {
-      name = "linux-headers";
-      buildCommand = ''
-        mkdir -p "$out"/nix-support
-        echo "-idirafter ${pkgs.linux-headers}/include" >"$out"/nix-support/cflags-compile
-      '';
-    })
+    pkgs.clang.cc_headers
+    pkgs.linux-headers
   ];
 };
-cc_clang = pkgs.wrapCCNew {
-  compiler = pkgs.clang.bin;
-  tools = [
-    pkgs.binutils
-  ];
+
+cc_gcc_early = pkgs.wrapCCNew {
+  compiler = pkgs.gcc.bin;
+  tools = [ pkgs.binutils.bin ];
   inputs = [
-    (pkgs.stdenv.mkDerivation {
-      name = "libstdcxx";
-      buildCommand = ''
-        mkdir -p "$out"/nix-support
-        exec 3>"$out"/nix-support/cxxflags-compile
-        echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*)" >&3
-        echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/*-linux-*)" >&3
-        echo "-idirafter $(echo '${pkgs.gcc}'/include/c++/*/backward)" >&3
-      '';
-    })
-    (pkgs.stdenv.mkDerivation {
-      name = "clang-headers";
-      buildCommand = ''
-        mkdir -p "$out"/nix-support
-        echo "-idirafter ${pkgs.clang.cc_headers}/include" >"$out"/nix-support/cflags-compile
-      '';
-    })
-    (pkgs.stdenv.mkDerivation {
-      name = "gcclib";
-      buildCommand = ''
-        mkdir -p "$out"/nix-support
-        libs="$(echo '${pkgs.gcc}'/lib/gcc/*/*)"
-        echo "-B$libs" >"$out"/nix-support/cflags-compile
-        echo "-L$libs -L${pkgs.gcc}/lib" >"$out"/nix-support/ldflags
-      '';
-    })
-    (pkgs.stdenv.mkDerivation {
-      name = "glibc";
-      buildCommand = ''
-        mkdir -p "$out"/nix-support
-        echo "-idirafter ${pkgs.glibc}/include" >"$out"/nix-support/cflags-compile
-        echo "-B${pkgs.glibc}/lib" >"$out"/nix-support/cflags-link
-        dyld="$(echo '${pkgs.glibc}'/lib/ld-*.so)"
-        echo "-dynamic-linker $dyld" >"$out"/nix-support/ldflags-before
-        echo "-L${pkgs.glibc}/lib -L${pkgs.libidn2}/lib --push-state --no-as-needed -lidn2 -lgcc_s --pop-state" >"$out"/nix-support/ldflags
-      '';
-    })
-    (pkgs.stdenv.mkDerivation {
-      name = "linux-headers";
-      buildCommand = ''
-        mkdir -p "$out"/nix-support
-        echo "-idirafter ${pkgs.linux-headers}/include" >"$out"/nix-support/cflags-compile
-      '';
-    })
+    pkgs.gcc.cc_headers
+    pkgs.linux-headers
+  ];
+};
+
+cc_gcc_glibc_headers = pkgs.wrapCCNew {
+  compiler = pkgs.gcc.bin;
+  tools = [ pkgs.binutils.bin ];
+  inputs = [
+    pkgs.gcc.cc_headers
+    pkgs.glibc_gcc_headers
+    pkgs.linux-headers
+  ];
+};
+
+cc_gcc_glibc_nolibc = pkgs.wrapCCNew {
+  compiler = pkgs.gcc.bin;
+  tools = [ pkgs.binutils.bin ];
+  inputs = [
+    pkgs.gcc_lib_glibc_static
+    pkgs.gcc.cc_headers
+    pkgs.linux-headers
+  ];
+};
+
+cc_gcc_glibc_nolibgcc = pkgs.wrapCCNew {
+  compiler = pkgs.gcc.bin;
+  tools = [ pkgs.binutils.bin ];
+  inputs = [
+    pkgs.gcc_lib_glibc_static
+    pkgs.gcc.cc_headers
+    pkgs.glibc_lib
+    pkgs.linux-headers
+  ];
+};
+
+cc_gcc_glibc_early = pkgs.wrapCCNew {
+  compiler = pkgs.gcc.bin;
+  tools = [ pkgs.binutils.bin ];
+  inputs = [
+    pkgs.gcc_lib_glibc
+    pkgs.gcc.cc_headers
+    pkgs.glibc_lib
+    pkgs.linux-headers
+  ];
+};
+
+cc_gcc_glibc = pkgs.wrapCCNew {
+  compiler = pkgs.gcc.bin;
+  tools = [ pkgs.binutils.bin ];
+  inputs = [
+    pkgs.gcc_cxx_glibc
+    pkgs.gcc_lib_glibc
+    pkgs.gcc.cc_headers
+    pkgs.glibc_lib.cc_reqs
+    pkgs.glibc_lib
+    pkgs.linux-headers
   ];
 };
 
@@ -1583,32 +1562,18 @@ gcab = callPackage ../all-pkgs/g/gcab { };
 
 gcc = callPackage ../all-pkgs/g/gcc { };
 
-gcc_lib = null;
-
 gcc_lib_glibc = callPackage ../all-pkgs/g/gcc/lib.nix {
-  cc = wrapCCNew {
-    compiler = pkgs.gcc.bin;
-    tools = [ pkgs.binutils.bin ];
-    inputs = [
-      pkgs.gcc_lib_nolibc
-      pkgs.gcc.cc_headers
-      pkgs.glibc
-      pkgs.linux-headers
-    ];
-  };
+  cc = pkgs.cc_gcc_glibc_nolibgcc;
 };
 
 gcc_lib_glibc_static = callPackage ../all-pkgs/g/gcc/lib.nix {
-  cc = wrapCCNew {
-    compiler = pkgs.gcc.bin;
-    tools = [ pkgs.binutils.bin ];
-    inputs = [
-      pkgs.gcc.cc_headers
-      pkgs.glibc_headers
-      pkgs.linux-headers
-    ];
-  };
+  cc = pkgs.cc_gcc_glibc_headers;
   type = "nolibc";
+};
+
+gcc_cxx_glibc = callPackage ../all-pkgs/g/gcc/cxx.nix {
+  cc = pkgs.cc_gcc_glibc_early;
+  gcc_lib = pkgs.gcc_lib_glibc;
 };
 
 gcc_lib_musl = callPackage ../all-pkgs/g/gcc/lib.nix {
@@ -1710,9 +1675,19 @@ glfw = callPackage ../all-pkgs/g/glfw { };
 
 glib = callPackage ../all-pkgs/g/glib { };
 
-glibc = callPackage ../all-pkgs/g/glibc { };
+glibc_lib = callPackage ../all-pkgs/g/glibc {
+  cc = pkgs.cc_gcc_glibc_nolibc;
+};
 
-glibc_headers = callPackage ../all-pkgs/g/glibc/headers.nix { };
+glibc_clang_headers = callPackage ../all-pkgs/g/glibc/headers.nix {
+  cc = pkgs.cc_clang_early;
+};
+
+glibc_gcc_headers = callPackage ../all-pkgs/g/glibc/headers.nix {
+  cc = pkgs.cc_gcc_early;
+};
+
+glibc_progs = callPackage ../all-pkgs/g/glib/progs.nix { };
 
 glibc_locales = callPackage ../all-pkgs/g/glibc/locales.nix { };
 
@@ -2551,16 +2526,7 @@ libidn = callPackage ../all-pkgs/l/libidn { };
 libidn2 = callPackage ../all-pkgs/l/libidn2 { };
 
 libidn2_glibc = callPackage ../all-pkgs/l/libidn2 {
-  cc = stage0Pkgs.wrapCCNew {
-    compiler = pkgs.gcc.bin;
-    tools = [ pkgs.binutils.bin ];
-    inputs = [
-      pkgs.gcc_lib_nolibc
-      pkgs.gcc.cc_headers
-      pkgs.glibc
-      pkgs.linux-headers
-    ];
-  };
+  cc = pkgs.cc_gcc_glibc_early;
   libunistring = pkgs.libunistring_glibc;
 };
 
@@ -2769,10 +2735,6 @@ libssh = callPackage ../all-pkgs/l/libssh { };
 
 libssh2 = callPackage ../all-pkgs/l/libssh2 { };
 
-libstdcxx = callPackage ../all-pkgs/l/libstdcxx { };
-
-libstdcxx_glibc = callPackage ../all-pkgs/l/libstdcxx { };
-
 libstoragemgmt = callPackage ../all-pkgs/l/libstoragemgmt { };
 
 libtasn1 = callPackage ../all-pkgs/l/libtasn1 { };
@@ -2813,16 +2775,7 @@ libunique = callPackage ../all-pkgs/l/libunique { };
 libunistring = callPackage ../all-pkgs/l/libunistring { };
 
 libunistring_glibc = callPackage ../all-pkgs/l/libunistring {
-  cc = stage0Pkgs.wrapCCNew {
-    compiler = pkgs.gcc.bin;
-    tools = [ pkgs.binutils.bin ];
-    inputs = [
-      pkgs.gcc_lib_nolibc
-      pkgs.gcc.cc_headers
-      pkgs.glibc
-      pkgs.linux-headers
-    ];
-  };
+  cc = pkgs.cc_gcc_glibc_early;
 };
 
 libunwind = callPackage ../all-pkgs/l/libunwind { };

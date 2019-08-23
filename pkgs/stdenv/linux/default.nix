@@ -106,7 +106,7 @@ let
   stage01Pkgs = allPackages {
     inherit targetSystem hostSystem config;
     stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
-      name = "stdenv-linux-boot-stage01";
+      name = "stdenv-linux-boot-stage0.1";
       cc = stage0Pkgs.cc_gcc;
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage01Pkgs is missing package definition for `${n}`") pkgs) // {
@@ -139,144 +139,75 @@ let
   };
 
   # This stage produces all of the target libraries needed for a working compiler
-  stage02Pkgs = allPackages {
+  stage1Pkgs = allPackages {
     inherit targetSystem hostSystem config;
     stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
-      name = "stdenv-linux-boot-stage02";
+      name = "stdenv-linux-boot-stage1";
       cc = null;
 
       preHook = commonBootstrapOptions.preHook + ''
         export NIX_SYSTEM_HOST='${bootstrapTarget}'
       '';
 
-      overrides = pkgs: (lib.mapAttrs (n: _: throw "stage02Pkgs is missing package definition for `${n}`") pkgs) // {
+      overrides = pkgs: (lib.mapAttrs (n: _: throw "stage1Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
-        inherit (pkgs) stdenv;
-        inherit (stage01Pkgs) gcc linux-headers bison;
+        inherit (stage01Pkgs) binutils gcc linux-headers bison;
+        inherit (pkgs) stdenv gcc_lib_glibc_static gcc_lib_glibc gcc_cxx_glibc libidn2_glibc libunistring_glibc;
 
-        cc_gcc_early = stage0Pkgs.wrapCCNew {
-          compiler = stage01Pkgs.gcc.bin;
-          tools = [ stage01Pkgs.binutils.bin ];
-          inputs = [
-            stage01Pkgs.gcc.cc_headers
-            stage01Pkgs.linux-headers
-          ];
+        cc_gcc_early = pkgs.cc_gcc_early.override {
           target = bootstrapTarget;
         };
 
-        glibc_headers = pkgs.glibc_headers.override {
-          cc = stage02Pkgs.cc_gcc_early;
+        glibc_gcc_headers = pkgs.glibc_gcc_headers.override {
           python3 = stage01Pkgs.python_tiny;
         };
 
-        cc_gcc_glibc_headers = stage0Pkgs.wrapCCNew {
-          compiler = stage01Pkgs.gcc.bin;
-          tools = [ stage01Pkgs.binutils.bin ];
-          inputs = [
-            stage01Pkgs.gcc.cc_headers
-            stage02Pkgs.glibc_headers
-            stage01Pkgs.linux-headers
-          ];
+        cc_gcc_glibc_headers = pkgs.cc_gcc_glibc_headers.override {
           target = bootstrapTarget;
         };
 
-        gcc_lib_glibc_static = pkgs.gcc_lib_glibc_static.override {
-          cc = stage02Pkgs.cc_gcc_glibc_headers;
-        };
-
-        cc_gcc_glibc_nolibc = stage0Pkgs.wrapCCNew {
-          compiler = stage01Pkgs.gcc.bin;
-          tools = [ stage01Pkgs.binutils.bin ];
-          inputs = [
-            stage02Pkgs.gcc_lib_glibc_static
-            stage01Pkgs.gcc.cc_headers
-            stage01Pkgs.linux-headers
-          ];
+        cc_gcc_glibc_nolibc = pkgs.cc_gcc_glibc_nolibc.override {
           target = bootstrapTarget;
         };
 
-        glibc = pkgs.glibc.override {
+        glibc_lib = pkgs.glibc_lib.override {
           type = "bootstrap";
-          cc = stage02Pkgs.cc_gcc_glibc_nolibc;
           python3 = stage01Pkgs.python_tiny;
         };
 
-        cc_gcc_glibc_nolibgcc = stage0Pkgs.wrapCCNew {
-          compiler = stage01Pkgs.gcc.bin;
-          tools = [ stage01Pkgs.binutils.bin ];
-          inputs = [
-            stage02Pkgs.gcc_lib_glibc_static
-            stage01Pkgs.gcc.cc_headers
-            stage02Pkgs.glibc
-            stage01Pkgs.linux-headers
-          ];
+        cc_gcc_glibc_nolibgcc = pkgs.cc_gcc_glibc_nolibgcc.override {
           target = bootstrapTarget;
         };
 
-        gcc_lib_glibc = pkgs.gcc_lib_glibc.override {
-          cc = stage02Pkgs.cc_gcc_glibc_nolibgcc;
-        };
-
-        cc_gcc_glibc_early = stage0Pkgs.wrapCCNew {
-          compiler = stage01Pkgs.gcc.bin;
-          tools = [ stage01Pkgs.binutils.bin ];
-          inputs = [
-            stage02Pkgs.gcc_lib_glibc
-            stage01Pkgs.gcc.cc_headers
-            stage02Pkgs.glibc
-            stage01Pkgs.linux-headers
-          ];
+        cc_gcc_glibc_early = pkgs.cc_gcc_glibc_early.override {
           target = bootstrapTarget;
         };
 
-        libstdcxx_glibc = pkgs.libstdcxx_glibc.override {
-          cc = stage02Pkgs.cc_gcc_glibc_early;
-          gcc_lib = stage02Pkgs.gcc_lib_glibc;
-        };
-
-        libunistring_glibc = pkgs.libunistring_glibc.override {
-          cc = stage02Pkgs.cc_gcc_glibc_early;
-        };
-
-        libidn2_glibc = pkgs.libidn2_glibc.override {
-          cc = stage02Pkgs.cc_gcc_glibc_early;
-        };
-
-        cc_gcc_glibc = stage0Pkgs.wrapCCNew {
-          compiler = stage01Pkgs.gcc.bin;
-          tools = [ stage01Pkgs.binutils.bin ];
-          inputs = [
-            stage02Pkgs.libstdcxx_glibc
-            stage02Pkgs.gcc_lib_glibc
-            stage01Pkgs.gcc.cc_headers
-            stage02Pkgs.glibc.cc_reqs
-            stage02Pkgs.glibc
-            stage01Pkgs.linux-headers
-          ];
+        cc_gcc_glibc = pkgs.cc_gcc_glibc.override {
           target = bootstrapTarget;
         };
 
         # These are only needed to evaluate
-        inherit (stage0Pkgs) fetchurl fetchTritonPatch;
+        inherit (stage0Pkgs) fetchurl fetchTritonPatch wrapCCNew;
       };
     });
   };
 
   # This stage is used to rebuild the rest of the toolchain targetting tritonboot
-  stage03Pkgs = allPackages {
+  stage11Pkgs = allPackages {
     inherit targetSystem hostSystem config;
     stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
-      name = "stdenv-linux-boot-stage03";
-      cc = stage02Pkgs.cc_gcc_glibc;
+      name = "stdenv-linux-boot-stage1.1";
+      cc = stage1Pkgs.cc_gcc_glibc;
 
       preHook = commonBootstrapOptions.preHook + ''
         export NIX_SYSTEM_BUILD='${bootstrapTarget}'
         export NIX_SYSTEM_HOST='${bootstrapTarget}'
       '';
 
-      overrides = pkgs: (lib.mapAttrs (n: _: throw "stage03Pkgs is missing package definition for `${n}`") pkgs) // {
+      overrides = pkgs: (lib.mapAttrs (n: _: throw "stage11Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
-        inherit (pkgs) stdenv;
+        inherit (pkgs) stdenv gmp gnum4;
 
         binutils = pkgs.binutils.override {
           type = "small";
@@ -285,88 +216,12 @@ let
 
         gcc = pkgs.gcc.override {
           type = "small";
-          libc = stage02Pkgs.libc;
         };
 
         zlib = pkgs.zlib.override {
           type = "small";
         };
 
-
-        # These are only needed to evaluate
-        inherit (stage0Pkgs) fetchurl fetchTritonPatch;
-      };
-    });
-  };
-
-  # Rebuild the c / c++ toolchain based on our new libc + libstdcxx.
-  stage11Pkgs = allPackages {
-    inherit targetSystem hostSystem config;
-    stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
-      name = "stdenv-linux-boot-stage11";
-      cc = stage03Pkgs.cc;
-
-      overrides = pkgs: (lib.mapAttrs (n: _: throw "stage11Pkgs is missing package definition for `${n}`") pkgs) // {
-        inherit lib;
-        inherit (stage01Pkgs) linux-headers;
-        inherit (pkgs) stdenv libmpc mpfr isl isl_0-21;
-
-        gmp = pkgs.gmp.override {
-          gnum4 = stage01Pkgs.gnum4;
-          cxx = false;
-        };
-
-        binutils = pkgs.binutils.override {
-          type = "small";
-        };
-
-        gcc = pkgs.gcc.override {
-          type = "small";
-          libc = stage02Pkgs.libc;
-        };
-
-        zlib = pkgs.zlib.override {
-          type = "small";
-        };
-
-        # These are only needed to evaluate
-        inherit (stage0Pkgs) fetchurl fetchTritonPatch;
-      };
-    });
-  };
-
-  # Rebuild the libc based on our second pass compiler and linker
-  stage12Pkgs = allPackages {
-    inherit targetSystem hostSystem config;
-    stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
-      name = "stdenv-linux-boot-stage12";
-      # Make sure we don't use the wrong compiler
-      cc = null;
-
-      overrides = pkgs: (lib.mapAttrs (n: _: throw "stage12Pkgs is missing package definition for `${n}`") pkgs) // {
-        inherit lib;
-        inherit (stage11Pkgs) binutils gcc;
-        inherit (pkgs) stdenv cc libc;
-
-        glibc = pkgs.glibc.override {
-          type = "small";
-          bison = stage01Pkgs.bison;
-          python_tiny = stage01Pkgs.python_tiny;
-          linux-headers = stage01Pkgs.linux-headers;
-        };
-
-        cc_gcc = lib.makeOverridable (import ../../build-support/cc-wrapper) {
-          nativeTools = false;
-          nativeLibc = false;
-          libc = stage12Pkgs.libc;
-          cc = stage11Pkgs.gcc;
-          linux-headers = stage01Pkgs.linux-headers;
-          libgcc = stage11Pkgs.gcc;
-          binutils = stage11Pkgs.binutils;
-          coreutils = bootstrapTools;
-          name = "bootstrap-cc-wrapper-stage12";
-          stdenv = pkgs.stdenv;
-        };
 
         # These are only needed to evaluate
         inherit (stage0Pkgs) fetchurl fetchTritonPatch;
@@ -379,7 +234,7 @@ let
     inherit targetSystem hostSystem config;
     stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
       name = "stdenv-linux-boot-stage13";
-      cc = stage12Pkgs.cc;
+      cc = stage1Pkgs.cc;
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage13Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
@@ -434,7 +289,7 @@ let
         cc_gcc = lib.makeOverridable (import ../../build-support/cc-wrapper) {
           nativeTools = false;
           nativeLibc = false;
-          libc = stage12Pkgs.libc;
+          libc = stage1Pkgs.libc;
           cc = stage11Pkgs.gcc;
           linux-headers = stage01Pkgs.linux-headers;
           libgcc = stage11Pkgs.gcc;
@@ -645,9 +500,8 @@ let
   };
 in {
   inherit
-    bootstrapTools stage0Pkgs
-    stage01Pkgs stage02Pkgs stage03Pkgs
-    stage11Pkgs stage12Pkgs stage13Pkgs
+    bootstrapTools stage0Pkgs stage01Pkgs
+    stage1Pkgs stage11Pkgs stage13Pkgs
     stage21Pkgs stage22Pkgs stage23Pkgs
     stdenv;
 }

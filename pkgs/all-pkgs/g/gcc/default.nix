@@ -144,7 +144,13 @@ stdenv.mkDerivation rec {
     # GCC won't include our libc limits.h if we don't fix it
     cat ../gcc/{limitx.h,glimits.h,limity.h} >"$bin"/lib/gcc/*/*/include-fixed/limits.h
 
+    find "$bin" -name '*'.la -delete
+
     rm -rv "$bin"/lib/gcc/*/*/install-tools
+    mkdir -p "$plugin_dev" "$plugin_lib/lib"
+    mv -v "$bin"/lib/gcc/*/*/plugin "$plugin_dev"
+    mv -v "$plugin_dev"/plugin/*.so* "$plugin_lib"/lib
+    ln -sv "$plugin_lib"/lib/* "$plugin_dev"/plugin
 
     mkdir -p "$cc_headers"
     mv -v "$bin"/lib/gcc/*/*/include "$cc_headers"
@@ -157,9 +163,8 @@ stdenv.mkDerivation rec {
     mv -v "$bin"/lib*/*.so* "$lib"/lib
     ln -sv "$lib"/lib/* "$dev"/lib
 
-    find "$bin"/lib -name '*'.la
-
     mv "$bin"/{include,share} "$dev"
+    rmdir "$bin"/lib/gcc/*/* "$bin"/lib/gcc/* "$bin"/lib/gcc "$bin"/lib
 
     pfx=
   '' + optionalString (target != null) ''
@@ -199,15 +204,13 @@ stdenv.mkDerivation rec {
   preFixup = optionalString (type != "full") ''
     # Remove unused files from bootstrap
     rm -r "$dev"/share
-  '' + ''
-    # We don't need the libtool archive files so purge them
-    # TODO: Fixup libtool archives so we don't reference an old compiler
-    find "$dev"/lib* -name '*'.la -delete
   '';
 
+  # Ensure we don't have bad dependencies
   postFixup = ''
     ln -sv "$cc_headers" "$dev"/cc_headers
     ln -sv "$bin"/bin "$dev"
+    ln -sv "$plugin_dev" "$dev"/plugin_dev
   '';
 
   outputs = [
@@ -215,12 +218,13 @@ stdenv.mkDerivation rec {
     "bin"
     "lib"
     "cc_headers"
+    "plugin_dev"
+    "plugin_lib"
     "internal"
   ] ++ optionals (type == "full") [
     "man"
   ];
 
-  # We want static libgcc_s
   disableStatic = false;
 
   passthru = {

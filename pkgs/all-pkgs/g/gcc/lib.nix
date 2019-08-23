@@ -2,7 +2,6 @@
 , cc
 , fetchurl
 , gcc
-, libc
 
 , type ? null
 }:

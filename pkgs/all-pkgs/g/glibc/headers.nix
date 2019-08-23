@@ -1,15 +1,15 @@
 { stdenv
 , cc
 , bison
-, glibc
+, glibc_lib
 , linux-headers
 , python3
 }:
 
 (stdenv.override { cc = null; }).mkDerivation {
-  name = "${glibc.name}-headers";
+  name = "${glibc_lib.name}-headers";
 
-  inherit (glibc)
+  inherit (glibc_lib)
     src;
 
   nativeBuildInputs = [

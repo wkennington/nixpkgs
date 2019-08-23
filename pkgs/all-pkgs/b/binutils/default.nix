@@ -66,10 +66,11 @@ stdenv.mkDerivation rec {
 
   configureFlags = [
     "--exec-prefix=${placeholder "bin"}"
+    (optionalString (type == "full") "--localedir=${placeholder "bin"}/share/locale")
     (optionalString (target != null) "--target=${target}")
     "--enable-shared"
     "--enable-static"
-    "--${boolEn (type != "bootstrap")}-nls"
+    "--${boolEn (type == "full")}-nls"
     "--disable-werror"
     "--enable-deterministic-archives"
     "--${boolEn (type != "bootstrap")}-gold${optionalString (type != "bootstrap") "=default"}"
