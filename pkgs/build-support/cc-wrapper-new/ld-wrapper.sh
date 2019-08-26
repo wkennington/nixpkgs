@@ -19,27 +19,27 @@ if [ -n "${NIX_DEBUG-}" ]; then
   done
 fi
 
-if [ -z "${NIX_LD_WRAPPER_FLAGS_SET-}" ]; then
-  export NIX_LD_WRAPPER_FLAGS_SET=1
+if [ -z "${NIX@typefx@_LD_WRAPPER_FLAGS_SET-}" ]; then
+  export NIX@typefx@_LD_WRAPPER_FLAGS_SET=1
 
-  maybeAppendFlagsFromFile NIX_LDFLAGS '@out@'/nix-support/ldflags
-  maybeAppendFlagsFromFile NIX_LDFLAGS_BEFORE '@out@'/nix-support/ldflags-before
-  maybeAppendFlagsFromFile NIX_LDFLAGS_DYNAMIC '@out@'/nix-support/ldflags-dynamic
+  maybeAppendFlagsFromFile NIX@typefx@_LDFLAGS '@out@'/nix-support/ldflags
+  maybeAppendFlagsFromFile NIX@typefx@_LDFLAGS_BEFORE '@out@'/nix-support/ldflags-before
+  maybeAppendFlagsFromFile NIX@typefx@_LDFLAGS_DYNAMIC '@out@'/nix-support/ldflags-dynamic
 fi
 
-params=($NIX_LDFLAGS_BEFORE)
-: ${NIX_LD_HARDEN=1}
+params=($NIX@typefx@_LDFLAGS_BEFORE)
+: ${NIX@typefx@_LD_HARDEN=1}
 
-if [ "${NIX_LD_NEW_DTAGS-1}" = "1" ]; then
+if [ "${NIX@typefx@_LD_NEW_DTAGS-1}" = "1" ]; then
   params+=('--enable-new-dtags')
 fi
-if [ "${NIX_LD_NOEXECSTACK-$NIX_LD_HARDEN}" = "1" ]; then
+if [ "${NIX@typefx@_LD_NOEXECSTACK-$NIX@typefx@_LD_HARDEN}" = "1" ]; then
   params+=('-z' 'noexecstack')
 fi
-if [ "${NIX_LD_RELRO-$NIX_LD_HARDEN}" = "1" ]; then
+if [ "${NIX@typefx@_LD_RELRO-$NIX@typefx@_LD_HARDEN}" = "1" ]; then
   params+=('-z' 'relro')
 fi
-if [ "${NIX_LD_BINDNOW-$NIX_LD_HARDEN}" = "1" ]; then
+if [ "${NIX@typefx@_LD_BINDNOW-$NIX@typefx@_LD_HARDEN}" = "1" ]; then
   params+=('-z' 'now')
 fi
 # Remove compiler passed runtime paths
@@ -63,7 +63,7 @@ for (( i = 1; i <= "$#" ; i++ )); do
     params+=("$p")
   fi
 done
-params+=($NIX_LDFLAGS)
+params+=($NIX@typefx@_LDFLAGS)
 
 # Determine if we are dynamically linking
 dynamicLibs=
@@ -80,7 +80,7 @@ for p in "${params[@]}"; do
   fi
 done
 if [ -n "$dynamicLibs" ]; then
-  params+=(${NIX_LDFLAGS_DYNAMIC-})
+  params+=(${NIX@typefx@_LDFLAGS_DYNAMIC-})
 fi
 
 # Filter out paths that are considered bad
@@ -113,7 +113,7 @@ done
 params=("${filtered_params[@]}")
 
 # Add all used dynamic libraries to the rpath.
-if [ -n "${NIX_LD_ADD_RPATH-1}" ]; then
+if [ -n "${NIX@typefx@_LD_ADD_RPATH-1}" ]; then
   addToRPath() {
     # We need to follow library symlinks in order to pick the best rpath
     local link

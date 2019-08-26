@@ -22,8 +22,6 @@ in
     cc
   ];
 
-  prefix = placeholder "dev";
-
   configureFlags = gcc.commonConfigureFlags ++ optionals (type == "nolibc") [
     "--disable-shared"
     "--disable-gcov"

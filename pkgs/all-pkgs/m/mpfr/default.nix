@@ -1,5 +1,6 @@
 { stdenv
 , fetchurl
+
 , gmp
 }:
 
@@ -50,14 +51,19 @@ stdenv.mkDerivation rec {
 
   # Only provides some doc files
   postInstall = ''
-    rm -r "$out"/share
+    rm -r "$dev"/share
+
+    mkdir -p "$lib"/lib
+    mv -v "$dev"/lib*/*.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib
   '';
 
-  # Ensure we don't depend on anything unexpected
-  allowedReferences = [
-    "out"
-    gmp
-  ] ++ stdenv.cc.runtimeLibcLibs;
+  disableStatic = false;
+
+  outputs = [
+    "dev"
+    "lib"
+  ];
 
   passthru = {
     srcVerification = fetchurl rec {

@@ -86,13 +86,6 @@ stdenv.mkDerivation rec {
     rm -r "$out"/share
   '';
 
-  allowedReferences = [
-    "out"
-  ] ++ stdenv.cc.runtimeLibcLibs ++ optionals (type == "full") [
-    ncurses
-    readline
-  ];
-
   passthru = rec {
     shellPath = "/bin/bash";
     systemBashrcName = "bash.bashrc";

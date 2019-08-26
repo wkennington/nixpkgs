@@ -32,6 +32,8 @@ stdenv.mkDerivation rec {
     gmp
   ];
 
+  prefix = placeholder "dev";
+
   configureFlags = [
     "--disable-silent-rules"
     "--enable-portable-binary"
@@ -44,11 +46,19 @@ stdenv.mkDerivation rec {
     export NIX_LDFLAGS="$NIX_LDFLAGS -lgmp"
   '';
 
-  # Ensure we don't depend on anything unexpected
-  allowedReferences = [
-    "out"
-    gmp
-  ] ++ stdenv.cc.runtimeLibcLibs;
+  postInstall = ''
+    mkdir -p "$lib"/lib
+    mv -v "$dev"/lib*/*.so* "$lib"/lib
+    mv -v "$lib"/lib/*gdb* "$dev"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib
+  '';
+
+  disableStatic = false;
+
+  outputs = [
+    "dev"
+    "lib"
+  ];
 
   meta = with stdenv.lib; {
     homepage = http://www.kotnet.org/~skimo/isl/;

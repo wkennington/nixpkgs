@@ -60,10 +60,6 @@ stdenv.mkDerivation rec {
 
   dontPatchShebangs = true;
 
-  allowedReferences = [
-    "out"
-  ] ++ stdenv.cc.runtimeLibcLibs;
-
   meta = with lib; {
     description = "high-quality data compression program";
     # upstream http://www.bzip.org

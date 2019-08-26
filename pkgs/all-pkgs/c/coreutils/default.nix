@@ -50,18 +50,6 @@ stdenv.mkDerivation rec {
     rm -r "$out"/share
   '';
 
-  allowedReferences = [
-    "out"
-  ] ++ stdenv.cc.runtimeLibcLibs
-    ++ optionals (type == "full") [
-    acl
-    attr
-    gmp
-    libcap
-    libselinux
-    libsepol
-  ];
-
   passthru = {
     srcVerification = fetchurl rec {
       failEarly = true;

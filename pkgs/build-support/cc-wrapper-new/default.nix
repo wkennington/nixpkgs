@@ -15,6 +15,7 @@ lib.makeOverridable
 , target ? ""
 , tools ? [ ]
 , inputs ? [ ]
+, type ? "host"
 }:
 
 (stdenv.override { cc = null; }).mkDerivation {
@@ -34,6 +35,12 @@ lib.makeOverridable
     tools
     inputs
     target;
+
+  inherit type;
+  typefx = {
+    "build" = "_BUILD";
+    "host" = "";
+  }."${type}";
 
   pfx = if target == "" then "" else "${target}-";
 
@@ -66,7 +73,7 @@ lib.makeOverridable
       fi
 
       export prog
-      echo "Wrapping $prog -> $link" >&2
+      echo "Wrapping $link -> $prog" >&2
       substituteAll "$wrapper" "$link"
       chmod +x "$link"
       unset prog

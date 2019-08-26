@@ -58,8 +58,6 @@ stdenv.mkDerivation rec {
     echo 'NATIVE_LIB_DIRS=' >> ld/configure.tgt
   '';
 
-  prefix = placeholder "dev";
-
   # Needed by cross linker to search DT_RUNPATH of libs during link
   # Otherwise, we won't have the necessary search paths for transitive libs
   USE_LIBPATH = "yes";

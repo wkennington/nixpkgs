@@ -829,6 +829,11 @@ export TZ='UTC'
 # Before doing anything else, state the build time
 NIX_BUILD_START="$(date '+%s')"
 
+# Determine the default output, we define this as the first one
+if [ -z "$defaultOutput" ]; then
+  defaultOutput="${outputs%% *}"
+fi
+
 # Execute the pre-hook.
 if [ -z "$shell" ]; then
   export shell=$SHELL
@@ -867,7 +872,7 @@ done
 # for instance if we just want to perform a test build/install to a
 # temporary location and write a build report to $out.
 if [ -z "$prefix" ]; then
-  prefix="$out"
+  prefix="$defaultOutput"
 fi
 
 if [ "$useTempPrefix" = 1 ]; then

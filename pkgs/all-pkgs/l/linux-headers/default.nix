@@ -2,6 +2,7 @@
 , bison
 , fetchurl
 , flex
+, hostcc
 , lib
 
 , channel
@@ -40,13 +41,15 @@ let
     optionals
     versionAtLeast;
 in
-stdenv.mkDerivation rec {
+(stdenv.override { cc = null; }).mkDerivation rec {
   name = "linux-headers-${source.version}";
 
   inherit (sourceFetch)
     src;
 
-  nativeBuildInputs = optionals (versionAtLeast source.version "4.16") [
+  nativeBuildInputs = [
+    hostcc
+  ] ++ optionals (versionAtLeast source.version "4.16") [
     bison
     flex
   ];
@@ -54,6 +57,11 @@ stdenv.mkDerivation rec {
   patches = [
     sourceFetch.patch
   ];
+
+  preBuild = ''
+    export HOSTCC="$CC_BUILD"
+    export HOSTCXX="$CXX_BUILD"
+  '';
 
   # The header install process requires a configuration
   # The default configuration should be suitable for this

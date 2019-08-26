@@ -843,7 +843,7 @@ cairomm = callPackage ../all-pkgs/c/cairomm { };
 caribou = callPackage ../all-pkgs/c/caribou { };
 
 cc = null;
-cc_early = null;
+hostcc = null;
 
 cc_clang_early = pkgs.wrapCCNew {
   compiler = pkgs.clang.bin;
@@ -868,7 +868,7 @@ cc_gcc_glibc_headers = pkgs.wrapCCNew {
   tools = [ pkgs.binutils.bin ];
   inputs = [
     pkgs.gcc.cc_headers
-    pkgs.glibc_gcc_headers
+    pkgs.glibc_headers_gcc
     pkgs.linux-headers
   ];
 };
@@ -1679,11 +1679,11 @@ glibc_lib = callPackage ../all-pkgs/g/glibc {
   cc = pkgs.cc_gcc_glibc_nolibc;
 };
 
-glibc_clang_headers = callPackage ../all-pkgs/g/glibc/headers.nix {
+glibc_headers_clang = callPackage ../all-pkgs/g/glibc/headers.nix {
   cc = pkgs.cc_clang_early;
 };
 
-glibc_gcc_headers = callPackage ../all-pkgs/g/glibc/headers.nix {
+glibc_headers_gcc = callPackage ../all-pkgs/g/glibc/headers.nix {
   cc = pkgs.cc_gcc_early;
 };
 
