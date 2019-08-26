@@ -31,8 +31,6 @@ stdenv.mkDerivation rec {
     gnum4
   ];
 
-  prefix = placeholder "dev";
-
   configureFlags = [
     "--with-pic"
     "--enable-fat"

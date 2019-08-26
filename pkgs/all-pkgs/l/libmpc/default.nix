@@ -26,8 +26,6 @@ stdenv.mkDerivation rec {
     mpfr
   ];
 
-  prefix = placeholder "dev";
-
   # Only provides some info files
   postInstall = ''
     rm -r "$dev"/share

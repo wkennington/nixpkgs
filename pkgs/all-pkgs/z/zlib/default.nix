@@ -23,8 +23,6 @@ stdenv.mkDerivation rec {
     sha256 = "4ff941449631ace0d4d203e3483be9dbc9da454084111f97ea0a2114e19bf066";
   };
 
-  prefix = placeholder "dev";
-
   preConfigure = ''
     if "$NIX_SYSTEM_HOST"-cc -v >/dev/null 2>&1; then
       export AR="$NIX_SYSTEM_HOST"-gcc-ar

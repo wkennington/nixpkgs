@@ -28,8 +28,6 @@ in
     libunistring
   ];
 
-  prefix = placeholder "dev";
-
   configureFlags = [
     "--disable-doc"
   ];

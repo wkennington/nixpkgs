@@ -17,8 +17,6 @@
     cc
   ];
 
-  prefix = placeholder "dev";
-
   configureFlags = [
     "--enable-shared"
     "--enable-static"

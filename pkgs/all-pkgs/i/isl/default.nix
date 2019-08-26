@@ -32,8 +32,6 @@ stdenv.mkDerivation rec {
     gmp
   ];
 
-  prefix = placeholder "dev";
-
   configureFlags = [
     "--disable-silent-rules"
     "--enable-portable-binary"

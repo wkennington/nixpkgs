@@ -23,8 +23,6 @@ in
     cc
   ];
 
-  prefix = placeholder "dev";
-
   postInstall = ''
     mkdir -p "$lib"/lib
     mv "$dev"/lib*/*.so* "$lib"/lib
