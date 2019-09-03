@@ -36,15 +36,19 @@ stdenv.mkDerivation rec {
     acl
   ];
 
-  postInstall = optionalString (type != "full") ''
-    rm -r "$out"/share
+  postFixup = ''
+    mkdir -p "$bin"/share2
+  '' + optionalString (type == "full") ''
+    mv "$bin"/share/locale "$bin"/share2
+  '' + ''
+    rm -rv "$bin"/share
+    mv "$bin"/share2 "$bin"/share
   '';
 
-  allowedReferences = [
-    "out"
-  ] ++ stdenv.cc.runtimeLibcLibs
-    ++ optionals (type == "full") [
-    acl
+  outputs = [
+    "bin"
+  ] ++ optionals (type == "full") [
+    "man"
   ];
 
   passthru = {

@@ -4,6 +4,7 @@
 , fetchurl
 , fetchTritonPatch
 , gcc_lib_glibc
+, glibc_progs
 , libidn2_glibc
 , linux-headers
 , python3
@@ -20,67 +21,25 @@ let
     optionalAttrs
     optionalString;
 
-  version = "2.30";
+  inherit (import ./common.nix { inherit fetchurl fetchTritonPatch; })
+    src
+    patches
+    version;
 in
-(stdenv.override { cc = null; }).mkDerivation (rec {
+(stdenv.override { cc = null; }).mkDerivation rec {
   name = "glibc-${version}";
 
-  src = fetchurl {
-    url = "mirror://gnu/glibc/${name}.tar.xz";
-    hashOutput = false;
-    sha256 = "e2c4114e569afbe7edbc29131a43be833850ab9a459d81beb2588016d2bbb8af";
-  };
+  inherit
+    src
+    patches;
 
   nativeBuildInputs = [
     bison
     cc
     python3
+  ] ++ optionals (type != "bootstrap") [
+    glibc_progs
   ];
-
-  # Some of the tools depend on a shell. Set to impure /bin/sh to
-  # prevent a retained dependency on the bootstrap tools in the stdenv-linux
-  # bootstrap.
-  BASH_SHELL = "/bin/sh";
-
-  patches = [
-    (fetchTritonPatch {
-      rev = "081b7a40d174baf95f1979ff15c60b49c8fdc30d";
-      file = "g/glibc/0001-Fix-common-header-paths.patch";
-      sha256 = "df93cbd406a5dd2add2dd0d601ff9fc97fc42a1402010268ee1ee8331ec6ec72";
-    })
-    (fetchTritonPatch {
-      rev = "081b7a40d174baf95f1979ff15c60b49c8fdc30d";
-      file = "g/glibc/0002-sunrpc-Don-t-hardcode-cpp-path.patch";
-      sha256 = "7a9ce7f69cd6d3426d19a8343611dc3e9c48e3374fa1cb8b93c5c98d7e79d69b";
-    })
-    (fetchTritonPatch {
-      rev = "081b7a40d174baf95f1979ff15c60b49c8fdc30d";
-      file = "g/glibc/0003-timezone-Fix-zoneinfo-path-for-triton.patch";
-      sha256 = "b4b47be63c3437882a160fc8d9b8ed7119ab383b1559599e2706ce8f211a0acd";
-    })
-    (fetchTritonPatch {
-      rev = "081b7a40d174baf95f1979ff15c60b49c8fdc30d";
-      file = "g/glibc/0004-nsswitch-Try-system-paths-for-modules.patch";
-      sha256 = "9cd235f0699661cbfd0b77f74c538d97514ba450dfba9a3f436adc2915ae0acf";
-    })
-    (fetchTritonPatch {
-      rev = "b772989f030aef70b8b5fd39a3bb04738d50b383";
-      file = "g/glibc/0005-locale-archive-Support-multiple-locale-archive-locat.patch";
-      sha256 = "3ab23b441e573e51ee67a8e65a3c0c5a40d8d80805838a389b9abca08c45156c";
-    })
-    (fetchTritonPatch {
-      rev = "cf6beafafc0d218cf156e3713fe62c0e53629419";
-      file = "g/glibc/0006-Add-C.UTF-8-Support.patch";
-      sha256 = "07f61db686dc36bc009999cb8d686581a29b13a0d2dd3f7f0b74cdfe964a0540";
-    })
-  ];
-
-  # We don't want to rewrite the paths to our dynamic linkers for ldd
-  # Just use the paths as-is.
-  postPatch = ''
-    grep -q '^ldd_rewrite_script=' sysdeps/unix/sysv/linux/x86_64/configure
-    find sysdeps -name configure -exec sed -i '/^ldd_rewrite_script=/d' {} \;
-  '';
 
   prefix = placeholder "lib";
 
@@ -93,7 +52,8 @@ in
     "--enable-stack-protector=strong"
     "--enable-kernel=${linux-headers.channel}"
     "--disable-werror"
-    "--${boolEn (type == "full")}-build-nscd"
+  ] ++ optionals (type != "bootstrap") [
+    "libc_cv_use_default_link=yes"
   ];
 
   preConfigure = ''
@@ -121,19 +81,27 @@ in
   postInstall = ''
     mkdir -p "$dev"/lib
 
-    for file in "$lib"/lib/*; do
+    $READELF --version >/dev/null
+
+    pushd "$lib"/lib >/dev/null
+    for file in $(find * -not -type d); do
       elf=1
-      readelf -h "$file" >/dev/null 2>&1 || elf=0
+      $READELF -h "$file" >/dev/null 2>&1 || elf=0
       if [[ "$file" == *.so* && "$elf" == 1 ]]; then
-        ln -s "$file" "$dev"/lib
+        mkdir -p "$dev"/lib/"$(dirname "$file")"
+        ln -sv "$lib"/lib/"$file" "$dev"/lib/"$file"
       else
         if [[ "$elf" == 0 ]] && grep -q 'ld script' "$file"; then
           sed -i "s,$lib,$dev,g" "$file"
         fi
-        mv "$file" "$dev"/lib
+        mv -v "$file" "$dev"/lib
       fi
     done
-    mv "$lib"/{include,share} "$dev"
+    popd >/dev/null
+    mv "$dev"/lib/gconv-modules "$lib"/lib
+    rm -r "$dev"/etc
+    rm -r "$lib"/share
+    mv "$lib"/include "$dev"
 
     mkdir -p "$dev"/nix-support
     echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags-compile
@@ -159,6 +127,9 @@ in
 
   # Don't retain shell referencs
   dontPatchShebangs = true;
+
+  # Patchelf will break our loader
+  dontPatchELF = true;
 
   # Early libs can't use some of our hardening flags
   NIX_CC_FORTIFY_SOURCE = false;
@@ -186,6 +157,4 @@ in
     platforms = with platforms;
       x86_64-linux;
   };
-} // optionalAttrs (type == "full") {
-  setupHook = ./setup-hook.sh;
-})
+}

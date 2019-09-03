@@ -1,6 +1,7 @@
 { stdenv
 , fetchurl
 , lib
+, patchelf
 
 , pcregrep ? false
   , bzip2
@@ -29,6 +30,12 @@ stdenv.mkDerivation rec {
     sha256 = "91e762520003013834ac1adb4a938d53b22a216341c061b0cf05603b290faf6b";
   };
 
+  # We need to ensure that our bad rpaths are patched out
+  # Otherwise the build hardcodes "dev" into the rpath
+  nativeBuildInputs = [
+    patchelf
+  ];
+
   buildInputs = optionals pcregrep [
     bzip2
     zlib
@@ -51,11 +58,28 @@ stdenv.mkDerivation rec {
     "--disable-coverage"
   ];
 
-  dontPatchShebangs = true;
+  postInstall = ''
+    mkdir -p "$bin"/bin
+    mv -v "$dev"/bin/* "$bin"/bin
+    mv "$bin"/bin/pcre-config "$dev"/bin
 
-  allowedReferences = [
-    "out"
-  ] ++ stdenv.cc.runtimeLibcLibs;
+    mkdir -p "$lib"/lib
+    mv -v "$dev"/lib*/*.so* "$lib"/lib
+  '';
+
+  postFixup = ''
+    ln -sv "$lib"/lib/* "$dev"/lib
+    rm -rv "$dev"/share
+  '';
+
+  outputs = [
+    "dev"
+    "bin"
+    "lib"
+  ];
+
+  disableStatic = false;
+  dontPatchShebangs = true;
 
   passthru = {
     srcVerification = fetchurl rec {

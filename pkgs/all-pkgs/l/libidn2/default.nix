@@ -1,6 +1,8 @@
 { stdenv
 , cc
 , fetchurl
+, hostcc
+
 , libunistring
 }:
 
@@ -22,6 +24,7 @@ in
 
   nativeBuildInputs = [
     cc
+    hostcc
   ];
 
   buildInputs = [

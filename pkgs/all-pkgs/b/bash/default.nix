@@ -73,18 +73,31 @@ stdenv.mkDerivation rec {
   ];
 
   postInstall = ''
-    ln -s bash "$out/bin/sh"
+    ln -s bash "$bin/bin/sh"
   '';
 
   preFixup = ''
-    rm -r "$out"/include
+    rm -r "$bin"/include
 
     # Remove impurities
-    rm "$out"/lib/bash/Makefile.inc
-    rm "$out"/bin/bashbug
-  '' + optionalString (type == "small") ''
-    rm -r "$out"/share
+    rm "$bin"/lib/bash/Makefile.inc
+    rm "$bin"/bin/bashbug
   '';
+
+  postFixup = ''
+    mkdir -p "$bin"/share2
+  '' + optionalString (type == "full") ''
+    mv "$bin"/share/locale "$bin"/share2
+  '' + ''
+    rm -rv "$bin"/share
+    mv "$bin"/share2 "$bin"/share
+  '';
+
+  outputs = [
+    "bin"
+  ] ++ optionals (type == "full") [
+    "man"
+  ];
 
   passthru = rec {
     shellPath = "/bin/bash";

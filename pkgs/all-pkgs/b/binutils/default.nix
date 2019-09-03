@@ -38,6 +38,17 @@ stdenv.mkDerivation rec {
       file = "b/binutils/0001-bfd-No-bundled-bfd-plugin-support.patch";
       sha256 = "da0b9a2d537929db24a4bf4cbf4e5b588f64fac47d1534b72aaf37291ee55edb";
     })
+  ] ++ optionals (type != "bootstrap") [
+    (fetchTritonPatch {
+      rev = "780a4108d3b9ffeab7c54dd68f7c7967d4e83b78";
+      file = "b/binutils/0001-gold-Don-t-use-absolute-file-paths-for-version-table.patch";
+      sha256 = "64750440ba41b3e7370a4535db230d43f39b583e12d566c6b28c6a3ef556d739";
+    })
+    (fetchTritonPatch {
+      rev = "9e454c8e63e519768d1dd557af5572eaed941e2b";
+      file = "b/binutils/0001-gold-Make-consistent-with-bfd-script-search-behavior.patch";
+      sha256 = "77857fc87f4a719e848116085ddfc5f54b8cced34d15953e1c644bd277a1ecc4";
+    })
   ];
 
   postPatch = ''
@@ -56,6 +67,8 @@ stdenv.mkDerivation rec {
     # Clear the default library search path.
     grep -q 'NATIVE_LIB_DIRS=' ld/configure.tgt
     echo 'NATIVE_LIB_DIRS=' >> ld/configure.tgt
+  '' + optionalString (target == null) ''
+    export NIX_CFLAGS_LINK+=" -fuse-ld=bfd"
   '';
 
   # Needed by cross linker to search DT_RUNPATH of libs during link
@@ -64,7 +77,7 @@ stdenv.mkDerivation rec {
 
   configureFlags = [
     "--exec-prefix=${placeholder "bin"}"
-    (optionalString (type == "full") "--localedir=${placeholder "bin"}/share/locale")
+    "--datarootdir=${placeholder "bin"}/share"
     (optionalString (target != null) "--target=${target}")
     "--enable-shared"
     "--enable-static"
@@ -120,16 +133,18 @@ stdenv.mkDerivation rec {
     mv "$bin"/lib "$dev"
   '';
 
-  preFixup = optionalString (type != "full") ''
-    # Remove unused files from bootstrap
-    rm -r "$dev"/share
-  '' + ''
+  preFixup = ''
     # Missing install of private static libraries
     rm "$dev"/lib/*.la
   '';
 
   postFixup = ''
-    ln -sv "$bin"/bin "$dev"
+    mkdir -p "$bin"/share2
+  '' + optionalString (type == "full") ''
+    mv "$bin"/share/locale "$bin"/share2
+  '' + ''
+    rm -rv "$bin"/share
+    mv "$bin"/share2 "$bin"/share
   '';
 
   outputs = [

@@ -1,22 +1,35 @@
 { stdenv
 , cc
 , bison
-, glibc_lib
+, fetchurl
+, fetchTritonPatch
 , linux-headers
 , python3
 }:
 
+let
+  inherit (import ./common.nix { inherit fetchurl fetchTritonPatch; })
+    src
+    patches
+    version;
+in
 (stdenv.override { cc = null; }).mkDerivation {
-  name = "${glibc_lib.name}-headers";
+  name = "glibc-headers-${version}";
 
-  inherit (glibc_lib)
-    src;
+  inherit
+    src
+    patches;
 
   nativeBuildInputs = [
     bison
     cc
     python3
   ];
+
+  # We don't need subdirs to install the stub headers
+  postPatch = ''
+    sed -i '/installed-stubs/s, subdir_install,,' Makefile
+  '';
 
   preConfigure = ''
     mkdir -p build
@@ -35,10 +48,12 @@
 
   installTargets = [
     "install-headers"
-    "install-others-nosubdir"
   ];
 
   postInstall = ''
+    # This is okay for building libgcc
+    touch "$out"/include/gnu/stubs.h
+
     mkdir -p "$out"/nix-support
     echo "-idirafter $out/include" >"$out"/nix-support/cflags-compile
   '';

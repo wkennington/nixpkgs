@@ -38,7 +38,7 @@ lib.makeOverridable
 
   inherit type;
   typefx = {
-    "build" = "_BUILD";
+    "build" = "_FOR_BUILD";
     "host" = "";
   }."${type}";
 
@@ -131,8 +131,6 @@ lib.makeOverridable
       maybeAppend ldflags-before "$inc"
       maybeAppend ldflags-dynamic "$inc"
     done
-
-    export strip="$out"/bin/*strip
 
     substituteAll '${./setup-hook.sh}' "$out"/nix-support/setup-hook
     substituteAll '${./utils.sh}' "$out"/nix-support/utils.sh

@@ -8,8 +8,7 @@
 let
   inherit (stdenv.lib)
     boolEn
-    optionalAttrs
-    optionalString;
+    optionals;
 
   version = "1.4.18";
 in
@@ -39,9 +38,15 @@ stdenv.mkDerivation rec {
     "--with-syscmd-shell=/bin/sh"
   ];
 
-  postInstall = optionalString (type != "full") ''
-    rm -r "$out"/share
+  postFixup = ''
+    rm -rv "$bin"/share
   '';
+
+  outputs = [
+    "bin"
+  ] ++ optionals (type == "full") [
+    "man"
+  ];
 
   passthru = {
     srcVerification = fetchurl {

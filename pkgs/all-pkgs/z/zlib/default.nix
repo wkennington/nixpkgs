@@ -23,18 +23,10 @@ stdenv.mkDerivation rec {
     sha256 = "4ff941449631ace0d4d203e3483be9dbc9da454084111f97ea0a2114e19bf066";
   };
 
-  preConfigure = ''
-    if "$NIX_SYSTEM_HOST"-cc -v >/dev/null 2>&1; then
-      export AR="$NIX_SYSTEM_HOST"-gcc-ar
-      export RANLIB="$NIX_SYSTEM_HOST"-ranlib
-    fi
-  '';
-
   postInstall = ''
     mkdir -p "$lib"/lib
     mv "$dev"/lib*/*.so* "$lib"/lib
     ln -sv "$lib"/lib/* "$dev"/lib
-  '' + optionalString (type != "full") ''
     rm -r "$dev"/share
   '';
 

@@ -889,7 +889,7 @@ cc_gcc_glibc_nolibgcc = pkgs.wrapCCNew {
   inputs = [
     pkgs.gcc_lib_glibc_static
     pkgs.gcc.cc_headers
-    pkgs.glibc_lib
+    pkgs.glibc_lib_gcc
     pkgs.linux-headers
   ];
 };
@@ -900,7 +900,7 @@ cc_gcc_glibc_early = pkgs.wrapCCNew {
   inputs = [
     pkgs.gcc_lib_glibc
     pkgs.gcc.cc_headers
-    pkgs.glibc_lib
+    pkgs.glibc_lib_gcc
     pkgs.linux-headers
   ];
 };
@@ -909,11 +909,11 @@ cc_gcc_glibc = pkgs.wrapCCNew {
   compiler = pkgs.gcc.bin;
   tools = [ pkgs.binutils.bin ];
   inputs = [
-    pkgs.gcc_cxx_glibc
+    pkgs.gcc_runtime_glibc
     pkgs.gcc_lib_glibc
     pkgs.gcc.cc_headers
-    pkgs.glibc_lib.cc_reqs
-    pkgs.glibc_lib
+    pkgs.glibc_lib_gcc.cc_reqs
+    pkgs.glibc_lib_gcc
     pkgs.linux-headers
   ];
 };
@@ -1576,6 +1576,10 @@ gcc_cxx_glibc = callPackage ../all-pkgs/g/gcc/cxx.nix {
   gcc_lib = pkgs.gcc_lib_glibc;
 };
 
+gcc_runtime_glibc = callPackage ../all-pkgs/g/gcc/runtime.nix {
+  cc = pkgs.cc_gcc_glibc_early;
+};
+
 gcc_lib_musl = callPackage ../all-pkgs/g/gcc/lib.nix {
   cc = wrapCCNew {
     compiler = pkgs.gcc.bin;
@@ -1675,7 +1679,9 @@ glfw = callPackage ../all-pkgs/g/glfw { };
 
 glib = callPackage ../all-pkgs/g/glib { };
 
-glibc_lib = callPackage ../all-pkgs/g/glibc {
+glibc_lib = null;
+
+glibc_lib_gcc = callPackage ../all-pkgs/g/glibc {
   cc = pkgs.cc_gcc_glibc_nolibc;
 };
 
@@ -1687,7 +1693,7 @@ glibc_headers_gcc = callPackage ../all-pkgs/g/glibc/headers.nix {
   cc = pkgs.cc_gcc_early;
 };
 
-glibc_progs = callPackage ../all-pkgs/g/glib/progs.nix { };
+glibc_progs = callPackage ../all-pkgs/g/glibc/progs.nix { };
 
 glibc_locales = callPackage ../all-pkgs/g/glibc/locales.nix { };
 

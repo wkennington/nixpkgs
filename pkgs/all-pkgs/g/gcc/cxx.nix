@@ -16,8 +16,6 @@
     cc
   ];
 
-  prefix = placeholder "dev";
-
   configureFlags = gcc.commonConfigureFlags;
 
   preConfigure = ''

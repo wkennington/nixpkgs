@@ -8,7 +8,7 @@
 
 let
   inherit (stdenv.lib)
-    optionalString;
+    optionals;
 in
 stdenv.mkDerivation rec {
   name = "patchelf-0.10";
@@ -21,13 +21,15 @@ stdenv.mkDerivation rec {
 
   setupHook = ./setup-hook.sh;
 
-  postInstall = optionalString (type != "full") ''
-    rm -r "$out"/share
+  postFixup = ''
+    rm -rv "$bin"/share
   '';
 
-  allowedReferences = [
-    "out"
-  ] ++ stdenv.cc.runtimeLibcxxLibs;
+  outputs = [
+    "bin"
+  ] ++ optionals (type == "full") [
+    "man"
+  ];
 
   passthru = {
     dist = stdenv.mkDerivation rec {

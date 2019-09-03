@@ -9,8 +9,7 @@
 let
   inherit (lib)
     boolEn
-    optionalAttrs
-    optionalString;
+    optionals;
 
   tarballUrls = version: [
     "mirror://gnu/bison/bison-${version}.tar.xz"
@@ -18,7 +17,7 @@ let
 
   version = "3.4.1";
 in
-stdenv.mkDerivation (rec {
+stdenv.mkDerivation rec {
   name = "bison-${version}";
 
   src = fetchurl {
@@ -50,9 +49,19 @@ stdenv.mkDerivation (rec {
     "ac_cv_path_PERL=perl"
   ];
 
-  postInstall = optionalString (type != "full") ''
-    rm -r "$out"/share/{doc,man,info}
+  postFixup = ''
+    mkdir -p "$bin"/share2
+    mv "$bin"/share/{aclocal,bison} "$bin"/share2
+    rm -rv "$bin"/share
+    mv "$bin"/share2 "$bin"/share
+    rm -rv "$bin"/lib
   '';
+
+  outputs = [
+    "bin"
+  ] ++ optionals (type == "full") [
+    "man"
+  ];
 
   dontPatchShebangs = true;
 
@@ -80,9 +89,4 @@ stdenv.mkDerivation (rec {
       i686-linux
       ++ x86_64-linux;
   };
-} // optionalAttrs (type != "bootstrap") {
-  allowedReferences = [
-    "out"
-    gnum4
-  ] ++ stdenv.cc.runtimeLibcLibs;
-})
+}

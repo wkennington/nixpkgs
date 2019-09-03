@@ -7,6 +7,7 @@
 
 let
   inherit (stdenv.lib)
+    optionals
     optionalString;
 in
 stdenv.mkDerivation rec {
@@ -33,15 +34,22 @@ stdenv.mkDerivation rec {
   # We don't want to depend on bootstrap-tools
   ac_cv_path_SORT = "sort";
 
-  postInstall = optionalString (type != "full") ''
-    rm -r "$out"/share
+  postFixup = ''
+    mkdir -p "$bin"/share2
+  '' + optionalString (type == "full") ''
+    mv "$bin"/share/locale "$bin"/share2
+  '' + ''
+    rm -rv "$bin"/share
+    mv "$bin"/share2 "$bin"/share
   '';
 
-  dontPatchShebangs = true;
+  outputs = [
+    "bin"
+  ] ++ optionals (type == "full") [
+    "man"
+  ];
 
-  allowedReferences = [
-    "out"
-  ] ++ stdenv.cc.runtimeLibcLibs;
+  dontPatchShebangs = true;
 
   meta = with stdenv.lib; {
     description = "GNU Find Utilities, basic directory searching utilities";

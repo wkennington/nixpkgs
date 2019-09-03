@@ -139,8 +139,8 @@ exitHandler() {
     # normally.  Otherwise, return the original exit code.
     if [ -n "$succeedOnFailure" ]; then
       echo "build failed with exit code $exitCode (ignored)"
-      mkdir -p "$out/nix-support"
-      printf "%s" "$exitCode" > "$out/nix-support/failed"
+      mkdir -p "${!defaultOutput}/nix-support"
+      printf "%s" "$exitCode" > "${!defaultOutput}/nix-support/failed"
       exit 0
     fi
   else
@@ -617,23 +617,23 @@ fixupPhase() {
   done
 
   if [ -n "$propagatedBuildInputs" ]; then
-    mkdir -p "$out/nix-support"
-    echo "$propagatedBuildInputs" > "$out/nix-support/propagated-build-inputs"
+    mkdir -p "${!defaultOutput}/nix-support"
+    echo "$propagatedBuildInputs" > "${!defaultOutput}/nix-support/propagated-build-inputs"
   fi
 
   if [ -n "$propagatedNativeBuildInputs" ]; then
-    mkdir -p "$out/nix-support"
-    echo "$propagatedNativeBuildInputs" > "$out/nix-support/propagated-native-build-inputs"
+    mkdir -p "${!defaultOutput}/nix-support"
+    echo "$propagatedNativeBuildInputs" > "${!defaultOutput}/nix-support/propagated-native-build-inputs"
   fi
 
   if [ -n "$propagatedUserEnvPkgs" ]; then
-    mkdir -p "$out/nix-support"
-    echo "$propagatedUserEnvPkgs" > "$out/nix-support/propagated-user-env-packages"
+    mkdir -p "${!defaultOutput}/nix-support"
+    echo "$propagatedUserEnvPkgs" > "${!defaultOutput}/nix-support/propagated-user-env-packages"
   fi
 
   if [ -n "$setupHook" ]; then
-    mkdir -p "$out/nix-support"
-    substituteAll "$setupHook" "$out/nix-support/setup-hook"
+    mkdir -p "${!defaultOutput}/nix-support"
+    substituteAll "$setupHook" "${!defaultOutput}/nix-support/setup-hook"
   fi
 
   runHook 'postFixup'
@@ -872,7 +872,7 @@ done
 # for instance if we just want to perform a test build/install to a
 # temporary location and write a build report to $out.
 if [ -z "$prefix" ]; then
-  prefix="$defaultOutput"
+  prefix="${!defaultOutput}"
 fi
 
 if [ "$useTempPrefix" = 1 ]; then

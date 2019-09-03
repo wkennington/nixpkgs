@@ -151,7 +151,6 @@ let
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage1Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
-        inherit (stage01Pkgs) binutils gcc bison;
         inherit (pkgs) stdenv linux-headers linux-headers_4-14 gcc_lib_glibc_static gcc_lib_glibc
           gcc_cxx_glibc libidn2_glibc libunistring_glibc;
 
@@ -175,7 +174,7 @@ let
           target = bootstrapTarget;
         };
 
-        glibc_lib = pkgs.glibc_lib.override {
+        glibc_lib_gcc = pkgs.glibc_lib_gcc.override {
           type = "bootstrap";
           python3 = stage01Pkgs.python_tiny;
         };
@@ -194,6 +193,8 @@ let
 
         # These are only needed to evaluate
         inherit (stage0Pkgs) fetchurl fetchTritonPatch wrapCCNew;
+        inherit (stage01Pkgs) binutils gcc bison;
+        gcc_runtime_glibc = stage1Pkgs.gcc_cxx_glibc;
       };
     });
   };
@@ -212,7 +213,8 @@ let
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage11Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
-        inherit (pkgs) stdenv isl isl_0-21 libmpc mpfr bash_small coreutils_small;
+        inherit (pkgs) stdenv isl isl_0-21 libmpc mpfr bash_small coreutils_small gawk_small pcre
+          gnupatch_small gnused_small gnutar_small pkgconfig pkgconf pkgconf-wrapper python_tiny xz;
 
         zlib = pkgs.zlib.override {
           type = "small";
@@ -240,34 +242,6 @@ let
           type = "small";
         };
 
-        # These are only needed to evaluate
-        inherit (stage0Pkgs) fetchurl fetchTritonPatch;
-        brotli = null;
-      };
-    });
-  };
-
-  # Build the rest of the required tooling for the final rebuild
-  stage13Pkgs = allPackages {
-    inherit targetSystem hostSystem config;
-    stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
-      name = "stdenv-linux-boot-stage13";
-      cc = stage1Pkgs.cc;
-
-      overrides = pkgs: (lib.mapAttrs (n: _: throw "stage13Pkgs is missing package definition for `${n}`") pkgs) // {
-        inherit lib;
-        inherit (pkgs) stdenv cc bash_small coreutils_small
-          gawk_small gnupatch_small gnused_small gnutar_small pcre
-          pkgconfig pkgconf pkgconf-wrapper python_tiny xz;
-
-        bison = pkgs.bison.override {
-          type = "small";
-        };
-
-        bzip2 = pkgs.bzip2.override {
-          type = "small";
-        };
-
         diffutils = pkgs.diffutils.override {
           type = "small";
         };
@@ -281,10 +255,6 @@ let
         };
 
         gnumake = pkgs.gnumake.override {
-          type = "small";
-        };
-
-        gnum4 = pkgs.gnum4.override {
           type = "small";
         };
 
@@ -304,21 +274,19 @@ let
           type = "small";
         };
 
-        cc_gcc = lib.makeOverridable (import ../../build-support/cc-wrapper) {
-          nativeTools = false;
-          nativeLibc = false;
-          libc = stage1Pkgs.libc;
-          cc = stage11Pkgs.gcc;
-          linux-headers = stage01Pkgs.linux-headers;
-          libgcc = stage11Pkgs.gcc;
-          binutils = stage11Pkgs.binutils;
-          coreutils = stage13Pkgs.coreutils_small;
-          name = "bootstrap-cc-wrapper-stage13";
-          stdenv = pkgs.stdenv;
+        bison = pkgs.bison.override {
+          type = "small";
+        };
+
+        glibc_progs = pkgs.glibc_progs.override {
+          type = "small";
+          python3 = stage01Pkgs.python_tiny;
+          glibc_lib = stage1Pkgs.glibc_lib_gcc;
         };
 
         # These are only needed to evaluate
         inherit (stage0Pkgs) fetchurl fetchTritonPatch;
+        inherit (stage1Pkgs) linux-headers;
         brotli = null;
       };
     });
@@ -332,8 +300,11 @@ let
       name = "stdenv-linux-boot-stage2";
       cc = null;
       shell = stage11Pkgs.bash_small + stage11Pkgs.bash_small.shellPath;
-      initialPath = lib.attrValues ((import ../generic/common-path.nix) { pkgs = stage11Pkgs; });
-      extraBuildInputs = [ ];
+      initialPath = lib.mapAttrsToList (_: v: v.bin or v) ((import ../generic/common-path.nix) { pkgs = stage11Pkgs; });
+      extraBuildInputs = [
+        stage11Pkgs.patchelf
+        stage11Pkgs.pkgconfig
+      ];
 
       preHook = commonStdenvOptions.preHook + ''
         export NIX_SYSTEM_BUILD='${bootstrapTarget}'
@@ -342,156 +313,89 @@ let
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage2Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
-        inherit (stage11Pkgs) coreutils_small gcc;
-        inherit (pkgs) stdenv wrapCCNew linux-headers linux-headers_4-14;
+        inherit (pkgs) stdenv wrapCCNew linux-headers linux-headers_4-14 gcc_lib_glibc_static gcc_lib_glibc
+          gcc_runtime_glibc libidn2_glibc libunistring_glibc;
 
         hostcc = stage1Pkgs.cc_gcc_glibc.override {
           type = "build";
         };
 
         cc_gcc_early = pkgs.cc_gcc_early.override {
-          target = bootstrapTarget;
+          target = finalTarget;
+        };
+
+        glibc_headers_gcc = pkgs.glibc_headers_gcc.override {
+          python3 = stage11Pkgs.python_tiny;
+        };
+
+        cc_gcc_glibc_headers = pkgs.cc_gcc_glibc_headers.override {
+          target = finalTarget;
+        };
+
+        cc_gcc_glibc_nolibc = pkgs.cc_gcc_glibc_nolibc.override {
+          target = finalTarget;
+        };
+
+        glibc_lib_gcc = pkgs.glibc_lib_gcc.override {
+          glibc_progs = stage11Pkgs.glibc_progs;
+          python3 = stage11Pkgs.python_tiny;
+        };
+
+        cc_gcc_glibc_nolibgcc = pkgs.cc_gcc_glibc_nolibgcc.override {
+          target = finalTarget;
+        };
+
+        cc_gcc_glibc_early = pkgs.cc_gcc_glibc_early.override {
+          target = finalTarget;
+        };
+
+        cc_gcc_glibc = pkgs.cc_gcc_glibc.override {
+          target = finalTarget;
         };
 
         # These are only needed to evaluate
         inherit (stage0Pkgs) fetchurl fetchTritonPatch;
+        inherit (stage11Pkgs) coreutils_small bison binutils gcc;
       };
     });
   };
 
-  # This is the first set of packages built without external tooling
-  # Start by getting a working glibc and headers
+  # This is the final set of packages built without external tooling
   stage21Pkgs = allPackages {
     inherit targetSystem hostSystem config;
     stdenv = import ../generic { inherit lib; } (commonStdenvOptions // {
-      name = "stdenv-linux-boot-stage21";
-      cc = null;
-      shell = stage13Pkgs.bash_small + stage13Pkgs.bash_small.shellPath;
-      initialPath = lib.attrValues ((import ../generic/common-path.nix) { pkgs = stage13Pkgs; });
-      extraBuildInputs = [ ];
+      name = "stdenv-linux-boot-stage2.1";
+      cc = stage2Pkgs.cc_gcc_glibc;
+      shell = stage11Pkgs.bash_small + stage11Pkgs.bash_small.shellPath;
+      initialPath = lib.mapAttrsToList (_: v: v.bin or v) ((import ../generic/common-path.nix) { pkgs = stage11Pkgs; });
+
+      extraBuildInputs = [
+        stage11Pkgs.patchelf
+        stage11Pkgs.pkgconfig
+      ];
+
+      preHook = commonStdenvOptions.preHook + ''
+        export NIX_SYSTEM_BUILD='${finalTarget}'
+        export NIX_SYSTEM_HOST='${finalTarget}'
+      '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage21Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
-        inherit (pkgs) stdenv cc libc linux-headers;
+        inherit (stage2Pkgs) glibc_headers_gcc gcc_runtime_glibc gcc_lib_glibc glibc_lib_gcc
+          linux-headers_4-14 gcc_lib_glibc_static;
+        inherit (pkgs) stdenv isl isl_0-21 libmpc mpfr bash_small coreutils_small gawk_small pcre
+          gnupatch_small gnused_small gnutar_small pkgconfig pkgconf pkgconf-wrapper xz xz_5-2-4
+          patchelf pkgconf_unwrapped brotli brotli_1-0-7 bzip2 diffutils findutils gnugrep gnumake
+          gzip cc_gcc_glibc wrapCCNew gcc binutils zlib gmp linux-headers cc_gcc_early cc_gcc_glibc_early
+          cc_gcc_glibc_headers cc_gcc_glibc_nolibc cc_gcc_glibc_nolibgcc;
 
-        linux-headers_4-14 = pkgs.linux-headers_4-14.override {
-          stdenv = pkgs.stdenv.override {
-            cc = stage13Pkgs.cc;
-          };
-        };
-
-        glibc = pkgs.glibc.override {
-          bison = stage13Pkgs.bison;
-          python_tiny = stage13Pkgs.python_tiny;
-          binutils = stage11Pkgs.binutils;
-          gcc = stage11Pkgs.gcc;
-        };
-
-        cc_gcc = lib.makeOverridable (import ../../build-support/cc-wrapper) {
-          nativeTools = false;
-          nativeLibc = false;
-          libc = stage21Pkgs.libc;
-          cc = stage11Pkgs.gcc;
-          linux-headers = stage21Pkgs.linux-headers;
-          binutils = stage11Pkgs.binutils;
-          coreutils = stage13Pkgs.coreutils_small;
-          name = "cc-wrapper-stage21";
-          stdenv = pkgs.stdenv;
+        glibc_progs = pkgs.glibc_progs.override {
+          python3 = stage11Pkgs.python_tiny;
         };
 
         # These are only needed to evaluate
         inherit (stage0Pkgs) fetchurl fetchTritonPatch;
-      };
-    });
-  };
-
-  # This is the second package set using the final glibc and bootstrap tools.
-  # This stage is used for building the final gcc
-  stage22Pkgs = allPackages rec {
-    inherit targetSystem hostSystem config;
-    stdenv = import ../generic { inherit lib; } (commonStdenvOptions // {
-      name = "stdenv-linux-boot-stage22";
-      cc = stage21Pkgs.cc;
-      shell = stage13Pkgs.bash_small + stage13Pkgs.bash_small.shellPath;
-      initialPath = lib.attrValues ((import ../generic/common-path.nix) { pkgs = stage13Pkgs; });
-      extraBuildInputs = [
-        stage13Pkgs.patchelf
-        stage13Pkgs.pkgconfig
-      ];
-
-      overrides = pkgs: (lib.mapAttrs (n: _: throw "stage22Pkgs is missing package definition for `${n}`") pkgs) // {
-        inherit lib;
-        inherit (stage21Pkgs) libc glibc linux-headers linux-headers_4-14;
-        inherit (pkgs) stdenv cc isl isl_0-21 libmpc mpfr zlib;
-
-        gcc = pkgs.gcc.override {
-          binutils = stage11Pkgs.binutils;
-        };
-
-        gmp = pkgs.gmp.override {
-          gnum4 = stage13Pkgs.gnum4;
-          cxx = false;
-        };
-
-        cc_gcc = lib.makeOverridable (import ../../build-support/cc-wrapper) {
-          nativeTools = false;
-          nativeLibc = false;
-          libc = stage21Pkgs.libc;
-          cc = stage22Pkgs.gcc;
-          linux-headers = stage21Pkgs.linux-headers;
-          libgcc = stage22Pkgs.gcc;
-          binutils = stage11Pkgs.binutils;
-          coreutils = stage13Pkgs.coreutils_small;
-          name = "cc-wrapper-stage22";
-          stdenv = pkgs.stdenv;
-        };
-
-        # These are only needed to evaluate
-        inherit (stage0Pkgs) fetchurl fetchTritonPatch;
-      };
-    });
-  };
-
-  # This is the second package set using the final glibc, gcc and bootstrap tools.
-  # This stage is used for building the final stdenv package set
-  stage23Pkgs = allPackages rec {
-    inherit targetSystem hostSystem config;
-    stdenv = import ../generic { inherit lib; } (commonStdenvOptions // {
-      name = "stdenv-linux-boot-stage23";
-      cc = stage22Pkgs.cc;
-      shell = stage13Pkgs.bash_small + stage13Pkgs.bash_small.shellPath;
-      initialPath = lib.attrValues ((import ../generic/common-path.nix) { pkgs = stage13Pkgs; });
-      extraBuildInputs = [
-        stage13Pkgs.patchelf
-        stage13Pkgs.pkgconfig
-      ];
-
-      overrides = pkgs: (lib.mapAttrs (n: _: throw "stage23Pkgs is missing package definition for `${n}`") pkgs) // {
-        inherit lib;
-        inherit (stage21Pkgs) libc glibc linux-headers;
-        inherit (stage22Pkgs) gcc gmp isl isl_0-21 libmpc mpfr zlib;
-        inherit (pkgs) stdenv cc coreutils_small gnugrep binutils pcre
-          bash_small patchelf pkgconfig pkgconf pkgconf-wrapper pkgconf_unwrapped
-          brotli brotli_1-0-7 bzip2 diffutils findutils gawk_small gnumake
-          gnupatch_small gnused_small gnutar_small gzip xz xz_5-2-4 libidn2;
-
-        cc_gcc = lib.makeOverridable (import ../../build-support/cc-wrapper) {
-          nativeTools = false;
-          nativeLibc = false;
-          libc = stage21Pkgs.libc;
-          cc = stage22Pkgs.gcc;
-          linux-headers = stage21Pkgs.linux-headers;
-          libgcc = stage22Pkgs.gcc;
-          libidn2 = stage23Pkgs.libidn2;
-          binutils = stage23Pkgs.binutils;
-          coreutils = stage23Pkgs.coreutils_small;
-          shell = stage23Pkgs.bash_small + stage23Pkgs.bash_small.shellPath;
-          name = "cc-wrapper";
-          stdenv = pkgs.stdenv;
-        };
-
-        # These are only needed to evaluate
-        inherit (stage0Pkgs) fetchurl fetchTritonPatch;
+        inherit (stage11Pkgs) gnum4;
       };
     });
   };
@@ -503,19 +407,30 @@ let
     name = "stdenv-final";
 
     # We want common applications in the path like gcc, mv, cp, tar, xz ...
-    initialPath = lib.attrValues ((import ../generic/common-path.nix) { pkgs = stage23Pkgs; });
+    initialPath = lib.mapAttrsToList (_: v: v.bin or v) ((import ../generic/common-path.nix) { pkgs = stage21Pkgs; });
 
     # We need patchelf to be a buildInput since it has to install a setup-hook.
     # We need pkgconfig to be a buildInput as it has aclocal files needed to
     # generate PKG_CHECK_MODULES.
-    extraBuildInputs = with stage23Pkgs; [ patchelf pkgconfig ];
+    extraBuildInputs = with stage21Pkgs; [
+      patchelf
+      pkgconfig
+    ];
 
-    cc = stage23Pkgs.cc;
+    cc = finalPkgs.cc_gcc_glibc;
 
-    shell = stage23Pkgs.bash_small + stage23Pkgs.bash_small.shellPath;
+    shell = stage21Pkgs.bash_small + stage21Pkgs.bash_small.shellPath;
+
+    preHook = commonStdenvOptions.preHook + ''
+      export NIX_SYSTEM_BUILD='${finalTarget}'
+      export NIX_SYSTEM_HOST='${finalTarget}'
+      if [ -z "$LOCALE_PREDEFINED" ]; then
+        export LC_ALL='C.UTF-8'
+      fi
+    '';
 
     extraArgs = rec {
-      stdenvDeps = stage23Pkgs.stdenv.mkDerivation {
+      stdenvDeps = stage21Pkgs.stdenv.mkDerivation {
         name = "stdenv-deps";
         buildCommand = ''
           mkdir -p $out
@@ -523,7 +438,7 @@ let
           [ -h "$out/$(basename "${n}")" ] || ln -s "${n}" "$out"
         '');
       };
-      stdenvDepTest = stage23Pkgs.stdenv.mkDerivation {
+      stdenvDepTest = stage21Pkgs.stdenv.mkDerivation {
         name = "stdenv-dep-test";
         buildCommand = ''
           mkdir -p $out
@@ -534,17 +449,23 @@ let
     };
 
     extraAttrs = rec {
-      bootstrappedPackages' = lib.attrValues (overrides {}) ++ [ cc.cc cc ] ++ extraBuildInputs;
+      bootstrappedPackages' = lib.concatMap (n: n.all or [ ]) (lib.attrValues (overrides { cc_gcc_glibc = null; }));
       bootstrappedPackages = [ stdenv ] ++ bootstrappedPackages';
     };
 
-    overrides = pkgs: {
-      inherit (stage21Pkgs) libc glibc linux-headers;
-      inherit (stage22Pkgs) gcc gmp isl isl_0-21 libmpc mpfr zlib;
-      inherit (stage23Pkgs) cc_gcc coreutils_small gnugrep binutils pcre
-        bash_small patchelf pkgconfig pkgconf pkgconf_unwrapped
-        brotli brotli_1-0-7 bzip2 diffutils findutils gawk_small gnumake
-        gnupatch_small gnused_small gnutar_small gzip xz xz_5-2-4 libidn2;
+    overrides = pkgs: rec {
+      inherit (stage2Pkgs) glibc_headers_gcc gcc_runtime_glibc gcc_lib_glibc glibc_lib_gcc
+        linux-headers_4-14 gcc_lib_glibc_static libidn2_glibc libunistring_glibc;
+      inherit (stage21Pkgs) isl isl_0-21 libmpc mpfr bash_small coreutils_small gawk_small pcre
+        gnupatch_small gnused_small gnutar_small pkgconfig pkgconf xz xz_5-2-4
+        patchelf pkgconf_unwrapped brotli brotli_1-0-7 bzip2 diffutils findutils gnugrep gnumake
+        gzip gcc binutils zlib gmp linux-headers;
+      libidn2 = libidn2_glibc;
+      libunistring = libunistring_glibc;
+      cc = pkgs.cc_gcc_glibc;
+      hostcc = cc;
+      glibc_lib = glibc_lib_gcc;
+      libc = glibc_lib;
     };
   });
 
@@ -553,8 +474,9 @@ let
   };
 in {
   inherit
-    bootstrapTools stage0Pkgs stage01Pkgs
-    stage1Pkgs stage11Pkgs stage13Pkgs
-    stage2Pkgs stage21Pkgs stage22Pkgs stage23Pkgs
+    bootstrapTools
+    stage0Pkgs stage01Pkgs
+    stage1Pkgs stage11Pkgs
+    stage2Pkgs stage21Pkgs
     stdenv;
 }

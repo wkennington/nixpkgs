@@ -13,8 +13,8 @@
 
 let
   inherit (stdenv.lib)
-    optionals
-    optionalString;
+    optionalString
+    optionals;
 
   tarballUrls = version: [
     "mirror://gnu/coreutils/coreutils-${version}.tar.xz"
@@ -46,9 +46,20 @@ stdenv.mkDerivation rec {
     "--enable-single-binary=symlinks"
   ];
 
-  postInstall = optionalString (type == "small") ''
-    rm -r "$out"/share
+  postFixup = ''
+    mkdir -p "$bin"/share2
+  '' + optionalString (type == "full") ''
+    mv "$bin"/share/locale "$bin"/share2
+  '' + ''
+    rm -rv "$bin"/share
+    mv "$bin"/share2 "$bin"/share
   '';
+
+  outputs = [
+    "bin"
+  ] ++ optionals (type == "full") [
+    "man"
+  ];
 
   passthru = {
     srcVerification = fetchurl rec {

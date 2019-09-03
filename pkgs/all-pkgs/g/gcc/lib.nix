@@ -28,10 +28,16 @@ in
   ];
 
   postPatch = ''
+    # Extract headers from the gcc build and use them
     mkdir -v build
     cd build
     tar xf '${gcc.internal}'/build.tar.xz
     find . -type f -exec sed -i "s,/build-dir,$NIX_BUILD_TOP,g" {} \;
+
+    # We are guaranteed to have libc headers so use them
+    grep -q '\-Dinhibit_libc' gcc/libgcc.mvars
+    sed -i 's, -Dinhibit_libc,,g' gcc/libgcc.mvars
+
     mkdir -p x/libgcc
     cd x/libgcc
     configureScript='../../../libgcc/configure'
@@ -44,10 +50,12 @@ in
 
     mv "$dev"/lib/include "$dev"
 
+    $READELF --version >/dev/null
+
     mkdir -p "$lib"/lib
     for file in "$dev"/lib*/*; do
       elf=1
-      readelf -h "$file" >/dev/null 2>&1 || elf=0
+      $READELF -h "$file" >/dev/null 2>&1 || elf=0
       if [[ "$file" == *.so* && "$elf" == 1 ]]; then
         mv "$file" "$lib"/lib
       fi

@@ -1,5 +1,6 @@
 { stdenv
 , fetchurl
+, patchelf
 
 , type ? "full"
 , version
@@ -7,7 +8,7 @@
 
 let
   inherit (stdenv.lib)
-    optionalString;
+    optionals;
 
   tarballUrls = version: [
     "https://tukaani.org/xz/xz-${version}.tar.xz"
@@ -31,24 +32,44 @@ stdenv.mkDerivation rec {
       sha256;
   };
 
+  nativeBuildInputs = [
+    patchelf
+  ];
+
   # In stdenv-linux, prevent a dependency on bootstrap-tools.
   preConfigure = ''
     unset CONFIG_SHELL
   '';
 
+  configureFlags = [
+    "--localedir=${placeholder "bin"}/share/locale"
+  ];
+
   postInstall = ''
-    rm -r "$out"/share/doc
-  '' + optionalString (type != "full") ''
-    rm -r "$out"/share
+    # Move bin files
+    mkdir -p "$bin"
+    mv -v "$dev"/bin "$bin"
+
+    # Move shared libs
+    mkdir -p "$lib"/lib
+    mv -v "$dev"/lib*/*.so* "$lib"/lib
+  '';
+
+  postFixup = ''
+    ln -sv "$lib"/lib/* "$dev"/lib
+    rm -rv "$dev"/share
   '';
 
   disableStatic = false;
-
   dontPatchShebangs = true;
 
-  allowedReferences = [
-    "out"
-  ] ++ stdenv.cc.runtimeLibcLibs;
+  outputs = [
+    "dev"
+    "bin"
+    "lib"
+  ] ++ optionals (type == "full") [
+    "man"
+  ];
 
   passthru = {
     srcVerification = fetchurl rec {

@@ -59,8 +59,10 @@ in
   ];
 
   preBuild = ''
-    export HOSTCC="$CC_BUILD"
-    export HOSTCXX="$CXX_BUILD"
+    makeFlagsArray+=(
+      HOSTCC="$CC_FOR_BUILD"
+      HOSTCXX="$CXX_FOR_BUILD"
+    )
   '';
 
   # The header install process requires a configuration
@@ -88,6 +90,9 @@ in
     # Cleanup some unneeded files
     find "$out"/include \( -name .install -o -name ..install.cmd \) -delete
   '';
+
+  # We don't have an elf patcher yet
+  dontStrip = true;
 
   # The linux-headers do not need to maintain any references
   allowedReferences = [ "out" ];

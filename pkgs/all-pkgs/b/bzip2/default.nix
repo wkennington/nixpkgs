@@ -8,7 +8,7 @@
 
 let
   inherit (lib)
-    optionalString;
+    optionals;
 in
 stdenv.mkDerivation rec {
   name = "bzip2-1.0.7";
@@ -39,26 +39,55 @@ stdenv.mkDerivation rec {
     })
   ];
 
+  postPatch = ''
+    sed -i "s,^CC=.*,CC=$CC," Makefile-libbz2_so
+    sed -i "s,^CC=.*,CC=$CC," Makefile
+    sed -i "s,^AR=.*,AR=$AR," Makefile
+    sed -i "s,^RANLIB=.*,RANLIB=$RANLIB," Makefile
+    sed -i "/^all:/s, test,," Makefile
+  '';
+
   preBuild = ''
     make -j $NIX_BUILD_CORES -f Makefile-libbz2_so
   '';
 
   preInstall = ''
-    installFlagsArray+=("PREFIX=$out")
+    installFlagsArray+=("PREFIX=$bin")
   '';
 
-  postInstall = optionalString (type != "full") ''
-   rm -r "$out"/man
-  '' + ''
-    mv bzip2-shared "$out"/bin/bzip2
-    rm "$out"/bin/{bzcat,bunzip2}
-    ln -sv bzip2 "$out"/bin/bzcat
-    ln -sv bzip2 "$out"/bin/bunzip
-    ln -sv $(basename "$(readlink -f libbz2.so* | head -n 1)") "$out"/lib/libbz2.so
-    mv libbz2.so* "$out"/lib
+  postInstall = ''
+    mv bzip2-shared "$bin"/bin/bzip2
+    rm "$bin"/bin/{bzcat,bunzip2}
+    ln -sv bzip2 "$bin"/bin/bzcat
+    ln -sv bzip2 "$bin"/bin/bunzip
+
+    mkdir -p "$dev"
+    mv "$bin"/{lib,include} "$dev"
+
+    mkdir -p "$lib"/lib
+    ln -sv $(basename "$(readlink -f libbz2.so* | head -n 1)") "$lib"/lib/libbz2.so
+    mv libbz2.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib
+  '';
+
+  preFixup = ''
+    mkdir -p "$bin"/share
+    mv "$bin"/man "$bin"/share
+  '';
+
+  postFixup = ''
+    rm -rv "$bin"/share
   '';
 
   dontPatchShebangs = true;
+
+  outputs = [
+    "dev"
+    "bin"
+    "lib"
+  ] ++ optionals (type == "full") [
+    "man"
+  ];
 
   meta = with lib; {
     description = "high-quality data compression program";

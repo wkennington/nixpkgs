@@ -7,7 +7,8 @@
 
 let
   inherit (stdenv.lib)
-    optionalString;
+    optionalString
+    optionals;
 
   version = "3.3";
 
@@ -31,22 +32,30 @@ stdenv.mkDerivation rec {
   # Fix reference to sh in bootstrap-tools, and invoke grep via
   # absolute path rather than looking at argv[0].
   postInstall = ''
-    rm $out/bin/egrep $out/bin/fgrep
-    echo "#! /bin/sh" > $out/bin/egrep
-    echo "exec $out/bin/grep -E \"\$@\"" >> $out/bin/egrep
-    echo "#! /bin/sh" > $out/bin/fgrep
-    echo "exec $out/bin/grep -F \"\$@\"" >> $out/bin/fgrep
-    chmod +x $out/bin/egrep $out/bin/fgrep
-  '' + optionalString (type != "full") ''
-    rm -r "$out"/share
+    rm "$bin"/bin/egrep "$bin"/bin/fgrep
+    echo "#! /bin/sh" > "$bin"/bin/egrep
+    echo "exec '$bin'/bin/grep -E \"\$@\"" >> "$bin"/bin/egrep
+    echo "#! /bin/sh" > "$bin"/bin/fgrep
+    echo "exec '$bin'/bin/grep -F \"\$@\"" >> "$bin"/bin/fgrep
+    chmod +x "$bin"/bin/egrep "$bin"/bin/fgrep
   '';
 
-  dontPatchShebangs = true;
+  postFixup = ''
+    mkdir -p "$bin"/share2
+  '' + optionalString (type == "full") ''
+    mv "$bin"/share/locale "$bin"/share2
+  '' + ''
+    rm -rv "$bin"/share
+    mv "$bin"/share2 "$bin"/share
+  '';
 
-  allowedReferences = [
-    "out"
-    pcre
-  ] ++ stdenv.cc.runtimeLibcLibs;
+  outputs = [
+    "bin"
+  ] ++ optionals (type == "full") [
+    "man"
+  ];
+
+  dontPatchShebangs = true;
 
   passthru = {
     srcVerification = fetchurl rec {

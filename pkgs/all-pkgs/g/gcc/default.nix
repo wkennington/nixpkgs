@@ -5,7 +5,6 @@
 , binutils
 , gmp
 , isl
-, libc
 , libmpc
 , linux-headers
 , mpfr
@@ -43,10 +42,6 @@ let
     "--${boolEn (type != "bootstrap")}-nls"
     "--enable-cet=auto"
     "--with-glibc-version=2.28"
-  ];
-
-  runtimeConfigureFlags = [
-    "--${boolWt (type != "bootstrap")}-system-libunwind"
   ];
 
   version = "9.2.0";
@@ -107,6 +102,12 @@ stdenv.mkDerivation rec {
     mv mpfr-* mpfr
   '';
 
+  # We need to use the proper objdump tool for our build
+  postPatch = ''
+    grep -r 'export_sym_check.*"objdump' libcc1/configure
+    sed -i '/export_sym_check/s,"objdump,"$OBJDUMP,' {gcc,libcc1}/configure
+  '';
+
   prefix = placeholder "bin";
 
   configureFlags = commonConfigureFlags ++ [
@@ -114,7 +115,8 @@ stdenv.mkDerivation rec {
     "--${boolEn (type != "bootstrap")}-lto"
     "--enable-linker-build-id"
     "--${boolWt (type != "bootstrap")}-system-zlib"
-    (optional (type == "bootstrap") "--without-headers")
+    "--without-headers"
+    "--with-newlib"
     "--with-local-prefix=/no-such-path/local-prefix"
     "--with-native-system-header-dir=/no-such-path/native-headers"
     "--with-debug-prefix-map=$NIX_BUILD_TOP=/no-such-path"
@@ -140,8 +142,9 @@ stdenv.mkDerivation rec {
 
   postInstall = ''
     rm -v "$bin"/bin/*-${version}
-  '' + optionalString (type == "bootstrap") ''
+
     # GCC won't include our libc limits.h if we don't fix it
+    ! test -e "$bin"/lib/gcc/*/*/include-fixed/limits.h
     cat ../gcc/{limitx.h,glimits.h,limity.h} >"$bin"/lib/gcc/*/*/include-fixed/limits.h
 
     find "$bin" -name '*'.la -delete
@@ -163,7 +166,7 @@ stdenv.mkDerivation rec {
     mv -v "$bin"/lib*/*.so* "$lib"/lib
     ln -sv "$lib"/lib/* "$dev"/lib
 
-    mv "$bin"/{include,share} "$dev"
+    mv -v "$bin"/include "$dev"
     rmdir "$bin"/lib/gcc/*/* "$bin"/lib/gcc/* "$bin"/lib/gcc "$bin"/lib
 
     pfx=
@@ -201,16 +204,13 @@ stdenv.mkDerivation rec {
     rm -rv "$bin"/libexec/gcc/*/*/install-tools
   '';
 
-  preFixup = optionalString (type != "full") ''
-    # Remove unused files from bootstrap
-    rm -r "$dev"/share
-  '';
-
-  # Ensure we don't have bad dependencies
   postFixup = ''
-    ln -sv "$cc_headers" "$dev"/cc_headers
-    ln -sv "$bin"/bin "$dev"
-    ln -sv "$plugin_dev" "$dev"/plugin_dev
+    mkdir -p "$bin"/share2
+  '' + optionalString (type == "full") ''
+    mv "$bin"/share/locale "$bin"/share2
+  '' + ''
+    rm -rv "$bin"/share
+    mv "$bin"/share2 "$bin"/share
   '';
 
   outputs = [
@@ -225,6 +225,7 @@ stdenv.mkDerivation rec {
     "man"
   ];
 
+  #buildParallel = false;
   disableStatic = false;
 
   passthru = {

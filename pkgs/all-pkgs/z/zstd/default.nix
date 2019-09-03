@@ -27,10 +27,6 @@ stdenv.mkDerivation rec {
 
   dontPatchShebangs = true;
 
-  allowedReferences = [
-    "out"
-  ] ++ stdenv.cc.runtimeLibcLibs;
-
   meta = with lib; {
     description = "Fast real-time lossless compression algorithm";
     homepage = http://www.zstd.net/;

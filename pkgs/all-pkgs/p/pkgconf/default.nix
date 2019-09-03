@@ -1,12 +1,13 @@
 { stdenv
 , fetchurl
+, patchelf
 
 , type ? "full"
 }:
 
 let
   inherit (stdenv.lib)
-    optionalString;
+    optionals;
 in
 stdenv.mkDerivation rec {
   name = "pkgconf-1.6.1";
@@ -17,6 +18,12 @@ stdenv.mkDerivation rec {
     sha256 = "22b9ee38438901f9d60f180e5182821180854fa738fd071f593ea26a81da208c";
   };
 
+  # We need to ensure that our bad rpaths are patched out
+  # Otherwise the build hardcodes "dev" into the rpath
+  nativeBuildInputs = [
+    patchelf
+  ];
+
   configureFlags = [
     "--with-personality-dir=/no-such-path"
     "--with-pkg-config-dir=/no-such-path"
@@ -25,20 +32,38 @@ stdenv.mkDerivation rec {
   ];
 
   postInstall = ''
+    # Move bin files
+    mkdir -p "$bin"/share
+    mv -v "$dev"/bin "$bin"
+    mv -v "$dev"/share/aclocal "$bin"/share
+
+    # Move shared libs
+    mkdir -p "$lib"/lib
+    mv -v "$dev"/lib*/*.so* "$lib"/lib
+
     # The header files expect themselves to be in libpkgconf
     # however they are installed to pkgconf
-    test -d "$out"/include/pkgconf
-    ln -sv pkgconf "$out"/include/libpkgconf
+    test -d "$dev"/include/pkgconf
+    ln -sv pkgconf/libpkgconf "$dev"/include
 
     # We want compatability with pkg-config
-    ln -sv pkgconf "$out"/bin/pkg-config
-  '' + optionalString (type != "full") ''
-    rm -r "$out"/share/{doc,man}
+    ln -sv pkgconf "$bin"/bin/pkg-config
   '';
 
-  allowedReferences = [
-    "out"
-  ] ++ stdenv.cc.runtimeLibcLibs;
+  postFixup = ''
+    ln -sv "$lib"/lib/* "$dev"/lib
+    rm -rv "$dev"/share
+  '';
+
+  disableStatic = false;
+
+  outputs = [
+    "dev"
+    "bin"
+    "lib"
+  ] ++ optionals (type == "full") [
+    "man"
+  ];
 
   meta = with stdenv.lib; {
     homepage = "https://github.com/pkgconf/pkgconf";
