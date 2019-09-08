@@ -26,18 +26,38 @@ stdenv.mkDerivation rec {
       -e 's,/bin/pwd,pwd,g'
   '';
 
+  configureFlags = [
+    "--datadir=${placeholder "lib"}/share"
+  ];
+
   # Broken in 0.20 for some invocations
   buildParallel = false;
 
   postInstall = ''
-    rm -r "$out"/share/doc
+    rm -rv "$bin"/share/{doc,info}
+
+    mkdir -p "$dev"
+    mv "$bin"/{include,lib} "$dev"
+
+    mkdir -p "$lib"/lib
+    mv -v "$dev"/lib*/*.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib*
   '';
 
   preFixup = ''
-    sed -i "$out/bin/gettext.sh" \
-      -e "/^  .\?gettext/ s,envsubst,$out/bin/\0,g" \
-      -e "/^  .\?gettext/ s,^  ,\0$out/bin/,"
+    sed -i "$bin/bin/gettext.sh" \
+      -e "/^  .\?gettext/ s,envsubst,$bin/bin/\0,g" \
+      -e "/^  .\?gettext/ s,^  ,\0$bin/bin/,"
   '';
+
+  disableStatic = false;
+
+  outputs = [
+    "bin"
+    "dev"
+    "lib"
+    "man"
+  ];
 
   passthru = {
     srcVerification = fetchurl rec {

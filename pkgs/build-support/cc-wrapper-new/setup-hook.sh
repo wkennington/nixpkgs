@@ -56,7 +56,7 @@ if [ -z "${nix_@type@_cc_done-}" ]; then
       rpathOutputs+=("$defaultOutput")
     fi
     for output in "${rpathOutputs[@]}"; do
-      export NIX_LDFLAGS+=" -rpath ${!output}/lib"
+      export NIX_LDFLAGS_BEFORE+=" -rpath ${!output}/lib"
     done
   fi
 fi

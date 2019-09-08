@@ -22,11 +22,34 @@ stdenv.mkDerivation rec {
   configureFlags = [
     "--sysconfdir=/etc"
     "--localstatedir=/var"
+    "--localedir=${placeholder "bin"}/share/locale"
   ];
 
   preInstall = ''
-    installFlagsArray+=("sysconfdir=$out/etc")
+    installFlagsArray+=("sysconfdir=$dev/etc")
   '';
+
+  postInstall = ''
+    mkdir -p "$bin"
+    mv -v "$dev"/bin "$bin"
+
+    mkdir -p "$lib"/lib
+    mv -v "$dev"/lib*/*.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib*
+  '';
+
+  postFixup = ''
+    rm -rv "$dev"/share
+  '';
+
+  outputs = [
+    "dev"
+    "bin"
+    "lib"
+    "man"
+  ];
+
+  disableStatic = false;
 
   passthru = {
     srcVerification = fetchurl rec {

@@ -120,7 +120,6 @@ stdenv.mkDerivation rec {
     openssl
     readline
     sqlite
-    stdenv.cc.libc
     zlib
   ] ++ optionals isPy3 [
     xz
