@@ -105,9 +105,7 @@ let  # BEGIN let/in 1
             callPackage
             callPackages
             callPackageAlias
-            recurseIntoAttrs
-            wrapCCWith
-            wrapCC;
+            recurseIntoAttrs;
           inherit (lib)
             hiPrio
             hiPrioSet
@@ -537,20 +535,6 @@ let  # BEGIN let/in 1
 ################################################################################
 ################################################################################
 ################################################################################
-
-
-wrapCCWith = ccWrapper: libc: extraBuildCommands: baseCC: ccHeaders: ccWrapper {
-  nativeTools = pkgs.stdenv.cc.nativeTools or false;
-  nativeLibc = pkgs.stdenv.cc.nativeLibc or false;
-  nativePrefix = pkgs.stdenv.cc.nativePrefix or "";
-  cc = baseCC;
-  inherit libc extraBuildCommands;
-  coreutils = pkgs.coreutils_small;
-  cc-headers = ccHeaders;
-};
-
-wrapCC =
-  wrapCCWith (callPackage ../build-support/cc-wrapper) pkgs.stdenv.cc.libc "";
 
 wrapCCNew = callPackage ../build-support/cc-wrapper-new {
   coreutils = pkgs.coreutils_small;

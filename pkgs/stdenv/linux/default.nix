@@ -464,7 +464,10 @@ let
       libunistring = libunistring_glibc;
       cc = pkgs.cc_gcc_glibc;
       hostcc = cc;
+      glibc_headers = glibc_headers_gcc;
       glibc_lib = glibc_lib_gcc;
+      gcc_lib = gcc_lib_glibc;
+      gcc_runtime = gcc_runtime_glibc;
       libc = glibc_lib;
     };
   });
