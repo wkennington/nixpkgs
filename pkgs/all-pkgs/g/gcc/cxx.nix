@@ -26,8 +26,8 @@
     cd build
     tar xf '${gcc_lib.internal}'/build.tar.xz
     find . -type f -exec sed -i "s,/build-dir,$NIX_BUILD_TOP,g" {} \;
-    mkdir -p x/libstdc++-v3
-    cd x/libstdc++-v3
+    mkdir -p $NIX_SYSTEM_HOST/libstdc++-v3
+    cd $NIX_SYSTEM_HOST/libstdc++-v3
     configureScript='../../../libstdc++-v3/configure'
     chmod +x "$configureScript"
   '';
@@ -60,6 +60,7 @@
       wkennington
     ];
     platforms = with platforms;
+      i686-linux ++
       x86_64-linux;
   };
 }

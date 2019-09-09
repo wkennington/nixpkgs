@@ -38,8 +38,8 @@ in
     grep -q '\-Dinhibit_libc' gcc/libgcc.mvars
     sed -i 's, -Dinhibit_libc,,g' gcc/libgcc.mvars
 
-    mkdir -p x/libgcc
-    cd x/libgcc
+    mkdir -p $NIX_SYSTEM_HOST/libgcc
+    cd $NIX_SYSTEM_HOST/libgcc
     configureScript='../../../libgcc/configure'
     chmod +x "$configureScript"
   '';
@@ -76,12 +76,15 @@ in
     find . -type f -exec sed -i "s,$NIX_BUILD_TOP,/build-dir,g" {} \;
     mkdir -p "$internal"
     cd ../..
-    tar Jcf "$internal"/build.tar.xz x/libgcc
+    tar Jcf "$internal"/build.tar.xz $NIX_SYSTEM_HOST/libgcc
   '' + optionalString (type == "nolibc") ''
     # GCC will pull in gcc_eh during linking, but a libc shouldn't need
     # the exception handling symbols
     ln -sv libgcc.a "$dev"/lib/libgcc_eh.a
   '';
+
+  # Stack protector support is added to the compiler later
+  NIX_CC_STACK_PROTECTOR = false;
 
   # We want static libgcc
   disableStatic = false;
@@ -98,6 +101,7 @@ in
       wkennington
     ];
     platforms = with platforms;
+      i686-linux ++
       x86_64-linux;
   };
 }

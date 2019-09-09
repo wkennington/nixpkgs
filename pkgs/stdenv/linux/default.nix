@@ -65,9 +65,14 @@ let
 
   };
 
-  # TODO: Implement mapping for this
-  bootstrapTarget = "x86_64-tritonboot-linux-gnu";
-  finalTarget = "x86_64-pc-linux-gnu";
+  bootstrapTarget = {
+    "x86_64-linux" = "x86_64-tritonboot-linux-gnu";
+    "i686-linux" = "i686-tritonboot-linux-gnu";
+  }."${targetSystem}";
+  finalTarget = {
+    "x86_64-linux" = "x86_64-pc-linux-gnu";
+    "i686-linux" = "i686-pc-linux-gnu";
+  }."${targetSystem}";
 
   # This is not a real set of packages or stdenv.
   # This is just enough for us to use stdenv.mkDerivation to build our

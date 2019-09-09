@@ -1,5 +1,7 @@
 { stdenv
 , fetchurl
+
+, libunistring
 }:
 
 let
@@ -18,6 +20,10 @@ stdenv.mkDerivation rec {
     sha256 = "53f02fbbec9e798b0faaf7c73272f83608e835c6288dd58be6c9bb54624a3800";
   };
 
+  buildInputs = [
+    libunistring
+  ];
+
   postPatch = ''
     sed \
       -i gettext-tools/projects/KDE/trigger \
@@ -28,10 +34,8 @@ stdenv.mkDerivation rec {
 
   configureFlags = [
     "--datadir=${placeholder "lib"}/share"
+    "--without-included-libunistring"
   ];
-
-  # Broken in 0.20 for some invocations
-  buildParallel = false;
 
   postInstall = ''
     rm -rv "$bin"/share/{doc,info}

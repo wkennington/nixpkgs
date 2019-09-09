@@ -1562,6 +1562,7 @@ gcc_cxx_glibc = callPackage ../all-pkgs/g/gcc/cxx.nix {
 
 gcc_runtime_glibc = callPackage ../all-pkgs/g/gcc/runtime.nix {
   cc = pkgs.cc_gcc_glibc_early;
+  gcc_lib = pkgs.gcc_lib_glibc;
 };
 
 gcc_lib_musl = callPackage ../all-pkgs/g/gcc/lib.nix {
@@ -2876,7 +2877,9 @@ libxkbfile = callPackage ../all-pkgs/l/libxkbfile { };
 
 libxklavier = callPackage ../all-pkgs/l/libxklavier { };
 
-libxml2 = callPackage ../all-pkgs/l/libxml2 { };
+libxml2_lib = callPackage ../all-pkgs/l/libxml2/lib.nix { };
+
+libxml2_progs = callPackage ../all-pkgs/l/libxml2/progs.nix { };
 
 libxmu = callPackage ../all-pkgs/l/libxmu { };
 

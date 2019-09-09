@@ -37,6 +37,10 @@ stdenv.mkDerivation rec {
     findXMLCatalogs
   ];
 
+  postPatch = ''
+    sed -i '/^SUBDIRS/s, example,,g' Makefile.in
+  '';
+
   configureFlags = [
     "--with-icu=${icu}"
     "--with-readline=${readline}"

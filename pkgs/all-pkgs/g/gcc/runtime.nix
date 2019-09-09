@@ -2,6 +2,7 @@
 , cc
 , hostcc
 , gcc
+, gcc_lib
 }:
 
 (stdenv.override { cc = null; }).mkDerivation rec {
@@ -29,7 +30,13 @@
   preConfigure = ''
     mkdir -v build
     cd build
+    tar xf '${gcc_lib.internal}'/build.tar.xz
+    find . -type f -exec sed -i "s,/build-dir,$NIX_BUILD_TOP,g" {} \;
     configureScript='../configure'
+  '';
+
+  preBuild = ''
+    buildFlagsArray+=(RAW_CXX_FOR_TARGET="$CC")
   '';
 
   buildFlags = [
@@ -80,6 +87,7 @@
       wkennington
     ];
     platforms = with platforms;
+      i686-linux ++
       x86_64-linux;
   };
 }

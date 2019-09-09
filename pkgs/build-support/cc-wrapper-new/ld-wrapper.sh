@@ -115,27 +115,20 @@ params=("${filtered_params[@]}")
 # Add all used dynamic libraries to the rpath.
 if [ -n "${NIX@typefx@_LD_ADD_RPATH-1}" ]; then
   addToRPath() {
+    local libdir="$(dirname "$1")"
+    local prevdir="${2-$libdir}"
+
     # We need to follow library symlinks in order to pick the best rpath
     local link
     if link="$(readlink "$1")"; then
       if [ "${link:0:1}" = "/" ]; then
-        addToRPath "$link"
+        addToRPath "$link" "$libdir"
        else
-        addToRPath "$(realpath -sm "$1/../$link")"
+        addToRPath "$libdir/$link" "$libdir"
       fi
     fi
 
-    # If the path is not in the store, don't add it to the rpath.
-    # This typically happens for libraries in /tmp that are later
-    # copied to $out/lib.  If not, we're screwed.
-    startsWith '@NIX_STORE@' "$1" || return 0
-
-    local libdir="$(dirname "$1")"
-    local rpath
-    for rpath in "${rpaths[@]}"; do
-      [ "$rpath" = "$libdir" ] && return 0
-    done
-    rpaths+=("$libdir")
+    rpaths+=" $libdir $prevdir"
   }
 
   addToLibs() {
@@ -156,7 +149,7 @@ if [ -n "${NIX@typefx@_LD_ADD_RPATH-1}" ]; then
 
   libs=()
   libpaths=()
-  rpaths=()
+  rpaths=""
   paramsStatic=
   for (( i = 0; i < "${#params[@]}"; i++ )); do
     p="${params[$i]}"
@@ -211,7 +204,12 @@ if [ -n "${NIX@typefx@_LD_ADD_RPATH-1}" ]; then
   done
 
   # Finally, add `-rpath' switches.
-  for i in "${rpaths[@]}"; do
+  for i in $(echo "$rpaths" | tsort); do
+    # If the path is not in the store, don't add it to the rpath.
+    # This typically happens for libraries in /tmp that are later
+    # copied to $out/lib.  If not, we're screwed.
+    startsWith '@NIX_STORE@' "$i" || continue
+
     params+=('-rpath' "$i")
   done
 fi
