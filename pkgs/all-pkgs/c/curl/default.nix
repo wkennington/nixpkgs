@@ -65,6 +65,32 @@ stdenv.mkDerivation rec {
     "--with-libmetalink"
   ];
 
+  preBuild = ''
+    export NIX_DEBUG=1
+  '';
+
+  postInstall = ''
+    mkdir -p "$bin"
+    mv -v "$dev"/bin "$bin"
+    mkdir -p "$dev"/bin
+    mv -v "$bin"/bin/curl-config "$dev"/bin
+
+    mkdir -p "$lib"/lib
+    mv -v "$dev"/lib*/*.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib
+  '';
+
+  postFixup = ''
+    rm -rv "$dev"/share
+  '';
+
+  outputs = [
+    "dev"
+    "bin"
+    "lib"
+    "man"
+  ];
+
   passthru = {
     srcVerification = fetchurl rec {
       failEarly = true;

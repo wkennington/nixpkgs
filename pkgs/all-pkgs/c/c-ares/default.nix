@@ -19,6 +19,21 @@ stdenv.mkDerivation rec {
     sha256 = "6cdb97871f2930530c97deb7cf5c8fa4be5a0b02c7cea6e7c7667672a39d6852";
   };
 
+  postInstall = ''
+    mkdir -p "$lib"/lib
+    mv -v "$dev"/lib/*.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib
+  '';
+
+  postFixup = ''
+    rm -rv "$dev"/share
+  '';
+
+  outputs = [
+    "dev"
+    "lib"
+  ];
+
   passthru = {
     srcVerification = fetchurl rec {
       inherit (src) outputHashAlgo;

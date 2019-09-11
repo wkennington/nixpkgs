@@ -444,6 +444,8 @@ let
         '' + lib.flip lib.concatMapStrings extraAttrs.bootstrappedPackages' (n: ''
           [ -h "$out/$(basename "${n}")" ] || ln -s "${n}" "$out"
         '');
+        allowSubstitutes = false;
+        preferLocalBuild = true;
       };
       stdenvDepTest = stage21Pkgs.stdenv.mkDerivation {
         name = "stdenv-dep-test";
@@ -452,6 +454,8 @@ let
           ln -s "${stdenvDeps}" $out
         '';
         allowedRequisites = extraAttrs.bootstrappedPackages' ++ [ stdenvDeps ];
+        allowSubstitutes = false;
+        preferLocalBuild = true;
       };
     };
 

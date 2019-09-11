@@ -32,17 +32,22 @@ in
   ];
 
   configureFlags = [
+    "--localedir=${placeholder "bin"}/share/locale"
     "--disable-doc"
   ];
 
   postInstall = ''
+    mkdir -p "$bin"
+    mv -v "$dev"/bin "$bin"
+
     mkdir -p "$lib"/lib
-    mv "$dev"/lib*/*.so* "$lib"/lib
+    mv -v "$dev"/lib*/*.so* "$lib"/lib
     ln -sv "$lib"/lib/* "$dev"/lib
   '';
 
   outputs = [
     "dev"
+    "bin"
     "lib"
   ];
 

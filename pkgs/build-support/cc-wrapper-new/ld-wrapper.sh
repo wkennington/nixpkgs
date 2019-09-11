@@ -55,7 +55,7 @@ for (( i = 1; i <= "$#" ; i++ )); do
   p2="${!n-}"
   if [ "$p" = -g ]; then
     compilerFlags=
-  elif [ -n "$compilerFlags" -a "$p" = -rpath ]; then
+  elif [ "$p" = -rpath ] && (startsWith '@NIX_STORE@' "$p2" || [ -n "$compilerFlags" ]); then
     i=$((i + 1))
   elif [ -n "$compilerFlags" -a "$p" = -dynamic-linker ]; then
     i=$((i + 1))

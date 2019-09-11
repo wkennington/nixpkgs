@@ -56,8 +56,8 @@ stdenv.mkDerivation rec {
   '';
 
   outputs = [
-    "bin"
     "dev"
+    "bin"
     "lib"
     "man"
   ];

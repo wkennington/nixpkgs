@@ -8,7 +8,7 @@
 , jemalloc
 , libev
 , libevent
-, libxml2
+, libxml2_lib
 , openssl
 , zlib
 
@@ -30,7 +30,7 @@ let
     "https://github.com/tatsuhiro-t/nghttp2/releases/download/v${version}/nghttp2-${version}.tar.xz"
   ];
 
-  version = "1.39.1";
+  version = "1.39.2";
 in
 stdenv.mkDerivation rec {
   name = "${prefix}nghttp2-${version}";
@@ -38,7 +38,7 @@ stdenv.mkDerivation rec {
   src = fetchurl {
     urls = tarballUrls version;
     hashOutput = false;
-    sha256 = "679160766401f474731fd60c3aca095f88451e3cc4709b72306e4c34cf981448";
+    sha256 = "a2d216450abd2beaf4e200c168957968e89d602ca4119338b9d7ab059fd4ce8b";
   };
 
   buildInputs = optionals (!isLib) [
@@ -49,7 +49,7 @@ stdenv.mkDerivation rec {
     #jemalloc
     #libev
     #libevent
-    #libxml2
+    #libxml2_lib
     #openssl
     #zlib
   ];
@@ -64,8 +64,17 @@ stdenv.mkDerivation rec {
   ];
 
   postInstall = ''
-    rm -r "$out"/{bin,share}
+    rm -r "$dev"/{bin,share}
+
+    mkdir -p "$lib"/lib
+    mv -v "$dev"/lib/*.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib
   '';
+
+  outputs = [
+    "dev"
+    "lib"
+  ];
 
   passthru = {
     srcVerification = fetchurl {
