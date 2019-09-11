@@ -46,7 +46,6 @@ in
   configureFlags = [
     "--sysconfdir=/etc"
     "--localstatedir=/var"
-    "--disable-maintainer-mode"
     "--enable-stackguard-randomization"
     "--enable-bind-now"
     "--enable-stack-protector=strong"
@@ -124,9 +123,6 @@ in
     "dev"
     "lib"
   ];
-
-  # Don't retain shell referencs
-  dontPatchShebangs = true;
 
   # Patchelf will break our loader
   dontPatchELF = true;

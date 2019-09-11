@@ -36,8 +36,6 @@ stdenv.mkDerivation rec {
     mv "$bin"/share2 "$bin"/share
   '';
 
-  dontPatchShebangs = true;
-
   outputs = [
     "bin"
   ] ++ optionals (type == "full") [

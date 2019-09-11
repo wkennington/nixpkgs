@@ -17,11 +17,6 @@
     cc
   ];
 
-  configureFlags = [
-    "--enable-shared"
-    "--enable-static"
-  ];
-
   postInstall = ''
     mkdir -p "$lib"/lib
     mv "$dev"/lib/*.so* "$lib"/lib
@@ -39,12 +34,6 @@
 
   # Can't force the libc to use this
   NIX_CC_STACK_PROTECTOR = false;
-
-  # We need this for embedded things like busybox
-  disableStatic = false;
-
-  # Dont depend on a shell potentially from the bootstrap
-  dontPatchShebangs = true;
 
   outputs = [
     "dev"

@@ -39,8 +39,6 @@ stdenv.mkDerivation {
     "lib"
   ];
 
-  disableStatic = false;
-
   passthru = {
     inherit version;
   };

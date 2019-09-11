@@ -79,9 +79,6 @@
     "libssp"
   ];
 
-  # We want static runtime libs
-  disableStatic = false;
-
   meta = with stdenv.lib; {
     maintainers = with maintainers; [
       wkennington

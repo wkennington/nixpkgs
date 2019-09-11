@@ -79,8 +79,6 @@ stdenv.mkDerivation rec {
     "--exec-prefix=${placeholder "bin"}"
     "--datarootdir=${placeholder "bin"}/share"
     (optionalString (target != null) "--target=${target}")
-    "--enable-shared"
-    "--enable-static"
     "--${boolEn (type == "full")}-nls"
     "--disable-werror"
     "--enable-deterministic-archives"

@@ -34,7 +34,6 @@ let
     (optionalString (target != null) "--target=${target}")
     "--${boolEn (type != "bootstrap")}-gcov"
     "--disable-multilib"
-    "--disable-maintainer-mode"
     "--disable-bootstrap"
     "--enable-languages=c,c++"
     "--disable-werror"
@@ -224,9 +223,6 @@ stdenv.mkDerivation rec {
   ] ++ optionals (type == "full") [
     "man"
   ];
-
-  #buildParallel = false;
-  disableStatic = false;
 
   passthru = {
     inherit target version commonConfigureFlags;

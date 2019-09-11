@@ -49,8 +49,6 @@ stdenv.mkDerivation rec {
     "man"
   ];
 
-  disableStatic = false;
-
   passthru = {
     srcVerification = fetchurl rec {
       failEarly = true;

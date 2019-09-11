@@ -23,9 +23,10 @@ in
   ];
 
   configureFlags = gcc.commonConfigureFlags ++ optionals (type == "nolibc") [
-    "--disable-shared"
     "--disable-gcov"
   ];
+
+  disableShared = type == "nolibc";
 
   postPatch = ''
     # Extract headers from the gcc build and use them
@@ -85,9 +86,6 @@ in
 
   # Stack protector support is added to the compiler later
   NIX_CC_STACK_PROTECTOR = false;
-
-  # We want static libgcc
-  disableStatic = false;
 
   outputs = [
     "dev"

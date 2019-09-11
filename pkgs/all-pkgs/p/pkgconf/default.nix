@@ -55,8 +55,6 @@ stdenv.mkDerivation rec {
     rm -rv "$dev"/share
   '';
 
-  disableStatic = false;
-
   outputs = [
     "dev"
     "bin"

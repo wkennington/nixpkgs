@@ -469,42 +469,71 @@ configurePhase() {
     configureScript=./configure
   fi
 
-  if [ -n "${fixLibtool-true}" ]; then
+  if [ -n "${fixLibtool-1}" ]; then
     find . -iname "ltmain.sh" | while read i; do
       echo "fixing libtool script $i"
       libtoolFix "$i"
     done
   fi
 
-  : ${addSystem=true}
+  : ${addSystem=1}
 
   if [ -n "${addBuild-$addSystem}" -a -n "${NIX_SYSTEM_BUILD-}" ]; then
     if grep -q '\--build' "$configureScript" 2>/dev/null; then
-      configureFlags="--build=$NIX_SYSTEM_BUILD $configureFlags"
+      configureFlagsArray+=("--build=$NIX_SYSTEM_BUILD")
     fi
   fi
 
   if [ -n "${addHost-$addSystem}" -a -n "${NIX_SYSTEM_HOST-}" ]; then
     if grep -q '\--host' "$configureScript" 2>/dev/null; then
-      configureFlags="--host=$NIX_SYSTEM_HOST $configureFlags"
+      configureFlagsArray+=("--host=$NIX_SYSTEM_HOST")
     fi
   fi
 
-  if [ -n "${addPrefix-true}" ]; then
-    configureFlags="${prefixKey:---prefix=}$prefix $configureFlags"
+  if [ -n "${addPrefix-1}" ]; then
+    configureFlagsArray+=("${prefixKey:---prefix=}$prefix")
   fi
 
   # Add --disable-dependency-tracking to speed up some builds.
-  if [ -n "${addDisableDepTrack-true}" ]; then
+  if [ -n "${addDisableDepTrack-1}" ]; then
     if grep -q dependency-tracking "$configureScript" 2>/dev/null; then
-      configureFlags="--disable-dependency-tracking $configureFlags"
+      configureFlagsArray+=("--disable-dependency-tracking")
     fi
   fi
 
-  # By default, disable static builds.
-  if [ -n "${disableStatic-true}" ]; then
-    if grep -q enable-static "$configureScript" 2>/dev/null; then
-      configureFlags="--disable-static $configureFlags"
+  # Add --disable-maintainer-mode to reduce unnecessary regeneration.
+  if [ -n "${addDisableMaintainerMode-1}" ]; then
+    if grep -q maintainer-mode "$configureScript" 2>/dev/null; then
+      configureFlagsArray+=("--disable-maintainer-mode")
+    fi
+  fi
+
+  # Add --enable-shared by default since we always want shared libs
+  if [ -n "${addShared-1}" ]; then
+    local flag=enable
+    if [ -n "${disableShared-}" ]; then
+      flag=disable
+    fi
+    if grep -q "$flag-shared" "$configureScript" 2>/dev/null; then
+      configureFlagsArray+=("--$flag-shared")
+    fi
+  fi
+
+  # By default, disable static builds if we don't have multiple outputs
+  # for storing the static libs
+  local haveDev=
+  for output in $outputs; do
+    if [ "$output" = "dev" ]; then
+      haveDev=1
+    fi
+  done
+  if [ -n "${addStatic-1}" ]; then
+    local flag=disable
+    if [ -z "${disableStatic-1}" -o -n "$haveDev" ]; then
+      flag=enable
+    fi
+    if grep -q "$flag-static" "$configureScript" 2>/dev/null; then
+      configureFlagsArray+=("--$flag-static")
     fi
   fi
 

@@ -314,6 +314,7 @@ let
       preHook = commonStdenvOptions.preHook + ''
         export NIX_SYSTEM_BUILD='${bootstrapTarget}'
         export NIX_SYSTEM_HOST='${finalTarget}'
+        export dontPatchShebangs=1
       '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage2Pkgs is missing package definition for `${n}`") pkgs) // {
@@ -382,6 +383,7 @@ let
       preHook = commonStdenvOptions.preHook + ''
         export NIX_SYSTEM_BUILD='${finalTarget}'
         export NIX_SYSTEM_HOST='${finalTarget}'
+        export dontPatchShebangs=1
       '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage21Pkgs is missing package definition for `${n}`") pkgs) // {

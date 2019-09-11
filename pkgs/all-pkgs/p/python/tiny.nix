@@ -16,7 +16,6 @@ stdenv.mkDerivation {
   };
 
   configureFlags = [
-    "--enable-shared"
     "--with-assertions"
     "--without-ensurepip"
   ];

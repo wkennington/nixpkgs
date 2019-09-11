@@ -63,8 +63,6 @@ stdenv.mkDerivation rec {
     "man"
   ];
 
-  dontPatchShebangs = true;
-
   passthru = {
     srcVerification = fetchurl rec {
       failEarly = true;

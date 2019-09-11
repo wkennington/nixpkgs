@@ -35,8 +35,6 @@ stdenv.mkDerivation rec {
     ln -sv "$lib"/lib/* "$dev"/lib
   '';
 
-  disableStatic = false;
-
   outputs = [
     "dev"
     "lib"

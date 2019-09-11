@@ -52,9 +52,6 @@
     "lib"
   ];
 
-  # We want static libstdc++
-  disableStatic = false;
-
   meta = with stdenv.lib; {
     maintainers = with maintainers; [
       wkennington

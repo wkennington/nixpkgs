@@ -29,7 +29,6 @@ stdenv.mkDerivation rec {
   '';
 
   configureFlags = [
-    "--enable-static"
     "--enable-auto-cleanup"
     "--enable-rpath"
     "--disable-tests"
@@ -53,8 +52,6 @@ stdenv.mkDerivation rec {
   postFixup = ''
     rm -rf "$dev"/share
   '';
-
-  disableStatic = false;
 
   outputs = [
     "dev"

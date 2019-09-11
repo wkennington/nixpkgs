@@ -52,7 +52,6 @@ stdenv.mkDerivation rec {
   configureFlags = [
     "--sysconfdir=/etc"
     "--localstatedir=/var"
-    "--disable-maintainer-mode"
     "--enable-stackguard-randomization"
     "--enable-bind-now"
     "--enable-stack-protector=strong"
@@ -88,9 +87,6 @@ stdenv.mkDerivation rec {
   # Hardening can't be applied to all source
   # Makefiles manually harden for this
   NIX_CC_STACK_PROTECTOR = false;
-
-  # Don't retain shell referencs
-  dontPatchShebangs = true;
 
   meta = with stdenv.lib; {
     maintainers = with maintainers; [

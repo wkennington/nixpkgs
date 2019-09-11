@@ -38,7 +38,6 @@ in
   '';
 
   configureFlags = [
-    "--disable-maintainer-mode"
     "--enable-kernel=${linux-headers.channel}"
   ];
 

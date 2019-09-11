@@ -56,8 +56,6 @@ stdenv.mkDerivation rec {
     mv "$dev"/share2 "$dev"/share
   '';
 
-  disableStatic = false;
-
   outputs = [
     "dev"
     "lib"

@@ -25,8 +25,6 @@ stdenv.mkDerivation rec {
     )
   '';
 
-  dontPatchShebangs = true;
-
   meta = with lib; {
     description = "Fast real-time lossless compression algorithm";
     homepage = http://www.zstd.net/;

@@ -78,9 +78,6 @@ stdenv.mkDerivation rec {
     "lib"
   ];
 
-  disableStatic = false;
-  dontPatchShebangs = true;
-
   passthru = {
     srcVerification = fetchurl rec {
       failEarly = true;

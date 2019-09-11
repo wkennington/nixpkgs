@@ -35,8 +35,6 @@ stdenv.mkDerivation rec {
     "man"
   ];
 
-  dontPatchShebangs = true;
-
   meta = with stdenv.lib; {
     description = "GNU Find Utilities, basic directory searching utilities";
     homepage = http://www.gnu.org/software/findutils/;

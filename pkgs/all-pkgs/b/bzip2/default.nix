@@ -79,8 +79,6 @@ stdenv.mkDerivation rec {
     rm -rv "$bin"/share
   '';
 
-  dontPatchShebangs = true;
-
   outputs = [
     "dev"
     "bin"

@@ -32,8 +32,6 @@ in
   # Needed to prevent libunistring.so from referencing dev
   NIX_CFLAGS_COMPILE = "-DLIBDIR=\"${placeholder "lib"}/lib\"";
 
-  disableStatic = false;
-
   outputs = [
     "dev"
     "lib"

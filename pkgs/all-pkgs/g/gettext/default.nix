@@ -42,6 +42,7 @@ stdenv.mkDerivation rec {
 
     mkdir -p "$dev"
     mv "$bin"/{include,lib} "$dev"
+    rm -v "$dev"/lib/preload*
 
     mkdir -p "$lib"/lib
     mv -v "$dev"/lib*/*.so* "$lib"/lib
@@ -53,8 +54,6 @@ stdenv.mkDerivation rec {
       -e "/^  .\?gettext/ s,envsubst,$bin/bin/\0,g" \
       -e "/^  .\?gettext/ s,^  ,\0$bin/bin/,"
   '';
-
-  disableStatic = false;
 
   outputs = [
     "bin"
