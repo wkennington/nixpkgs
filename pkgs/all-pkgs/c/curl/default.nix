@@ -65,10 +65,6 @@ stdenv.mkDerivation rec {
     "--with-libmetalink"
   ];
 
-  preBuild = ''
-    export NIX_DEBUG=1
-  '';
-
   postInstall = ''
     mkdir -p "$bin"
     mv -v "$dev"/bin "$bin"

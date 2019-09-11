@@ -35,8 +35,8 @@ stdenv.mkDerivation rec {
   };
 
   buildInputs = [
-    gnum4
-    perl
+    gnum4.bin
+    perl.bin
   ];
 
   meta = with lib; {

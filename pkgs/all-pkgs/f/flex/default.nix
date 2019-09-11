@@ -21,8 +21,12 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [
-    bison
-    gnum4
+    bison.bin
+    gnum4.bin
+  ];
+
+  configureFlags = [
+    "--localedir=${placeholder "bin"}/share/locale"
   ];
 
   # Using static libraries fixes issues with references to
@@ -30,6 +34,21 @@ stdenv.mkDerivation rec {
   # This can be tested by building glusterfs
   disableShared = true;
   disableStatic = false;
+
+  postInstall = ''
+    mkdir -p "$bin"
+    mv "$dev"/bin "$bin"
+  '';
+
+  postFixup = ''
+    rm -rv "$dev"/share
+  '';
+
+  outputs = [
+    "dev"
+    "bin"
+    "man"
+  ];
 
   passthru = {
     srcVerification = fetchurl rec {

@@ -27,13 +27,13 @@ stdenv.mkDerivation rec {
   };
 
   nativeBuildInputs = [
-    gnum4
+    gnum4.bin
   ];
 
   # We need this for bison to work correctly when being
   # used during the build process
   propagatedBuildInputs = [
-    gnum4
+    gnum4.bin
   ];
 
   # Don't generate examples

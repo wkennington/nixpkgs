@@ -19,6 +19,25 @@ stdenv.mkDerivation rec {
     sha256 = "cbc9102f4a31a8dafd42d642e9a3aa31e79a0aedaa1f6efd2795ebc83174ec18";
   };
 
+  postInstall = ''
+    mkdir -p "$bin"
+    mv -v "$dev"/bin "$bin"
+
+    mkdir -p "$lib"/lib
+    mv -v "$dev"/lib/*.so* "$lib"/lib
+    ln -sv "$lib"/lib/* "$dev"/lib
+  '';
+
+  postFixup = ''
+    rm -rv "$dev"/share
+  '';
+
+  outputs = [
+    "dev"
+    "bin"
+    "lib"
+  ];
+
   passthru = {
     srcVerification = fetchurl rec {
       failEarly = true;
