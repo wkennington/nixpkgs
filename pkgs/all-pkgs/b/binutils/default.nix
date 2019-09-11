@@ -18,6 +18,14 @@ let
     optionalAttrs
     optionalString
     stringLength;
+
+  supportGold = type != "bootstrap";
+  defaultGold = supportGold && (
+    if target == null then
+      [ stdenv.targetSystem ] != lib.platforms.powerpc64le-linux
+    else
+      !(lib.hasPrefix "powerpc" target)
+    );
 in
 stdenv.mkDerivation rec {
   name = "binutils-2.32";
@@ -67,8 +75,6 @@ stdenv.mkDerivation rec {
     # Clear the default library search path.
     grep -q 'NATIVE_LIB_DIRS=' ld/configure.tgt
     echo 'NATIVE_LIB_DIRS=' >> ld/configure.tgt
-  '' + optionalString (target == null) ''
-    export NIX_CFLAGS_LINK+=" -fuse-ld=bfd"
   '';
 
   # Needed by cross linker to search DT_RUNPATH of libs during link
@@ -82,7 +88,7 @@ stdenv.mkDerivation rec {
     "--${boolEn (type == "full")}-nls"
     "--disable-werror"
     "--enable-deterministic-archives"
-    "--${boolEn (type != "bootstrap")}-gold${optionalString (type != "bootstrap") "=default"}"
+    "--${boolEn supportGold}-gold${optionalString defaultGold "=default"}"
     "--${boolWt (type != "bootstrap")}-system-zlib"
     "--with-separate-debug-dir=/no-such-path/debug"
   ];
@@ -153,7 +159,9 @@ stdenv.mkDerivation rec {
     "man"
   ];
 
-  dontDisableStatic = true;
+  passthru = {
+    inherit target;
+  };
 
   meta = with lib; {
     description = "Tools for manipulating binaries (linker, assembler, etc.)";
@@ -164,6 +172,7 @@ stdenv.mkDerivation rec {
     ];
     platforms = with platforms;
       i686-linux ++
-      x86_64-linux;
+      x86_64-linux ++
+      powerpc64le-linux;
   };
 }

@@ -89,7 +89,9 @@ if [ -z "${NIX@typefx@_CC_WRAPPER_FLAGS_SET-}" ]; then
   maybeAppendFlagsFromFile NIX@typefx@_CFLAGS_LINK '@out@'/nix-support/cflags-link
 fi
 
-params=('-nostdinc')
+if [ -n "${NIX_ENFORCE_PURITY-}" ]; then
+  params=('-nostdinc')
+fi
 if [ -z "$dontLink" ]; then
   params+=('-Wl,-g')
 fi

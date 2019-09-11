@@ -31,15 +31,20 @@ let
   bootstrapTools = (derivation {
     name = "bootstrap-tools";
 
-    builder = bootstrapFiles.busybox;
+    builder = "/bin/sh";
 
-    args = [ "ash" "-e" ./unpack-bootstrap-tools.sh ];
+    args = [ "-e" ./unpack-bootstrap-tools.sh ];
 
+    busybox = bootstrapFiles.busybox;
     tarball = bootstrapFiles.bootstrapTools;
 
     outputs = [ "out" "glibc" ];
 
     system = hostSystem;
+
+    __optionalChroot = true;
+    allowSubstitutes = false;
+    requiredSystemFeatures = [ "bootstrap" ];
   }) // {
     cc = "gcc";
     cxx = "g++";
@@ -53,6 +58,9 @@ let
 
   commonBootstrapOptions = {
     shell = bootstrapShell;
+    optionalChroot = true;
+    allowSubstitutes = false;
+    requiredSystemFeatures = [ "bootstrap" ];
     initialPath = [ bootstrapTools ];
     extraBuildInputs = [ ];
 
@@ -61,17 +69,22 @@ let
       export dontPatchShebangs=1
       # We can allow build dir impurities because we might have a weird compiler
       export buildDirCheck=
+      # We don't have package config early in the build process so don't use it
+      export dontAbsoluteLibtool=1
+      export dontAbsolutePkgconfig=1
     '';
 
   };
 
   bootstrapTarget = {
     "x86_64-linux" = "x86_64-tritonboot-linux-gnu";
+    "powerpc64le-linux" = "powerpc64le-tritonboot-linux-gnu";
     "i686-linux" = "i686-tritonboot-linux-gnu";
   }."${targetSystem}";
   finalTarget = {
-    "x86_64-linux" = "x86_64-pc-linux-gnu";
-    "i686-linux" = "i686-pc-linux-gnu";
+    "x86_64-linux" = "x86_64-triton-linux-gnu";
+    "powerpc64le-linux" = "powerpc64le-triton-linux-gnu";
+    "i686-linux" = "i686-triton-linux-gnu";
   }."${targetSystem}";
 
   # This is not a real set of packages or stdenv.
@@ -114,6 +127,11 @@ let
       name = "stdenv-linux-boot-stage0.1";
       cc = stage0Pkgs.cc_gcc_glibc;
 
+      preHook = commonBootstrapOptions.preHook + ''
+        export NIX_CC_HARDEN=
+        export NIX_LD_HARDEN=
+      '';
+
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage01Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
         inherit (pkgs) stdenv libc python_tiny;
@@ -151,7 +169,10 @@ let
       cc = null;
 
       preHook = commonBootstrapOptions.preHook + ''
+        export NIX_SYSTEM_BUILD="$('${bootstrapTools}'/bin/gcc -dumpmachine)"
         export NIX_SYSTEM_HOST='${bootstrapTarget}'
+        export NIX_FOR_BUILD_CC_HARDEN=
+        export NIX_FOR_BUILD_LD_HARDEN=
       '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage1Pkgs is missing package definition for `${n}`") pkgs) // {
@@ -212,14 +233,18 @@ let
       cc = stage1Pkgs.cc_gcc_glibc;
 
       preHook = commonBootstrapOptions.preHook + ''
-        export NIX_SYSTEM_BUILD='${bootstrapTarget}'
+        export NIX_SYSTEM_BUILD="$('${bootstrapTools}'/bin/gcc -dumpmachine)"
         export NIX_SYSTEM_HOST='${bootstrapTarget}'
       '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage11Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
         inherit (pkgs) stdenv isl isl_0-21 libmpc mpfr bash_small coreutils_small gawk_small pcre
-          gnupatch_small gnused_small gnutar_small pkgconfig pkgconf pkgconf-wrapper python_tiny xz;
+          gnupatch_small gnused_small gnutar_small pkgconfig pkgconf pkgconf-wrapper xz;
+
+        python_tiny = pkgs.python_tiny.override {
+          python = stage01Pkgs.python_tiny;
+        };
 
         zlib = pkgs.zlib.override {
           type = "small";
@@ -241,6 +266,7 @@ let
         gcc = pkgs.gcc.override {
           type = "small";
           target = finalTarget;
+          fakeCanadian = true;
         };
 
         bzip2 = pkgs.bzip2.override {
@@ -322,8 +348,24 @@ let
         inherit (pkgs) stdenv wrapCCNew linux-headers linux-headers_4-14 gcc_lib_glibc_static gcc_lib_glibc
           gcc_runtime_glibc libidn2_glibc libunistring_glibc;
 
-        hostcc = stage1Pkgs.cc_gcc_glibc.override {
+        # This is hacky so that we don't depend on the external system
+        # runtimes to execute the initial bootstrap compiler. We use our
+        # new compiler with our old runtimes.
+        hostcc = pkgs.cc_gcc_glibc.override {
           type = "build";
+          target = bootstrapTarget;
+          compiler = pkgs.cc_relinker {
+            tool = stage11Pkgs.gcc.bin;
+            target = bootstrapTarget;
+          };
+          tools = [
+            (pkgs.cc_relinker {
+              tool = stage11Pkgs.binutils.bin;
+              target = bootstrapTarget;
+            })
+          ];
+          inherit (stage1Pkgs.cc_gcc_glibc)
+            inputs;
         };
 
         cc_gcc_early = pkgs.cc_gcc_early.override {

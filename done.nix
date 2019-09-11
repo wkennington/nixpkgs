@@ -11,8 +11,10 @@ let
     bison
     flex
     curl_minimal
+    expat
     libxml2_lib
     stdenv
+    strace
   ];
 in
 pkgs.stdenv.mkDerivation {

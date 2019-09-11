@@ -82,8 +82,9 @@ stdenv.mkDerivation rec {
       wkennington
     ];
     platforms = with platforms;
-      i686-linux
-      ++ x86_64-linux;
+      i686-linux ++
+      x86_64-linux ++
+      powerpc64le-linux;
     priority = -9;  # This should have a higher priority than everything
   };
 }

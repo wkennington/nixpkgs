@@ -49,6 +49,10 @@ for p in "$@"; do
     compilerFlags=1
   fi
 done
+haveDyldFlag=
+if [[ "${NIX@typefx@_LDFLAGS_BEFORE-}" =~ (^| )-dynamic-linker\  ]]; then
+  haveDyldFlag=1
+fi
 for (( i = 1; i <= "$#" ; i++ )); do
   p="${!i}"
   n=$((i + 1))
@@ -57,7 +61,7 @@ for (( i = 1; i <= "$#" ; i++ )); do
     compilerFlags=
   elif [ "$p" = -rpath ] && (startsWith '@NIX_STORE@' "$p2" || [ -n "$compilerFlags" ]); then
     i=$((i + 1))
-  elif [ -n "$compilerFlags" -a "$p" = -dynamic-linker ]; then
+  elif [ "$p" = -dynamic-linker -a -n "$compilerFlags" -a -n "$haveDyldFlag" ]; then
     i=$((i + 1))
   else
     params+=("$p")

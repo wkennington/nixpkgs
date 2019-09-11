@@ -47,6 +47,10 @@ lib.makeOverridable
   buildCommand = ''
     mkdir -p "$out"/bin "$out"/nix-support
 
+    exists() {
+      [ -h "$1" -o -e "$1" ]
+    }
+
     wrap() {
       local prog="$1"
       local wrapper="$2"
@@ -58,15 +62,15 @@ lib.makeOverridable
       fi
 
       local link="$out"/bin/"$pfx$pname"
-      if [ -e "$link" ]; then
+      if exists "$link"; then
         echo "WARNING: $link already exists" >&2
         return 0
       fi
 
       prog="$pdir/$pfx$pname"
-      if [ ! -e "$prog" ]; then
+      if ! exists "$prog"; then
         prog="$pdir/$pname"
-        if [ ! -e "$prog" ]; then
+        if ! exists "$prog"; then
           echo "ERROR: Missing $prog" >&2
           exit 1
         fi
@@ -89,7 +93,7 @@ lib.makeOverridable
     ln -sv "$pfx$cc" "$out"/bin/"$pfx"cc
     wrap "$compiler"/bin/"$cxx" '${./cc-wrapper.sh}'
     ln -sv "$pfx$cxx" "$out"/bin/"$pfx"c++
-    if [ -e "$compiler"/bin/"$pfx"cpp -o -e "$compiler"/bin/cpp ]; then
+    if exists "$compiler"/bin/"$pfx"cpp || exists "$compiler"/bin/cpp; then
       wrap "$compiler"/bin/cpp '${./cc-wrapper.sh}'
     fi
 
@@ -99,7 +103,7 @@ lib.makeOverridable
       done
 
       for prog in "$bin"/bin/*; do
-        [ -e "$out"/bin/"$(basename "$prog")" ] || ln -sv "$prog" "$out"/bin
+        exists "$out"/bin/"$(basename "$prog")" || ln -sv "$prog" "$out"/bin
       done
     done
 
@@ -118,7 +122,7 @@ lib.makeOverridable
       local file="$1"
       local input="$2"
 
-      [ -e "$input"/nix-support/"$file" ] || return 0
+      exists "$input"/nix-support/"$file" || return 0
       cat "$input"/nix-support/"$file" >>"$out"/nix-support/"$file"
     }
 

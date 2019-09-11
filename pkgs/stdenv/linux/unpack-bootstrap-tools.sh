@@ -1,7 +1,35 @@
-# Unpack the bootstrap tools tarball.
 echo Unpacking the bootstrap tools...
-$builder mkdir $out
-< $tarball $builder unxz | $builder tar x -C $out
+export PATH=/bin:/usr/bin:/run/current-system/sw/bin
+if mkdir --help >/dev/null 2>&1; then
+  echo Using native tooling
+  mkdir -p "$out"/bin "$glibc"
+  for util in awk as ar basename bash bzip2 cat chmod cksum cmp cp cpp cut date \
+      diff dirname egrep env expr false fgrep find gawk gcc g++ grep gzip head id \
+      install join ld ln ls make mkdir mktemp mv nl nproc objcopy objdump od patch \
+      ranlib readelf readlink rm rmdir sed sh sleep sort stat strip tar tail \
+      tee test touch tsort tr true xz xargs uname uniq wc; do
+    oldifs="$IFS"
+    IFS=:
+    found=
+    for p in $PATH; do
+      if [ -e "$p"/$util ]; then
+        found="$p"/$util
+        break
+      fi
+    done
+    if [ -z "$found" ]; then
+      echo "Failed to find: $util"
+      exit 1
+    fi
+    ln -sv "$found" "$out"/bin/$util
+    IFS="$oldifs"
+  done
+  exit 0
+fi
+
+# Unpack the bootstrap tools tarball.
+$busybox mkdir $out
+< $tarball $busybox unxz | $busybox tar x -C $out
 
 # Set the ELF interpreter / RPATH in the bootstrap binaries.
 echo Patching the bootstrap tools...

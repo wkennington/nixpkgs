@@ -10,7 +10,7 @@ let
       inherit multihash sha256 executable;
     };
 in
-if [ hostSystem ] == lib.platforms.x86_64-linux || [ hostSystem ] == lib.platforms.i686-linux then {
+if [ hostSystem ] == lib.platforms.x86_64-linux || [ hostSystem ] == lib.platforms.i686-linux || [ hostSystem ] == lib.platforms.powerpc64le-linux then {
   busybox = makeUrls {
     file = "bootstrap-busybox";
     nix-hash = "794m4bqyvkniwy14axhbvvlwn0nfkvgg";

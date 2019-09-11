@@ -1,8 +1,8 @@
 { stdenv
+, binutils
 , fetchTritonPatch
 , fetchurl
 
-, binutils
 , gmp
 , isl
 , libmpc
@@ -12,6 +12,7 @@
 
 , target ? null
 , type ? "full"
+, fakeCanadian ? false
 }:
 
 let
@@ -103,8 +104,10 @@ stdenv.mkDerivation rec {
 
   # We need to use the proper objdump tool for our build
   postPatch = ''
-    grep -r 'export_sym_check.*"objdump' libcc1/configure
+    grep -q 'export_sym_check.*"objdump' libcc1/configure
     sed -i '/export_sym_check/s,"objdump,"$OBJDUMP,' {gcc,libcc1}/configure
+  '' + optionalString fakeCanadian ''
+    sed -i 's,@GCC_FOR_TARGET@,$$r/$(HOST_SUBDIR)/gcc/xgcc -B$$r/$(HOST_SUBDIR)/gcc/,' Makefile.in
   '';
 
   prefix = placeholder "bin";
@@ -242,6 +245,7 @@ stdenv.mkDerivation rec {
     ];
     platforms = with platforms;
       i686-linux ++
-      x86_64-linux;
+      x86_64-linux ++
+      powerpc64le-linux;
   };
 }

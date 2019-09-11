@@ -35,6 +35,7 @@ let
   headerArch = {
     "x86_64-linux" = "x86_64";
     "i686-linux" = "i386";
+    "powerpc64le-linux" = "powerpc";
   };
 
   inherit (lib)
@@ -60,10 +61,18 @@ in
 
   preBuild = ''
     makeFlagsArray+=(
+      CC="$NIX_SYSTEM_HOST-gcc"
+      CXX="$NIX_SYSTEM_HOST-g++"
+      LD="$NIX_SYSTEM_HOST-ld"
       HOSTCC="$CC_FOR_BUILD"
       HOSTCXX="$CXX_FOR_BUILD"
+      HOSTLD="$LD_FOR_BUILD"
     )
   '';
+
+  makeFlags = [
+    "ARCH=${headerArch."${stdenv.targetSystem}"}"
+  ];
 
   # The header install process requires a configuration
   # The default configuration should be suitable for this
@@ -74,10 +83,6 @@ in
   preInstall = ''
     installFlagsArray+=("INSTALL_HDR_PATH=$out")
   '';
-
-  installFlags = [
-    "ARCH=${headerArch."${stdenv.targetSystem}"}"
-  ];
 
   installTargets = "headers_install";
 
@@ -108,7 +113,8 @@ in
       wkennington
     ];
     platforms = with platforms;
-      i686-linux
-      ++ x86_64-linux;
+      i686-linux ++
+      x86_64-linux ++
+      powerpc64le-linux;
   };
 }

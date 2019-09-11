@@ -1,6 +1,7 @@
 { stdenv
 , fetchurl
 , lib
+, python
 }:
 
 let
@@ -15,9 +16,18 @@ stdenv.mkDerivation {
     sha256 = "da60b54064d4cfcd9c26576f6df2690e62085123826cff2e667e72a91952d318";
   };
 
+  nativeBuildInputs = [
+    python
+  ];
+
   configureFlags = [
     "--with-assertions"
     "--without-ensurepip"
+
+    # Needed for cross compiling
+    "--enable-ipv6"
+    "ac_cv_file__dev_ptmx=yes"
+    "ac_cv_file__dev_ptc=yes"
   ];
 
   postInstall = ''
@@ -27,6 +37,7 @@ stdenv.mkDerivation {
     find "$out"/lib -name __pycache__ -prune -exec rm -r {} \;
     find "$out"/lib -name '*'.exe -delete
     rm -r "$out"/lib/python*/{idlelib,ensurepip}
+    ln -sv python3 "$out"/bin/python
   '';
 
   meta = with lib; {
@@ -35,6 +46,7 @@ stdenv.mkDerivation {
     ];
     platforms = with platforms;
       i686-linux ++
-      x86_64-linux;
+      x86_64-linux ++
+      powerpc64le-linux;
   };
 }

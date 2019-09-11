@@ -829,6 +829,8 @@ caribou = callPackage ../all-pkgs/c/caribou { };
 cc = null;
 hostcc = null;
 
+cc_relinker = callPackage ../build-support/cc-relinker { };
+
 cc_clang_early = pkgs.wrapCCNew {
   compiler = pkgs.clang.bin;
   tools = [ pkgs.llvm.bin ];
@@ -3679,7 +3681,9 @@ python = callPackageAlias "python2" { };
 
 # Intended only for very early stage builds
 # Don't use this package without a good reason
-python_tiny = callPackage ../all-pkgs/p/python/tiny.nix { };
+python_tiny = callPackage ../all-pkgs/p/python/tiny.nix {
+  python = null;
+};
 
 python27Packages = hiPrioSet (
   recurseIntoAttrs (callPackage ../top-level/python-packages.nix {

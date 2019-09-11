@@ -14,6 +14,7 @@ export CPP@typefx@='@pfx@@cpp@'
 
 @type@CCProg ar
 @type@CCProg ranlib
+@type@CCProg ld
 @type@CCProg readelf
 @type@CCProg strip
 
