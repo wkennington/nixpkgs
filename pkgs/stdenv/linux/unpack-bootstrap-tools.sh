@@ -1,28 +1,36 @@
+BINS="awk basename bash bzip2 cat chmod cksum cmp cp cut date diff dirname \
+     egrep env expr false fgrep find gawk grep gzip head id install join ld \
+     ln ls make mkdir mktemp mv nl nproc od patch readlink rm rmdir sed sh \
+     sleep sort stat tar tail tee test touch tsort tr true xz xargs uname uniq wc"
+COMPILERS="as ar cpp gcc g++ ld objcopy objdump ranlib readelf strip"
+
 echo Unpacking the bootstrap tools...
 export PATH=/bin:/usr/bin:/run/current-system/sw/bin
 if mkdir --help >/dev/null 2>&1; then
   echo Using native tooling
-  mkdir -p "$out"/bin "$glibc"
-  for util in awk as ar basename bash bzip2 cat chmod cksum cmp cp cpp cut date \
-      diff dirname egrep env expr false fgrep find gawk gcc g++ grep gzip head id \
-      install join ld ln ls make mkdir mktemp mv nl nproc objcopy objdump od patch \
-      ranlib readelf readlink rm rmdir sed sh sleep sort stat strip tar tail \
-      tee test touch tsort tr true xz xargs uname uniq wc; do
-    oldifs="$IFS"
+  findbin() {
+    local oldifs="$IFS"
     IFS=:
-    found=
+    local found=
     for p in $PATH; do
-      if [ -e "$p"/$util ]; then
-        found="$p"/$util
+      if [ -e "$p"/$1 ]; then
+        found="$p"/$1
         break
       fi
     done
     if [ -z "$found" ]; then
-      echo "Failed to find: $util"
+      echo "Failed to find: $1" >&2
       exit 1
     fi
-    ln -sv "$found" "$out"/bin/$util
+    echo "$found"
     IFS="$oldifs"
+  }
+  mkdir -p "$out"/bin "$compiler"/bin "$glibc"
+  for util in $BINS; do
+    ln -sv "$(findbin "$util")" "$out"/bin/$util
+  done
+  for util in $COMPILERS; do
+    ln -sv "$(findbin "$util")" "$compiler"/bin/$util
   done
   exit 0
 fi
@@ -53,8 +61,11 @@ for i in $out/lib/lib*.so*; do
   LD_LIBRARY_PATH=. ./ld-*so ./patchelf --set-rpath $out/lib --force-rpath "$i" || true
 done
 
+LD_LIBRARY_PATH=. ./ld-*so $out/bin/mv $out/bin $out/sbin
+export PATH="$out"/sbin
+mkdir -p "$out"/bin "$compiler"/bin
+
 # Fix the libc linker script.
-export PATH=$out/bin
 for file in "$out"/lib/*; do
   if head -n 1 "$file" | grep -q '^/\*'; then
     sed "s,/nix/store/e*-[^/]*,$out,g" "$file" >"$file.tmp"
@@ -64,14 +75,6 @@ done
 
 # Provide some additional symlinks.
 ln -s bash $out/bin/sh
-ln -s bzip2 $out/bin/bunzip2
-
-# Provide a gunzip script.
-cat > $out/bin/gunzip <<EOF
-#!$out/bin/sh
-exec $out/bin/gzip -d "\$@"
-EOF
-chmod +x $out/bin/gunzip
 
 # Provide fgrep/egrep.
 echo "#! $out/bin/sh" > $out/bin/egrep
@@ -80,6 +83,24 @@ echo "#! $out/bin/sh" > $out/bin/fgrep
 echo "exec $out/bin/grep -F \"\$@\"" >> $out/bin/fgrep
 
 chmod +x $out/bin/egrep $out/bin/fgrep
+
+# Link all of the needed tools
+for util in $BINS; do
+  [ -e "$out"/bin/$util ] && continue
+  if [ ! -e "$out"/sbin/$util ]; then
+    echo "Failed to find: $util" >&2
+    exit 1
+  fi
+  ln -sv ../sbin/$util "$out"/bin/$util
+done
+for util in $COMPILERS; do
+  [ -e "$compiler"/bin/$util ] && continue
+  if [ ! -e "$out"/sbin/$util ]; then
+    echo "Failed to find: $util" >&2
+    exit 1
+  fi
+  ln -sv "$out"/sbin/$util "$compiler"/bin/$util
+done
 
 # Create a separate glibc
 mkdir -p $glibc

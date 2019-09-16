@@ -2,6 +2,7 @@
 , binutils
 , fetchTritonPatch
 , fetchurl
+, hostcc
 
 , gmp
 , isl
@@ -57,6 +58,7 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [
     binutils.bin
+    hostcc
   ];
 
   buildInputs = optionals (type != "bootstrap") [

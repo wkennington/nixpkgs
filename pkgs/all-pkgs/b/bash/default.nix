@@ -1,4 +1,5 @@
 { stdenv
+, hostcc
 , fetchurl
 , gettext
 , lib
@@ -31,7 +32,9 @@ stdenv.mkDerivation rec {
     sha256 = "0kgvfwqdcd90waczf4gx39xnrxzijhjrzyzv7s8v4w31qqm0za5l";
   };
 
-  nativeBuildInputs = optionals (type == "full") [
+  nativeBuildInputs = [
+    hostcc
+  ] ++ optionals (type == "full") [
     gettext
     texinfo
   ];

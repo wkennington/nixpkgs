@@ -28,7 +28,7 @@ let
     '';
   };
 
-  bootstrapTools = (derivation {
+  bootstrapTools = derivation {
     name = "bootstrap-tools";
 
     builder = "/bin/sh";
@@ -38,14 +38,20 @@ let
     busybox = bootstrapFiles.busybox;
     tarball = bootstrapFiles.bootstrapTools;
 
-    outputs = [ "out" "glibc" ];
+    outputs = [
+      "out"
+      "compiler"
+      "glibc"
+    ];
 
     system = hostSystem;
 
     __optionalChroot = true;
     allowSubstitutes = false;
     requiredSystemFeatures = [ "bootstrap" ];
-  }) // {
+  };
+
+  bootstrapCompiler = bootstrapTools.compiler // {
     cc = "gcc";
     cxx = "g++";
     cpp = "cpp";
@@ -111,7 +117,7 @@ let
         };
 
         cc_gcc_glibc = wrapCCNew {
-          compiler = bootstrapTools;
+          compiler = bootstrapCompiler;
           inputs = [
             bootstrapTools.glibc
           ];
@@ -157,6 +163,7 @@ let
         # These are only needed to evaluate
         inherit (stage0Pkgs) fetchurl fetchTritonPatch wrapCCNew;
         inherit (pkgs) gmp libmpc mpfr zlib;
+        hostcc = null;
       };
     });
   };
@@ -169,7 +176,8 @@ let
       cc = null;
 
       preHook = commonBootstrapOptions.preHook + ''
-        export NIX_SYSTEM_BUILD="$('${bootstrapTools}'/bin/gcc -dumpmachine)"
+        NIX_SYSTEM_BUILD="$('${bootstrapCompiler}'/bin/gcc -dumpmachine)" || exit 1
+        export NIX_SYSTEM_BUILD
         export NIX_SYSTEM_HOST='${bootstrapTarget}'
         export NIX_FOR_BUILD_CC_HARDEN=
         export NIX_FOR_BUILD_LD_HARDEN=
@@ -233,7 +241,8 @@ let
       cc = stage1Pkgs.cc_gcc_glibc;
 
       preHook = commonBootstrapOptions.preHook + ''
-        export NIX_SYSTEM_BUILD="$('${bootstrapTools}'/bin/gcc -dumpmachine)"
+        NIX_SYSTEM_BUILD="$('${bootstrapCompiler}'/bin/gcc -dumpmachine)" || exit 1
+        export NIX_SYSTEM_BUILD
         export NIX_SYSTEM_HOST='${bootstrapTarget}'
       '';
 
@@ -317,7 +326,7 @@ let
 
         # These are only needed to evaluate
         inherit (stage0Pkgs) fetchurl fetchTritonPatch;
-        inherit (stage1Pkgs) linux-headers;
+        inherit (stage1Pkgs) linux-headers hostcc;
         brotli = null;
       };
     });
@@ -445,6 +454,7 @@ let
         # These are only needed to evaluate
         inherit (stage0Pkgs) fetchurl fetchTritonPatch;
         inherit (stage11Pkgs) gnum4;
+        hostcc = null;
       };
     });
   };
