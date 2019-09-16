@@ -178,6 +178,8 @@ stdenv.mkDerivation rec {
     if [ -e "$bin"/bin/${target}-gcc ]; then
       pfx=${target}-
     fi
+  '' + optionalString (target == null) ''
+    rm -rv "$bin"/bin/"$NIX_SYSTEM_HOST"-*
   '' + ''
     # CC does not get installed for some reason
     ln -srv "$bin"/bin/''${pfx}gcc "$bin"/bin/''${pfx}cc

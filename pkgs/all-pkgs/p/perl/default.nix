@@ -47,7 +47,6 @@ stdenv.mkDerivation rec {
     "-Uinstallusrbinperl"
     "-Dinstallstyle=lib/perl5"
     "-Duseshrplib"
-    "-Duse64bitall"
     "-Dusethreads"
   ];
 
@@ -90,7 +89,8 @@ stdenv.mkDerivation rec {
     ];
     maintainers = with maintainers; [ ];
     platforms = with platforms;
-      i686-linux
-      ++ x86_64-linux;
+      i686-linux ++
+      x86_64-linux ++
+      powerpc64le-linux;
   };
 }
