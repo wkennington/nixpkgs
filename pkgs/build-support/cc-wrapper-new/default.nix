@@ -12,12 +12,19 @@
 
 lib.makeOverridable
 ({ compiler
-, target ? ""
 , tools ? [ ]
 , inputs ? [ ]
 , type ? "host"
 }:
 
+let
+  inherit (lib)
+    optionalString;
+
+  inherit (compiler)
+    target;
+in
+assert target != "";
 (stdenv.override { cc = null; }).mkDerivation {
   name = "cc-wrapper";
 
@@ -42,7 +49,7 @@ lib.makeOverridable
     "host" = "";
   }."${type}";
 
-  pfx = if target == "" then "" else "${target}-";
+  pfx = if target == null then "" else "${target}-";
 
   buildCommand = ''
     mkdir -p "$out"/bin "$out"/nix-support
@@ -106,18 +113,16 @@ lib.makeOverridable
         exists "$out"/bin/"$(basename "$prog")" || ln -sv "$prog" "$out"/bin
       done
     done
-
-    if [ -n "${target}" ]; then
-      mkdir -p "$out"/"${target}"/bin
-      for prog in "$out"/bin/*; do
-        local pname="''${prog##*/}"
-        if [ "''${pname:0:''${#pfx}}" = "$pfx" ]; then
-          pname="''${pname:''${#pfx}}"
-        fi
-        ln -sv "$prog" "$out"/"${target}"/bin/"$pname"
-      done
-    fi
-
+  '' + optionalString (target != null) ''
+    mkdir -p "$out"/"${target}"/bin
+    for prog in "$out"/bin/*; do
+      local pname="''${prog##*/}"
+      if [ "''${pname:0:''${#pfx}}" = "$pfx" ]; then
+        pname="''${pname:''${#pfx}}"
+      fi
+      ln -sv "$prog" "$out"/"${target}"/bin/"$pname"
+    done
+  '' + ''
     maybeAppend() {
       local file="$1"
       local input="$2"

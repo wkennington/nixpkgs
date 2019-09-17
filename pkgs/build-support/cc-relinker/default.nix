@@ -21,4 +21,6 @@ tool // (stdenv.mkDerivation {
     set +x
     popd >/dev/null
   '';
-})
+}) // {
+  inherit target;
+}

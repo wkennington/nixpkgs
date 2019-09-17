@@ -58,6 +58,7 @@ let
     optFlags = [ ];
     prefixMapFlag = "-fdebug-prefix-map";
     canStackClashProtect = false;
+    target = null;
   };
 
   bootstrapShell = "${bootstrapTools}/bin/bash";
@@ -219,43 +220,20 @@ let
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage1Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
         inherit (pkgs) stdenv linux-headers linux-headers_4-14 gcc_lib_glibc_static gcc_lib_glibc
-          gcc_cxx_glibc libidn2_glibc libunistring_glibc;
+          gcc_cxx_glibc libidn2_glibc libunistring_glibc cc_gcc_early cc_gcc_glibc_headers cc_gcc_glibc_nolibc
+          cc_gcc_glibc_nolibgcc cc_gcc_glibc_early cc_gcc_glibc;
 
         hostcc = stage0Pkgs.cc_gcc_glibc.override {
           type = "build";
-        };
-
-        cc_gcc_early = pkgs.cc_gcc_early.override {
-          target = bootstrapTarget;
         };
 
         glibc_headers_gcc = pkgs.glibc_headers_gcc.override {
           python3 = stage01Pkgs.python_tiny;
         };
 
-        cc_gcc_glibc_headers = pkgs.cc_gcc_glibc_headers.override {
-          target = bootstrapTarget;
-        };
-
-        cc_gcc_glibc_nolibc = pkgs.cc_gcc_glibc_nolibc.override {
-          target = bootstrapTarget;
-        };
-
         glibc_lib_gcc = pkgs.glibc_lib_gcc.override {
           type = "bootstrap";
           python3 = stage01Pkgs.python_tiny;
-        };
-
-        cc_gcc_glibc_nolibgcc = pkgs.cc_gcc_glibc_nolibgcc.override {
-          target = bootstrapTarget;
-        };
-
-        cc_gcc_glibc_early = pkgs.cc_gcc_glibc_early.override {
-          target = bootstrapTarget;
-        };
-
-        cc_gcc_glibc = pkgs.cc_gcc_glibc.override {
-          target = bootstrapTarget;
         };
 
         # These are only needed to evaluate
@@ -393,14 +371,14 @@ let
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage2Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
         inherit (pkgs) stdenv wrapCCNew linux-headers linux-headers_4-14 gcc_lib_glibc_static gcc_lib_glibc
-          gcc_runtime_glibc libidn2_glibc libunistring_glibc;
+          gcc_runtime_glibc libidn2_glibc libunistring_glibc cc_gcc_early cc_gcc_glibc_headers cc_gcc_glibc_nolibc
+          cc_gcc_glibc_nolibgcc cc_gcc_glibc_early cc_gcc_glibc;
 
         # This is hacky so that we don't depend on the external system
         # runtimes to execute the initial bootstrap compiler. We use our
         # new compiler with our old runtimes.
         hostcc = pkgs.cc_gcc_glibc.override {
           type = "build";
-          target = bootstrapTarget;
           compiler = pkgs.cc_relinker {
             tool = stage11Pkgs.gcc.bin;
             target = bootstrapTarget;
@@ -415,37 +393,13 @@ let
             inputs;
         };
 
-        cc_gcc_early = pkgs.cc_gcc_early.override {
-          target = finalTarget;
-        };
-
         glibc_headers_gcc = pkgs.glibc_headers_gcc.override {
           python3 = stage11Pkgs.python_tiny;
-        };
-
-        cc_gcc_glibc_headers = pkgs.cc_gcc_glibc_headers.override {
-          target = finalTarget;
-        };
-
-        cc_gcc_glibc_nolibc = pkgs.cc_gcc_glibc_nolibc.override {
-          target = finalTarget;
         };
 
         glibc_lib_gcc = pkgs.glibc_lib_gcc.override {
           glibc_progs = stage11Pkgs.glibc_progs;
           python3 = stage11Pkgs.python_tiny;
-        };
-
-        cc_gcc_glibc_nolibgcc = pkgs.cc_gcc_glibc_nolibgcc.override {
-          target = finalTarget;
-        };
-
-        cc_gcc_glibc_early = pkgs.cc_gcc_glibc_early.override {
-          target = finalTarget;
-        };
-
-        cc_gcc_glibc = pkgs.cc_gcc_glibc.override {
-          target = finalTarget;
         };
 
         # These are only needed to evaluate
