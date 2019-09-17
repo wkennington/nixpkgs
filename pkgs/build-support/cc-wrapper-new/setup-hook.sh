@@ -48,8 +48,15 @@ if [ -z "${nix_@type@_cc_done-}" ]; then
   # and not for builder binaries since those should never be installed.
   if [ -z "@typefx@" ] && [ -n "${NIX_LD_ADD_RPATH-1}" ]; then
     rpathOutputs=()
+    # We prefer libdirs over all others
     for output in $outputs; do
       if [ "${output:0:3}" = "lib" ]; then
+        rpathOutputs+=("$output")
+      fi
+    done
+    # Bin outputs can have dynamic libraries
+    for output in $outputs; do
+      if [ "${output:0:3}" = "bin" ]; then
         rpathOutputs+=("$output")
       fi
     done

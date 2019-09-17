@@ -126,7 +126,7 @@ let
     });
   };
 
-  # This stage produces the first bootstrapped compiler tooling
+  # Build native utils needed for later stages
   stage01Pkgs = allPackages {
     inherit targetSystem hostSystem config;
     stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
@@ -140,7 +140,44 @@ let
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage01Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
-        inherit (pkgs) stdenv libc python_tiny;
+        inherit (pkgs) stdenv python_tiny;
+
+        bison = pkgs.bison.override {
+          type = "bootstrap";
+        };
+
+        gnum4 = pkgs.gnum4.override {
+          type = "bootstrap";
+        };
+
+        patchelf = pkgs.patchelf.override {
+          type = "bootstrap";
+        };
+
+        # These are only needed to evaluate
+        inherit (stage0Pkgs) fetchurl fetchTritonPatch;
+      };
+    });
+  };
+
+  # This stage produces the first bootstrapped compiler tooling
+  stage02Pkgs = allPackages {
+    inherit targetSystem hostSystem config;
+    stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
+      name = "stdenv-linux-boot-stage0.2";
+      cc = stage0Pkgs.cc_gcc_glibc;
+      extraBuildInputs = [
+        stage01Pkgs.patchelf
+      ];
+
+      preHook = commonBootstrapOptions.preHook + ''
+        export NIX_CC_HARDEN=
+        export NIX_LD_HARDEN=
+      '';
+
+      overrides = pkgs: (lib.mapAttrs (n: _: throw "stage02Pkgs is missing package definition for `${n}`") pkgs) // {
+        inherit lib;
+        inherit (pkgs) stdenv;
 
         binutils = pkgs.binutils.override {
           type = "bootstrap";
@@ -152,16 +189,9 @@ let
           target = bootstrapTarget;
         };
 
-        bison = pkgs.bison.override {
-          type = "bootstrap";
-        };
-
-        gnum4 = pkgs.gnum4.override {
-          type = "bootstrap";
-        };
-
         # These are only needed to evaluate
-        inherit (stage0Pkgs) fetchurl fetchTritonPatch wrapCCNew;
+        inherit (stage0Pkgs) fetchurl fetchTritonPatch;
+        inherit (stage01Pkgs) bison;
         inherit (pkgs) gmp libmpc mpfr zlib;
         hostcc = null;
       };
@@ -174,11 +204,14 @@ let
     stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
       name = "stdenv-linux-boot-stage1";
       cc = null;
+      extraBuildInputs = [
+        stage01Pkgs.patchelf
+      ];
 
       preHook = commonBootstrapOptions.preHook + ''
+        export NIX_SYSTEM_HOST='${bootstrapTarget}'
         NIX_SYSTEM_BUILD="$('${bootstrapCompiler}'/bin/gcc -dumpmachine)" || exit 1
         export NIX_SYSTEM_BUILD
-        export NIX_SYSTEM_HOST='${bootstrapTarget}'
         export NIX_FOR_BUILD_CC_HARDEN=
         export NIX_FOR_BUILD_LD_HARDEN=
       '';
@@ -227,7 +260,7 @@ let
 
         # These are only needed to evaluate
         inherit (stage0Pkgs) fetchurl fetchTritonPatch wrapCCNew;
-        inherit (stage01Pkgs) binutils gcc bison;
+        inherit (stage02Pkgs) binutils gcc bison;
         gcc_runtime_glibc = stage1Pkgs.gcc_cxx_glibc;
       };
     });
@@ -239,11 +272,16 @@ let
     stdenv = import ../generic { inherit lib; } (commonStdenvOptions // commonBootstrapOptions // {
       name = "stdenv-linux-boot-stage1.1";
       cc = stage1Pkgs.cc_gcc_glibc;
+      extraBuildInputs = [
+        stage01Pkgs.patchelf
+      ];
 
       preHook = commonBootstrapOptions.preHook + ''
+        export NIX_SYSTEM_HOST='${bootstrapTarget}'
         NIX_SYSTEM_BUILD="$('${bootstrapCompiler}'/bin/gcc -dumpmachine)" || exit 1
         export NIX_SYSTEM_BUILD
-        export NIX_SYSTEM_HOST='${bootstrapTarget}'
+        export NIX_FOR_BUILD_CC_HARDEN=
+        export NIX_FOR_BUILD_LD_HARDEN=
       '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage11Pkgs is missing package definition for `${n}`") pkgs) // {
@@ -541,7 +579,7 @@ let
 in {
   inherit
     bootstrapTools
-    stage0Pkgs stage01Pkgs
+    stage0Pkgs stage01Pkgs stage02Pkgs
     stage1Pkgs stage11Pkgs
     stage2Pkgs stage21Pkgs
     stdenv;

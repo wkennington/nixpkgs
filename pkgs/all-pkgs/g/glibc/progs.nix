@@ -3,7 +3,6 @@
 , fetchurl
 , fetchTritonPatch
 , linux-headers
-, patchelf
 , python3
 
 , glibc_lib
@@ -33,7 +32,6 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [
     bison
-    patchelf
     python3
   ];
 

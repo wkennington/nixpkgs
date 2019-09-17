@@ -1,6 +1,5 @@
 { stdenv
 , fetchurl
-, patchelf
 
 , type ? "full"
 }:
@@ -17,12 +16,6 @@ stdenv.mkDerivation rec {
     multihash = "QmeRLRYaTsvc1oN8EgoTECe2wjSxAdsAkyh9aus4KP5pNu";
     sha256 = "22b9ee38438901f9d60f180e5182821180854fa738fd071f593ea26a81da208c";
   };
-
-  # We need to ensure that our bad rpaths are patched out
-  # Otherwise the build hardcodes "dev" into the rpath
-  nativeBuildInputs = [
-    patchelf
-  ];
 
   configureFlags = [
     "--with-personality-dir=/no-such-path"

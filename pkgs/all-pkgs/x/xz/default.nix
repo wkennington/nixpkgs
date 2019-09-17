@@ -1,6 +1,5 @@
 { stdenv
 , fetchurl
-, patchelf
 
 , type ? "full"
 , version
@@ -31,10 +30,6 @@ stdenv.mkDerivation rec {
       multihash
       sha256;
   };
-
-  nativeBuildInputs = [
-    patchelf
-  ];
 
   # In stdenv-linux, prevent a dependency on bootstrap-tools.
   preConfigure = ''

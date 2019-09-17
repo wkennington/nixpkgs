@@ -12,7 +12,7 @@ fi
 source @out@/nix-support/utils.sh
 
 # Optionally print debug info.
-if [ -n "${NIX_DEBUG-}" ]; then
+if [ -n "${NIX_DEBUG-}" -o "${NIX@typefx@_CC_DEBUG-}" ]; then
   echo "original flags to @prog@:" >&2
   for i in "$@"; do
     echo "  $i" >&2
@@ -77,7 +77,9 @@ if [ -z "${NIX@typefx@_CC_WRAPPER_FLAGS_SET-}" ]; then
 
   # `-B@out@/bin' forces cc to use ld-wrapper.sh when calling ld.
   appendFlags NIX@typefx@_CFLAGS_COMPILE '-B@out@/bin'
-  appendFlags NIX@typefx@_CFLAGS_COMPILE '-B@out@/@target@/bin'
+  if [ -n '@target@' ]; then
+    appendFlags NIX@typefx@_CFLAGS_COMPILE '-B@out@/@target@/bin'
+  fi
 
   if [ -z "$noStdInc" ]; then
     maybeAppendFlagsFromFile NIX@typefx@_CFLAGS_COMPILE '@out@'/nix-support/cflags-compile
@@ -220,7 +222,7 @@ if [ -n "${NIX_BUILD_TOP-}" ]; then
 fi
 
 # Optionally print debug info.
-if [ -n "${NIX_DEBUG-}" ]; then
+if [ -n "${NIX_DEBUG-}" -o "${NIX@typefx@_CC_DEBUG-}" ]; then
   echo "new flags to @prog@:" >&2
   for i in "${params[@]}"; do
     echo "  $i" >&2

@@ -2,7 +2,7 @@ BINS="awk basename bash bzip2 cat chmod cksum cmp cp cut date diff dirname \
      egrep env expr false fgrep find gawk grep gzip head id install join ld \
      ln ls make mkdir mktemp mv nl nproc od patch readlink rm rmdir sed sh \
      sleep sort stat tar tail tee test touch tsort tr true xz xargs uname uniq wc"
-COMPILERS="as ar cpp gcc g++ ld objcopy objdump ranlib readelf strip"
+COMPILERS="as ar cpp gcc g++ ld objdump ranlib readelf strip"
 
 echo Unpacking the bootstrap tools...
 export PATH=/bin:/usr/bin:/run/current-system/sw/bin

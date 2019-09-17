@@ -106,12 +106,8 @@ in
     echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags-compile
     echo "-B$dev/lib" >>"$dev"/nix-support/cflags-compile
     dyld="$lib"/lib/ld-*.so
-    echo "-dynamic-linker $dyld" >>"$dev"/nix-support/ldflags-before
-    # We need to inject this rpath since some of our shared objects are
-    # linker scripts like libc.so and our linker script doesn't interpret
-    # ld scripts
-    echo "-rpath $lib/lib" >>"$dev"/nix-support/ldflags
     echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
+    echo "-dynamic-linker $dyld" >>"$dev"/nix-support/ldflags-before
   '' + optionalString (type != "bootstrap") ''
     # Ensure we always have a fallback C.UTF-8 locale-archive
     export LOCALE_ARCHIVE="$lib"/lib/locale/locale-archive

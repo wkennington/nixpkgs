@@ -68,11 +68,6 @@ in
     echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags-compile
     echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
   '' + optionalString (type != "nolibc") ''
-    # We need to inject this rpath since some of our shared objects are
-    # linker scripts like libc.so and our linker script doesn't interpret
-    # ld scripts
-    echo "-rpath $lib/lib" >>"$dev"/nix-support/ldflags
-
     find . -not -type d -and -not -name '*'.h -delete
     find . -type f -exec sed -i "s,$NIX_BUILD_TOP,/build-dir,g" {} \;
     mkdir -p "$internal"
