@@ -2,7 +2,7 @@ BINS="awk basename bash bzip2 cat chmod cksum cmp cp cut date diff dirname \
      egrep env expr false fgrep find gawk grep gzip head id install join ld \
      ln ls make mkdir mktemp mv nl nproc od patch readlink rm rmdir sed sh \
      sleep sort stat tar tail tee test touch tsort tr true xz xargs uname uniq wc"
-COMPILERS="as ar cpp gcc g++ ld objdump ranlib readelf strip"
+COMPILERS="as ar gcc g++ ld objdump ranlib readelf strip"
 
 echo Unpacking the bootstrap tools...
 export PATH=/bin:/usr/bin:/run/current-system/sw/bin
@@ -110,13 +110,13 @@ ln -s $out/include-glibc $glibc/include
 # Make sure the cc-wrapper picks up the right thing
 mkdir -p "$glibc"/nix-support
 cxxinc="$(dirname "$(dirname "$out"/include/c++/*/*/bits/c++config.h)")"
-echo "-idirafter $cxxinc" >>"$glibc"/nix-support/cxxflags-compile
-echo "-idirafter $(dirname "$cxxinc")" >>"$glibc"/nix-support/cxxflags-compile
-gccinc="$glibc"/lib/gcc/*/*/include
-echo "-idirafter $gccinc" >>"$glibc"/nix-support/cflags-compile
-echo "-idirafter $gccinc-fixed" >>"$glibc"/nix-support/cflags-compile
-echo "-idirafter $glibc/include" >>"$glibc"/nix-support/cflags-compile
-echo "-B$glibc/lib" >>"$glibc"/nix-support/cflags-compile
-dyld="$glibc"/lib/ld-*.so
+echo "-idirafter $cxxinc" >>"$glibc"/nix-support/cxxflags
+echo "-idirafter $(dirname "$cxxinc")" >>"$glibc"/nix-support/cxxflags
+gccinc="$(echo "$glibc"/lib/gcc/*/*/include)"
+echo "-idirafter $gccinc" >>"$glibc"/nix-support/cflags
+echo "-idirafter $gccinc-fixed" >>"$glibc"/nix-support/cflags
+echo "-idirafter $glibc/include" >>"$glibc"/nix-support/cflags
+echo "-B$glibc/lib" >>"$glibc"/nix-support/cflags
+dyld="$(echo "$glibc"/lib/ld-*.so)"
 echo "-dynamic-linker $dyld" >>"$glibc"/nix-support/ldflags-before
 echo "-L$glibc/lib" >>"$glibc"/nix-support/ldflags

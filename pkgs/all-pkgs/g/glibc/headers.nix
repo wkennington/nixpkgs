@@ -54,6 +54,6 @@ in
     touch "$out"/include/gnu/stubs.h
 
     mkdir -p "$out"/nix-support
-    echo "-idirafter $out/include" >"$out"/nix-support/cflags-compile
+    echo "-idirafter $out/include" >"$out"/nix-support/cflags
   '';
 }

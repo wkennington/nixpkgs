@@ -64,8 +64,8 @@ in
     ln -sv "$lib"/lib/* "$dev"/lib
 
     mkdir -p "$dev"/nix-support
-    echo "-B$dev/lib" >>"$dev"/nix-support/cflags-compile
-    echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags-compile
+    echo "-B$dev/lib" >>"$dev"/nix-support/cflags
+    echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags
     echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
   '' + optionalString (type != "nolibc") ''
     find . -not -type d -and -not -name '*'.h -delete
@@ -80,7 +80,7 @@ in
   '';
 
   # Stack protector support is added to the compiler later
-  NIX_CC_STACK_PROTECTOR = false;
+  CC_WRAPPER_CC_STACK_PROTECTOR = false;
 
   outputs = [
     "dev"

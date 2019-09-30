@@ -29,12 +29,12 @@ let
     );
 in
 stdenv.mkDerivation rec {
-  name = "binutils-2.32";
+  name = "binutils-2.33.1";
 
   src = fetchurl {
     url = "mirror://gnu/binutils/${name}.tar.xz";
     hashOutput = false;
-    sha256 = "0ab6c55dd86a92ed561972ba15b9b70a8b9f75557f896446c82e8b36e473ee04";
+    sha256 = "ab66fc2d1c3ec0359b8e08843c9f33b63e8707efdff5e4cc5c200eae24722cbf";
   };
 
   nativeBuildInputs = [
@@ -47,9 +47,9 @@ stdenv.mkDerivation rec {
 
   patches = [
     (fetchTritonPatch {
-      rev = "9f59f6dd9aa320bc642aaa2a679823f7f08b2190";
+      rev = "b42aadf32b9163a2c7dcd30f68210a2797bbda8f";
       file = "b/binutils/0001-bfd-No-bundled-bfd-plugin-support.patch";
-      sha256 = "da0b9a2d537929db24a4bf4cbf4e5b588f64fac47d1534b72aaf37291ee55edb";
+      sha256 = "2611d9d326c615e2d3cfa71640b35ecd40338b7bd32cd92f26f35557b75142d5";
     })
   ] ++ optionals (type != "bootstrap") [
     (fetchTritonPatch {

@@ -52,11 +52,12 @@ let
   };
 
   bootstrapCompiler = bootstrapTools.compiler // {
+    impl = "gcc";
     cc = "gcc";
     cxx = "g++";
     cpp = "cpp";
     optFlags = [ ];
-    prefixMapFlag = "-fdebug-prefix-map";
+    prefixMapFlag = "debug-prefix-map";
     canStackClashProtect = false;
     target = null;
   };
@@ -135,8 +136,8 @@ let
       cc = stage0Pkgs.cc_gcc_glibc;
 
       preHook = commonBootstrapOptions.preHook + ''
-        export NIX_CC_HARDEN=
-        export NIX_LD_HARDEN=
+        export CC_WRAPPER_CC_HARDEN=
+        export CC_WRAPPER_LD_HARDEN=
       '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage01Pkgs is missing package definition for `${n}`") pkgs) // {
@@ -172,8 +173,8 @@ let
       ];
 
       preHook = commonBootstrapOptions.preHook + ''
-        export NIX_CC_HARDEN=
-        export NIX_LD_HARDEN=
+        export CC_WRAPPER_CC_HARDEN=
+        export CC_WRAPPER_LD_HARDEN=
       '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage02Pkgs is missing package definition for `${n}`") pkgs) // {
@@ -213,8 +214,9 @@ let
         export NIX_SYSTEM_HOST='${bootstrapTarget}'
         NIX_SYSTEM_BUILD="$('${bootstrapCompiler}'/bin/gcc -dumpmachine)" || exit 1
         export NIX_SYSTEM_BUILD
-        export NIX_FOR_BUILD_CC_HARDEN=
-        export NIX_FOR_BUILD_LD_HARDEN=
+        export CC_WRAPPER_FOR_BUILD_CC_HARDEN=
+        export CC_WRAPPER_FOR_BUILD_LD_HARDEN=
+        export CC_WRAPPER_CC_LTO=
       '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage1Pkgs is missing package definition for `${n}`") pkgs) // {

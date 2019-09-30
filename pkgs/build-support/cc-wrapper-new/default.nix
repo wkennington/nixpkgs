@@ -132,8 +132,8 @@ assert target != "";
     }
 
     for inc in "$compiler" $tools $inputs; do
-      maybeAppend cflags-compile "$inc"
-      maybeAppend cxxflags-compile "$inc"
+      maybeAppend cflags "$inc"
+      maybeAppend cxxflags "$inc"
       maybeAppend cflags-link "$inc"
       maybeAppend cxxflags-link "$inc"
       maybeAppend ldflags "$inc"

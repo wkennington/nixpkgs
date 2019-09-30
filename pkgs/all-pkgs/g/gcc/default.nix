@@ -163,8 +163,8 @@ stdenv.mkDerivation rec {
     mv -v "$bin"/lib/gcc/*/*/include "$cc_headers"
     mv -v "$bin"/lib/gcc/*/*/include-fixed "$cc_headers"
     mkdir -p "$cc_headers"/nix-support
-    echo "-idirafter $cc_headers/include" >>"$cc_headers"/nix-support/cflags-compile
-    echo "-idirafter $cc_headers/include-fixed" >>"$cc_headers"/nix-support/cflags-compile
+    echo "-idirafter $cc_headers/include" >>"$cc_headers"/nix-support/cflags
+    echo "-idirafter $cc_headers/include-fixed" >>"$cc_headers"/nix-support/cflags
 
     mkdir -p "$lib"/lib "$dev"/lib
     mv -v "$bin"/lib*/*.so* "$lib"/lib
@@ -239,7 +239,7 @@ stdenv.mkDerivation rec {
     cpp = "cpp";
     cxx = "g++";
     optFlags = [ ];
-    prefixMapFlag = "-ffile-prefix-map";
+    prefixMapFlag = "file-prefix-map";
     canStackClashProtect = true;
   };
 

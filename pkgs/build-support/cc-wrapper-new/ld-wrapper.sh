@@ -12,7 +12,7 @@ fi
 source @out@/nix-support/utils.sh
 
 # Optionally print debug info.
-if [ -n "${NIX_DEBUG-}" -o -n "${NIX@typefx@_LD_DEBUG-}" ]; then
+if [ -n "${CC_WRAPPER_DEBUG-}" -o -n "${CC_WRAPPER@typefx@_LD_DEBUG-}" ]; then
   echo "original flags to @prog@:" >&2
   for i in "$@"; do
       echo "  $i" >&2
@@ -20,27 +20,27 @@ if [ -n "${NIX_DEBUG-}" -o -n "${NIX@typefx@_LD_DEBUG-}" ]; then
   set -x
 fi
 
-if [ -z "${NIX@typefx@_LD_WRAPPER_FLAGS_SET-}" ]; then
-  export NIX@typefx@_LD_WRAPPER_FLAGS_SET=1
+if [ -z "${CC_WRAPPER@typefx@_LD_WRAPPER_FLAGS_SET-}" ]; then
+  export CC_WRAPPER@typefx@_LD_WRAPPER_FLAGS_SET=1
 
-  maybeAppendFlagsFromFile NIX@typefx@_LDFLAGS '@out@'/nix-support/ldflags
-  maybeAppendFlagsFromFile NIX@typefx@_LDFLAGS_BEFORE '@out@'/nix-support/ldflags-before
-  maybeAppendFlagsFromFile NIX@typefx@_LDFLAGS_DYNAMIC '@out@'/nix-support/ldflags-dynamic
+  maybeAppendFlagsFromFile CC_WRAPPER@typefx@_LDFLAGS '@out@'/nix-support/ldflags
+  maybeAppendFlagsFromFile CC_WRAPPER@typefx@_LDFLAGS_BEFORE '@out@'/nix-support/ldflags-before
+  maybeAppendFlagsFromFile CC_WRAPPER@typefx@_LDFLAGS_DYNAMIC '@out@'/nix-support/ldflags-dynamic
 fi
 
-params=($NIX@typefx@_LDFLAGS_BEFORE)
-: ${NIX@typefx@_LD_HARDEN=1}
+params=($CC_WRAPPER@typefx@_LDFLAGS_BEFORE)
+: ${CC_WRAPPER@typefx@_LD_HARDEN=1}
 
-if [ "${NIX@typefx@_LD_NEW_DTAGS-1}" = "1" ]; then
+if [ "${CC_WRAPPER@typefx@_LD_NEW_DTAGS-1}" = "1" ]; then
   params+=('--enable-new-dtags')
 fi
-if [ "${NIX@typefx@_LD_NOEXECSTACK-$NIX@typefx@_LD_HARDEN}" = "1" ]; then
+if [ "${CC_WRAPPER@typefx@_LD_NOEXECSTACK-$CC_WRAPPER@typefx@_LD_HARDEN}" = "1" ]; then
   params+=('-z' 'noexecstack')
 fi
-if [ "${NIX@typefx@_LD_RELRO-$NIX@typefx@_LD_HARDEN}" = "1" ]; then
+if [ "${CC_WRAPPER@typefx@_LD_RELRO-$CC_WRAPPER@typefx@_LD_HARDEN}" = "1" ]; then
   params+=('-z' 'relro')
 fi
-if [ "${NIX@typefx@_LD_BINDNOW-$NIX@typefx@_LD_HARDEN}" = "1" ]; then
+if [ "${CC_WRAPPER@typefx@_LD_BINDNOW-$CC_WRAPPER@typefx@_LD_HARDEN}" = "1" ]; then
   params+=('-z' 'now')
 fi
 # Remove compiler passed runtime paths
@@ -51,7 +51,7 @@ for p in "$@"; do
   fi
 done
 haveDyldFlag=
-if [[ "${NIX@typefx@_LDFLAGS_BEFORE-}" =~ (^| )-dynamic-linker\  ]]; then
+if [[ "${CC_WRAPPER@typefx@_LDFLAGS_BEFORE-}" =~ (^| )-dynamic-linker\  ]]; then
   haveDyldFlag=1
 fi
 for (( i = 1; i <= "$#" ; i++ )); do
@@ -68,7 +68,7 @@ for (( i = 1; i <= "$#" ; i++ )); do
     params+=("$p")
   fi
 done
-params+=($NIX@typefx@_LDFLAGS)
+params+=($CC_WRAPPER@typefx@_LDFLAGS)
 
 # Determine if we are dynamically linking
 dynamicLibs=
@@ -85,7 +85,7 @@ for p in "${params[@]}"; do
   fi
 done
 if [ -n "$dynamicLibs" ]; then
-  params+=(${NIX@typefx@_LDFLAGS_DYNAMIC-})
+  params+=(${CC_WRAPPER@typefx@_LDFLAGS_DYNAMIC-})
 fi
 
 # Filter out paths that are considered bad
@@ -118,7 +118,7 @@ done
 params=("${filtered_params[@]}")
 
 # Add all used dynamic libraries to the rpath.
-if [ -n "${NIX@typefx@_LD_ADD_RPATH-1}" ]; then
+if [ -n "${CC_WRAPPER@typefx@_LD_ADD_RPATH-1}" ]; then
   addToRPath() {
     local libdir="$(dirname "$1")"
     local prevdir="${2-$libdir}"
@@ -257,7 +257,7 @@ if [ -n "${NIX@typefx@_LD_ADD_RPATH-1}" ]; then
     # If the path is not in the store, don't add it to the rpath.
     # This typically happens for libraries in /tmp that are later
     # copied to $out/lib.  If not, we're screwed.
-    startsWith '@NIX_STORE@' "$i" || continue
+    startsWith '@CC_WRAPPER_STORE@' "$i" || continue
 
     beforeParams+=('-rpath' "$i")
   done
@@ -265,7 +265,7 @@ if [ -n "${NIX@typefx@_LD_ADD_RPATH-1}" ]; then
 fi
 
 # Optionally print debug info.
-if [ -n "${NIX_DEBUG-}" -o -n "${NIX@typefx@_LD_DEBUG-}" ]; then
+if [ -n "${CC_WRAPPER_DEBUG-}" -o -n "${CC_WRAPPER@typefx@_LD_DEBUG-}" ]; then
   echo "new flags to @prog@:" >&2
   for i in ${params[@]}; do
     echo "  $i" >&2

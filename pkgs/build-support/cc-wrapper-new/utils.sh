@@ -1,5 +1,5 @@
 skip () {
-  if [ -n "${NIX_DEBUG-}" ]; then
+  if [ -n "${CC_WRAPPER_DEBUG-}" ]; then
     echo "skipping impure path $1" >&2
   fi
 }
@@ -24,7 +24,7 @@ badPath() {
   startsWith '/no-such-path' "$p" && return 0
 
   # Purity checks happen after this stage
-  [ -z "${NIX_ENFORCE_PURITY-}" ] && return 1
+  [ -z "${CC_WRAPPER_ENFORCE_PURITY-}" ] && return 1
 
   # Otherwise, the path should refer to the store or some temporary
   # directory (including the build directory).

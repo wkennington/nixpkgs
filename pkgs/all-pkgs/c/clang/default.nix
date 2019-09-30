@@ -88,7 +88,7 @@ stdenv.mkDerivation {
     cxx = "clang++";
     cpp = "clang -E";
     optFlags = [ ];
-    prefixMapFlag = "-fdebug-prefix-map";
+    prefixMapFlag = "debug-prefix-map";
     canStackClashProtect = false;
   };
 

@@ -1,8 +1,12 @@
-export NIX@typefx@_CC='@out@'
+export CC_WRAPPER@typefx@_CC='@out@'
 
 export CC@typefx@='@pfx@@cc@'
 export CXX@typefx@='@pfx@@cxx@'
 export CPP@typefx@='@pfx@@cpp@'
+
+if [ -n "${NIX_ENFORCE_PURITY+1}" ]; then
+  export CC_WRAPPER_ENFORCE_PURITY="$NIX_ENFORCE_PURITY"
+fi
 
 @type@CCProg() {
   local prog
@@ -24,15 +28,15 @@ export CPP@typefx@='@pfx@@cpp@'
   fi
 
   if [ -d $1/include ]; then
-    export NIX@typefx@_CFLAGS_COMPILE+=" ${ccIncludeFlag:--isystem} $1/include"
+    export CC_WRAPPER@typefx@_CFLAGS_COMPILE+=" ${ccIncludeFlag:--isystem} $1/include"
   fi
 
   if [ -d $1/lib64 -a ! -L $1/lib64 ]; then
-    export NIX@typefx@_LDFLAGS+=" -L$1/lib64"
+    export CC_WRAPPER@typefx@_LDFLAGS+=" -L$1/lib64"
   fi
 
   if [ -d $1/lib ]; then
-    export NIX@typefx@_LDFLAGS+=" -L$1/lib"
+    export CC_WRAPPER@typefx@_LDFLAGS+=" -L$1/lib"
   fi
 }
 
@@ -46,7 +50,7 @@ if [ -z "${nix_@type@_cc_done-}" ]; then
 
   # Add the output as an rpath, we should only ever do this for host binaries
   # and not for builder binaries since those should never be installed.
-  if [ -z "@typefx@" ] && [ -n "${NIX_LD_ADD_RPATH-1}" ]; then
+  if [ -z "@typefx@" ] && [ -n "${CC_WRAPPER_LD_ADD_RPATH-1}" ]; then
     rpathOutputs=()
     # We prefer libdirs over all others
     for output in $outputs; do
@@ -64,7 +68,7 @@ if [ -z "${nix_@type@_cc_done-}" ]; then
       rpathOutputs+=("$defaultOutput")
     fi
     for output in "${rpathOutputs[@]}"; do
-      export NIX_LDFLAGS_BEFORE+=" -rpath ${!output}/lib"
+      export CC_WRAPPER_LDFLAGS_BEFORE+=" -rpath ${!output}/lib"
     done
   fi
 fi

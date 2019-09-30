@@ -103,9 +103,9 @@ in
     mv "$lib"/include "$dev"
 
     mkdir -p "$dev"/nix-support
-    echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags-compile
-    echo "-B$dev/lib" >>"$dev"/nix-support/cflags-compile
-    dyld="$lib"/lib/ld-*.so
+    echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags
+    echo "-B$dev/lib" >>"$dev"/nix-support/cflags
+    dyld="$(echo "$lib"/lib/ld-*.so)"
     echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
     echo "-dynamic-linker $dyld" >>"$dev"/nix-support/ldflags-before
   '' + optionalString (type != "bootstrap") ''
@@ -124,10 +124,10 @@ in
   dontPatchELF = true;
 
   # Early libs can't use some of our hardening flags
-  NIX_CC_FORTIFY_SOURCE = false;
-  NIX_CC_STACK_PROTECTOR = false;
-  NIX_LD_HARDEN = false;
-  NIX_LD_ADD_RPATH = false;
+  CC_WRAPPER_CC_FORTIFY_SOURCE = false;
+  CC_WRAPPER_CC_STACK_PROTECTOR = false;
+  CC_WRAPPER_LD_HARDEN = false;
+  CC_WRAPPER_LD_ADD_RPATH = false;
 
   passthru = {
     impl = "glibc";
