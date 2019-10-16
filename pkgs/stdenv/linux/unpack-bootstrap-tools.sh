@@ -6,7 +6,7 @@ COMPILERS="as ar gcc g++ ld objdump ranlib readelf strip"
 
 echo Unpacking the bootstrap tools...
 export PATH=/bin:/usr/bin:/run/current-system/sw/bin
-if mkdir --help >/dev/null 2>&1; then
+if mkdir --help >/dev/null 2>&1 && false; then
   echo Using native tooling
   findbin() {
     local oldifs="$IFS"
