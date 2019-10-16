@@ -113,11 +113,16 @@ let
             callPackage;
         };
 
-        wrapCCNew = pkgs.wrapCCNew.override {
-          coreutils = bootstrapTools;
+        wrapCC = pkgs.wrapCC.override {
+          stdenv = stdenv.override {
+            cc = pkgs.callPackage ../../build-support/cc-wrapper/bootstrap.nix {
+              compiler = bootstrapCompiler;
+              libs = bootstrapTools.glibc;
+            };
+          };
         };
 
-        cc_gcc_glibc = wrapCCNew {
+        cc_gcc_glibc = wrapCC {
           compiler = bootstrapCompiler;
           inputs = [
             bootstrapTools.glibc
@@ -238,7 +243,7 @@ let
         };
 
         # These are only needed to evaluate
-        inherit (stage0Pkgs) fetchurl fetchTritonPatch wrapCCNew;
+        inherit (stage0Pkgs) fetchurl fetchTritonPatch wrapCC;
         inherit (stage02Pkgs) binutils gcc bison;
         gcc_runtime_glibc = stage1Pkgs.gcc_cxx_glibc;
       };
@@ -267,7 +272,7 @@ let
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage11Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
         inherit (pkgs) stdenv isl isl_0-21 libmpc mpfr bash_small coreutils_small gawk_small pcre
-          gnupatch_small gnused_small gnutar_small pkgconfig pkgconf pkgconf-wrapper xz;
+          gnupatch_small gnused_small gnutar_small pkgconfig pkgconf pkgconf-wrapper xz wrapCC;
 
         python_tiny = pkgs.python_tiny.override {
           python = stage01Pkgs.python_tiny;
@@ -375,7 +380,7 @@ let
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage2Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
-        inherit (pkgs) stdenv wrapCCNew linux-headers linux-headers_4-14 gcc_lib_glibc_static gcc_lib_glibc
+        inherit (pkgs) stdenv linux-headers linux-headers_4-14 gcc_lib_glibc_static gcc_lib_glibc
           gcc_runtime_glibc libidn2_glibc libunistring_glibc cc_gcc_early cc_gcc_glibc_headers cc_gcc_glibc_nolibc
           cc_gcc_glibc_nolibgcc cc_gcc_glibc_early cc_gcc_glibc;
 
@@ -409,7 +414,7 @@ let
 
         # These are only needed to evaluate
         inherit (stage0Pkgs) fetchurl fetchTritonPatch;
-        inherit (stage11Pkgs) coreutils_small bison binutils gcc;
+        inherit (stage11Pkgs) wrapCC bison binutils gcc;
       };
     });
   };
@@ -437,20 +442,17 @@ let
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage21Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
         inherit (stage2Pkgs) glibc_headers_gcc gcc_runtime_glibc gcc_lib_glibc glibc_lib_gcc
-          linux-headers_4-14 gcc_lib_glibc_static;
+          linux-headers_4-14 gcc_lib_glibc_static libidn2_glibc libunistring_glibc;
         inherit (pkgs) stdenv isl isl_0-21 libmpc mpfr bash_small coreutils_small gawk_small pcre
           gnupatch_small gnused_small gnutar_small pkgconfig pkgconf pkgconf-wrapper xz xz_5-2-4
           patchelf pkgconf_unwrapped brotli brotli_1-0-7 bzip2 diffutils findutils gnugrep gnumake
-          gzip cc_gcc_glibc wrapCCNew gcc binutils zlib gmp linux-headers cc_gcc_early cc_gcc_glibc_early
-          cc_gcc_glibc_headers cc_gcc_glibc_nolibc cc_gcc_glibc_nolibgcc;
-
-        glibc_progs = pkgs.glibc_progs.override {
-          python3 = stage11Pkgs.python_tiny;
-        };
+          gzip gcc binutils zlib gmp linux-headers cc_gcc_early cc_gcc_glibc_headers cc_gcc_glibc_nolibc
+          cc_gcc_glibc_nolibgcc cc_gcc_glibc_early cc_gcc_glibc;
 
         # These are only needed to evaluate
         inherit (stage0Pkgs) fetchurl fetchTritonPatch;
         inherit (stage11Pkgs) gnum4;
+        inherit (pkgs) wrapCC;
         hostcc = null;
       };
     });
@@ -473,7 +475,7 @@ let
       pkgconfig
     ];
 
-    cc = finalPkgs.cc_gcc_glibc;
+    cc = stage21Pkgs.cc_gcc_glibc;
 
     shell = stage21Pkgs.bash_small + stage21Pkgs.bash_small.shellPath;
 
@@ -510,7 +512,7 @@ let
 
     extraAttrs = rec {
       bootstrappedPackages = lib.filter (n: n.allowSubstitutes != false) (
-        lib.concatMap (n: n.all or [ ]) (lib.attrValues (overrides { cc_gcc_glibc = null; })));
+        lib.concatMap (n: n.all or [ ]) (lib.attrValues (overrides { })));
     };
 
     overrides = pkgs: rec {
@@ -519,10 +521,11 @@ let
       inherit (stage21Pkgs) isl isl_0-21 libmpc mpfr bash_small coreutils_small gawk_small pcre
         gnupatch_small gnused_small gnutar_small pkgconfig pkgconf xz xz_5-2-4
         patchelf pkgconf_unwrapped brotli brotli_1-0-7 bzip2 diffutils findutils gnugrep gnumake
-        gzip gcc binutils zlib gmp linux-headers;
+        gzip gcc binutils zlib gmp linux-headers cc_gcc_early cc_gcc_glibc_headers cc_gcc_glibc_nolibc
+        cc_gcc_glibc_nolibgcc cc_gcc_glibc_early cc_gcc_glibc;
       libidn2 = libidn2_glibc;
       libunistring = libunistring_glibc;
-      cc = pkgs.cc_gcc_glibc;
+      cc = stage21Pkgs.cc_gcc_glibc;
       hostcc = cc;
       glibc_headers = glibc_headers_gcc;
       glibc_lib = glibc_lib_gcc;

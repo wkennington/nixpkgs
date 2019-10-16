@@ -1,17 +1,24 @@
 NIX@typefx@_CC='@out@'
 
-export CC@typefx@='@pfx@@cc@'
-export CXX@typefx@='@pfx@@cxx@'
-export CPP@typefx@='@pfx@@cc@ -E'
+export CC@typefx@='@targetfx@cc'
+export CXX@typefx@='@targetfx@c++'
+export CPP@typefx@='@targetfx@cpp'
 
 if [ -n ${NIX_ENFORCE_PURITY+x} ]; then
   export CC_WRAPPER@typefx@_ENFORCE_PURITY="$NIX_ENFORCE_PURITY"
 fi
 
 @type@CCProg() {
-  local prog
-  prog="$('@out@'/bin/$CC@typefx@ -print-prog-name="$1" 2>/dev/null)"
-  if [ -n "$prog" ]; then
+  # Special case needed for things like LTO to work with
+  # tools such as ar / nm / ranlib
+  local prog="@targetfx@gcc-$1"
+  if [ -e "@out@/bin/$prog" ]; then
+    export ${1^^}@typefx@="$prog"
+    return 0
+  fi
+
+  local prog="@targetfx@$1"
+  if [ -e "@out@/bin/$prog" ]; then
     export ${1^^}@typefx@="$prog"
   fi
 }
@@ -23,7 +30,7 @@ fi
 @type@CCProg readelf
 @type@CCProg strip
 
-@type@AddCVars () {
+@type@AddCVars() {
   if [ -e $1/nix-support/cc-wrapper-ignored ]; then
     return
   fi
@@ -41,13 +48,26 @@ fi
   fi
 }
 
+@type@RestoreLTO() {
+  if [ -n "${CC_WRAPPER@typefx@_CC_LTO_OLD+1}" ]; then
+    export CC_WRAPPER@typefx@_CC_LTO="$CC_WRAPPER@typefx@_CC_LTO_OLD"
+  else
+    unset CC_WRAPPER@typefx@_CC_LTO
+  fi
+}
+
 if [ -z "${nix_@type@_cc_done-}" ]; then
   nix_@type@_cc_done=1
 
   # TODO: Support native libraries and proper cross compiling
   if [ -z "@typefx@" ]; then
     envHooks+=(@type@AddCVars)
+    postConfigureHooks+=(@type@RestoreLTO)
   fi
+  if [ -n "${CC_WRAPPER@typefx@_CC_LTO+1}" ]; then
+    CC_WRAPPER@typefx@_CC_LTO_OLD="$CC_WRAPPER@typefx@_CC_LTO"
+  fi
+  export CC_WRAPPER@typefx@_CC_LTO=
 
   # Add the output as an rpath, we should only ever do this for host binaries
   # and not for builder binaries since those should never be installed.

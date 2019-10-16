@@ -536,9 +536,7 @@ let  # BEGIN let/in 1
 ################################################################################
 ################################################################################
 
-wrapCCNew = callPackage ../build-support/cc-wrapper-new {
-  coreutils = pkgs.coreutils_small;
-};
+wrapCC = callPackage ../build-support/cc-wrapper { };
 
 ################################################################################
 ################################################################################
@@ -840,7 +838,7 @@ cc_clang_early = pkgs.wrapCCNew {
   ];
 };
 
-cc_gcc_early = pkgs.wrapCCNew {
+cc_gcc_early = pkgs.wrapCC {
   compiler = pkgs.gcc.bin;
   tools = [ pkgs.binutils.bin ];
   inputs = [
@@ -849,7 +847,7 @@ cc_gcc_early = pkgs.wrapCCNew {
   ];
 };
 
-cc_gcc_glibc_headers = pkgs.wrapCCNew {
+cc_gcc_glibc_headers = pkgs.wrapCC {
   compiler = pkgs.gcc.bin;
   tools = [ pkgs.binutils.bin ];
   inputs = [
@@ -859,7 +857,7 @@ cc_gcc_glibc_headers = pkgs.wrapCCNew {
   ];
 };
 
-cc_gcc_glibc_nolibc = pkgs.wrapCCNew {
+cc_gcc_glibc_nolibc = pkgs.wrapCC {
   compiler = pkgs.gcc.bin;
   tools = [ pkgs.binutils.bin ];
   inputs = [
@@ -869,7 +867,7 @@ cc_gcc_glibc_nolibc = pkgs.wrapCCNew {
   ];
 };
 
-cc_gcc_glibc_nolibgcc = pkgs.wrapCCNew {
+cc_gcc_glibc_nolibgcc = pkgs.wrapCC {
   compiler = pkgs.gcc.bin;
   tools = [ pkgs.binutils.bin ];
   inputs = [
@@ -880,7 +878,7 @@ cc_gcc_glibc_nolibgcc = pkgs.wrapCCNew {
   ];
 };
 
-cc_gcc_glibc_early = pkgs.wrapCCNew {
+cc_gcc_glibc_early = pkgs.wrapCC {
   compiler = pkgs.gcc.bin;
   tools = [ pkgs.binutils.bin ];
   inputs = [
@@ -891,7 +889,7 @@ cc_gcc_glibc_early = pkgs.wrapCCNew {
   ];
 };
 
-cc_gcc_glibc = pkgs.wrapCCNew {
+cc_gcc_glibc = pkgs.wrapCC {
   compiler = pkgs.gcc.bin;
   tools = [ pkgs.binutils.bin ];
   inputs = [
