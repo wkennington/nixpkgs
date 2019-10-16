@@ -1,5 +1,6 @@
 { stdenv
 , bison
+, cc_gcc_glibc_early
 , fetchurl
 , fetchTritonPatch
 , linux-headers
@@ -23,7 +24,7 @@ let
     patches
     version;
 in
-stdenv.mkDerivation rec {
+(stdenv.override { cc = null; }).mkDerivation rec {
   name = "glibc-progs-${version}";
 
   inherit
@@ -32,6 +33,7 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [
     bison
+    cc_gcc_glibc_early
     python3
   ];
 
@@ -84,7 +86,8 @@ stdenv.mkDerivation rec {
 
   # Hardening can't be applied to all source
   # Makefiles manually harden for this
-  NIX_CC_STACK_PROTECTOR = false;
+  CC_WRAPPER_CC_STACK_PROTECTOR = false;
+  CC_WRAPPER_CC_FORTIFY_SOURCE = false;
 
   meta = with stdenv.lib; {
     maintainers = with maintainers; [

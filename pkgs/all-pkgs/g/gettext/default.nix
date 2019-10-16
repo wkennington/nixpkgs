@@ -32,6 +32,8 @@ stdenv.mkDerivation rec {
       -e 's,/bin/pwd,pwd,g'
   '';
 
+  prefix = placeholder "bin";
+
   configureFlags = [
     "--datadir=${placeholder "lib"}/share"
     "--without-included-libunistring"
@@ -83,6 +85,7 @@ stdenv.mkDerivation rec {
     ];
     platforms = with platforms;
       i686-linux
+      ++ powerpc64le-linux
       ++ x86_64-linux;
   };
 }

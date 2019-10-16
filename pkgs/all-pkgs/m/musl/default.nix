@@ -26,7 +26,7 @@
     ln -sv "$lib"/lib/libc.so "$bin"/bin/ldd
 
     mkdir -p "$dev"/nix-support
-    echo "-idirafter $dev/include" >"$dev"/nix-support/cflags-compile
+    echo "-idirafter $dev/include" >"$dev"/nix-support/cflags
     echo "-B$dev/lib" >"$dev"/nix-support/cflags-link
     echo "-dynamic-linker $lib/lib/libc.so" >"$dev"/nix-support/ldflags-before
     echo "-L$dev/lib" >"$dev"/nix-support/ldflags

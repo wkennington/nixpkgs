@@ -40,8 +40,10 @@ let
     ];
 
     buildPhase = ''
+      echo "int main() { }" >main.c
+      cc -o main main.c
       strip bin/*
-      find bin -type f -exec patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" {} \;
+      find bin -type f -exec patchelf --set-interpreter "$(patchelf --print-interpreter ./main)" {} \;
     '';
 
     installPhase = ''
@@ -88,10 +90,18 @@ stdenv.mkDerivation {
     patchShebangs src/all.bash
   '';
 
-  # Incremental re-compilation requires a path relative to home to store
-  # the object files
   preBuild = ''
+    # Incremental re-compilation requires a path relative to home to store
+    # the object files
     export HOME="$TMPDIR"
+
+    # For some reason the go toolchain only adds an rpath to our libc and not
+    # all of our DT_NEEDED entries. This forces the toolchain to set all of
+    # the needed rpaths.
+    echo "int main() { }" >main.c
+    cc -o main main.c
+    patchelf --print-rpath main
+    export GO_LDFLAGS="-r=$(patchelf --print-rpath main)"
   '';
 
   GOOS = "linux";
@@ -105,11 +115,6 @@ stdenv.mkDerivation {
   GO386 = 387; # from Arch: don't assume sse2 on i686
   CGO_ENABLED = 1;
   GOROOT_BOOTSTRAP = "${goBootstrap}/share/go";
-
-  # For some reason the go toolchain only adds an rpath to our libc and not
-  # all of our DT_NEEDED entries. This forces the toolchain to set all of
-  # the needed rpaths.
-  GO_LDFLAGS = "-r=" + concatStringsSep ":" (map (n: "${n}/lib") stdenv.cc.runtimeLibcLibs);
 
   # These optimizations / security hardenings break the `os` library
   optimize = false;
@@ -146,13 +151,6 @@ stdenv.mkDerivation {
   '';
 
   setupHook = ./setup-hook.sh;
-
-  allowedReferences = [
-    "out"
-    iana-etc
-    mime-types
-    tzdata
-  ] ++ stdenv.cc.runtimeLibcLibs;
 
   passthru = {
     inherit

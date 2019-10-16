@@ -63,6 +63,10 @@ stdenv.mkDerivation rec {
       "$out"/lib/perl5/*/*/CORE/config.h
   '';
 
+  disallowedReferences = [
+    stdenv.cc
+  ];
+
   setupHook = ./setup-hook.sh;
 
   passthru = {

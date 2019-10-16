@@ -236,7 +236,6 @@ stdenv.mkDerivation rec {
     impl = "gcc";
 
     cc = "gcc";
-    cpp = "cpp";
     cxx = "g++";
     optFlags = [ ];
     prefixMapFlag = "file-prefix-map";

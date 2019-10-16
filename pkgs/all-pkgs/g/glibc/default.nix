@@ -56,6 +56,9 @@ in
   ];
 
   preConfigure = ''
+    # Prevent impure dynamic-linker paths from being injected
+    export CC_WRAPPER_LDFLAGS_BEFORE="$CC_WRAPPER_LDFLAGS_BEFORE -dynamic-linker $lib/lib/fake-ld.so"
+
     mkdir -v build
     cd build
     configureScript='../configure'

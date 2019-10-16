@@ -5,7 +5,7 @@
 }:
 
 let
-  version = "3.7.3";
+  version = "3.8.0";
 in
 stdenv.mkDerivation {
   name = "python-tiny-${version}";
@@ -13,7 +13,7 @@ stdenv.mkDerivation {
   src = fetchurl {
     url = "https://www.python.org/ftp/python/${version}/Python-${version}.tar.xz";
     hashOutput = false;
-    sha256 = "da60b54064d4cfcd9c26576f6df2690e62085123826cff2e667e72a91952d318";
+    sha256 = "b356244e13fb5491da890b35b13b2118c3122977c2cd825e3eb6e7d462030d84";
   };
 
   nativeBuildInputs = [

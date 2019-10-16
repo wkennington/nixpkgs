@@ -1,11 +1,11 @@
-export CC_WRAPPER@typefx@_CC='@out@'
+NIX@typefx@_CC='@out@'
 
 export CC@typefx@='@pfx@@cc@'
 export CXX@typefx@='@pfx@@cxx@'
-export CPP@typefx@='@pfx@@cpp@'
+export CPP@typefx@='@pfx@@cc@ -E'
 
-if [ -n "${NIX_ENFORCE_PURITY+1}" ]; then
-  export CC_WRAPPER_ENFORCE_PURITY="$NIX_ENFORCE_PURITY"
+if [ -n ${NIX_ENFORCE_PURITY+x} ]; then
+  export CC_WRAPPER@typefx@_ENFORCE_PURITY="$NIX_ENFORCE_PURITY"
 fi
 
 @type@CCProg() {
@@ -17,8 +17,9 @@ fi
 }
 
 @type@CCProg ar
-@type@CCProg ranlib
 @type@CCProg ld
+@type@CCProg nm
+@type@CCProg ranlib
 @type@CCProg readelf
 @type@CCProg strip
 
@@ -28,7 +29,7 @@ fi
   fi
 
   if [ -d $1/include ]; then
-    export CC_WRAPPER@typefx@_CFLAGS_COMPILE+=" ${ccIncludeFlag:--isystem} $1/include"
+    export CC_WRAPPER@typefx@_CFLAGS+=" ${ccIncludeFlag:--isystem} $1/include"
   fi
 
   if [ -d $1/lib64 -a ! -L $1/lib64 ]; then

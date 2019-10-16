@@ -44,7 +44,7 @@ stdenv.mkDerivation rec {
     readline
   ];
 
-  NIX_CFLAGS_COMPILE = [
+  CC_WRAPPER_CFLAGS = [
     "-DSYS_BASHRC=\"/etc/${passthru.systemBashrcName}\""
     "-DSYS_BASH_LOGOUT=\"/etc/${passthru.systemBashlogoutName}\""
     "-DDEFAULT_PATH_VALUE=\"/no-such-path\""
@@ -80,11 +80,11 @@ stdenv.mkDerivation rec {
   '';
 
   preFixup = ''
-    rm -r "$bin"/include
+    rm -rv "$bin"/include
+    rm -rv "$bin"/lib
 
     # Remove impurities
-    rm "$bin"/lib/bash/Makefile.inc
-    rm "$bin"/bin/bashbug
+    rm -v "$bin"/bin/bashbug
   '';
 
   postFixup = ''
@@ -100,6 +100,10 @@ stdenv.mkDerivation rec {
     "bin"
   ] ++ optionals (type == "full") [
     "man"
+  ];
+
+  disallowedReferences = [
+    stdenv.cc
   ];
 
   passthru = rec {

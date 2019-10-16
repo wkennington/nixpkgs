@@ -51,6 +51,11 @@ stdenv.mkDerivation rec {
     "lib"
   ];
 
+  # Ensure we don't accidentally run into this again
+  disallowedReferences = [
+    stdenv.cc
+  ];
+
   passthru = {
     srcVerification = fetchurl rec {
       failEarly = true;

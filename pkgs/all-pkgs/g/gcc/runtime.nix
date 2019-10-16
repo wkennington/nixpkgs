@@ -60,11 +60,11 @@
     ln -sv "$lib"/lib/* "$libcxx"/lib "$libsan"/lib/* "$libssp"/lib/* "$dev"/lib
 
     mkdir -p "$dev"/nix-support
-    echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags-compile
+    echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags
     echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
     cxxinc="$(dirname "$(dirname "$dev"/include/c++/*/*/bits/c++config.h)")"
-    echo "-idirafter $(dirname "$cxxinc")" >>"$dev"/nix-support/cxxflags-compile
-    echo "-idirafter $cxxinc" >>"$dev"/nix-support/cxxflags-compile
+    echo "-idirafter $(dirname "$cxxinc")" >>"$dev"/nix-support/cxxflags
+    echo "-idirafter $cxxinc" >>"$dev"/nix-support/cxxflags
   '';
 
   preFixup = ''

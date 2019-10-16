@@ -30,7 +30,6 @@ assert target != "";
 
   inherit (compiler)
     cc
-    cpp
     cxx
     optFlags
     prefixMapFlag
@@ -40,8 +39,7 @@ assert target != "";
     coreutils
     compiler
     tools
-    inputs
-    target;
+    inputs;
 
   inherit type;
   typefx = {
@@ -49,6 +47,7 @@ assert target != "";
     "host" = "";
   }."${type}";
 
+  target = if target == null then "" else target;
   pfx = if target == null then "" else "${target}-";
 
   buildCommand = ''
@@ -100,9 +99,6 @@ assert target != "";
     ln -sv "$pfx$cc" "$out"/bin/"$pfx"cc
     wrap "$compiler"/bin/"$cxx" '${./cc-wrapper.sh}'
     ln -sv "$pfx$cxx" "$out"/bin/"$pfx"c++
-    if exists "$compiler"/bin/"$pfx"cpp || exists "$compiler"/bin/cpp; then
-      wrap "$compiler"/bin/cpp '${./cc-wrapper.sh}'
-    fi
 
     for bin in "$compiler" $tools; do
       for prog in "$bin"/bin/"$pfx"ld* "$bin"/bin/ld*; do

@@ -17,7 +17,7 @@ buildAbsoluteLdflags() {
   if [ -e "$TMPDIR/absolute-lib-paths" ]; then
     return 0
   fi
-  echo "$LDFLAGS $NIX_LDFLAGS" > $TMPDIR/absolute-ldflags
+  echo "$LDFLAGS $CC_WRAPPER_LDFLAGS" > $TMPDIR/absolute-ldflags
 
   # Add the outputs to the LDFLAGS
   local output

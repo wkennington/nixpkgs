@@ -76,15 +76,15 @@ if [ -z "${CC_WRAPPER@typefx@_CC_WRAPPER_FLAGS_SET-}" ]; then
   export CC_WRAPPER@typefx@_CC_WRAPPER_FLAGS_SET=1
 
   # `-B@out@/bin' forces cc to use ld-wrapper.sh when calling ld.
-  appendFlags CC_WRAPPER@typefx@_CFLAGS_COMPILE '-B@out@/bin'
+  appendFlags CC_WRAPPER@typefx@_CFLAGS '-B@out@/bin'
   if [ -n '@target@' ]; then
-    appendFlags CC_WRAPPER@typefx@_CFLAGS_COMPILE '-B@out@/@target@/bin'
+    appendFlags CC_WRAPPER@typefx@_CFLAGS '-B@out@/@target@/bin'
   fi
 
   if [ -z "$noStdInc" ]; then
-    maybeAppendFlagsFromFile CC_WRAPPER@typefx@_CFLAGS_COMPILE '@out@'/nix-support/cflags
+    maybeAppendFlagsFromFile CC_WRAPPER@typefx@_CFLAGS '@out@'/nix-support/cflags
     if [ -z "$noStdIncxx" ]; then
-      maybeAppendFlagsFromFile CC_WRAPPER@typefx@_CXXFLAGS_COMPILE '@out@'/nix-support/cxxflags
+      maybeAppendFlagsFromFile CC_WRAPPER@typefx@_CXXFLAGS '@out@'/nix-support/cxxflags
     fi
   fi
   maybeAppendFlagsFromFile CC_WRAPPER@typefx@_CXXFLAGS_LINK '@out@'/nix-support/cxxflags-link
@@ -157,10 +157,10 @@ done
 
 linkFlags=()
 if [[ "@prog@" = *++ ]]; then
-  params+=($CC_WRAPPER@typefx@_CXXFLAGS_COMPILE)
+  params+=($CC_WRAPPER@typefx@_CXXFLAGS)
   linkFlags+=($CC_WRAPPER@typefx@_CXXFLAGS_LINK)
 fi
-params+=($CC_WRAPPER@typefx@_CFLAGS_COMPILE)
+params+=($CC_WRAPPER@typefx@_CFLAGS)
 linkFlags+=($CC_WRAPPER@typefx@_CFLAGS_LINK)
 if [ -z "$dontLink" ]; then
   params+=("${linkFlags[@]}")

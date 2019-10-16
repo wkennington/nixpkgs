@@ -55,7 +55,6 @@ let
     impl = "gcc";
     cc = "gcc";
     cxx = "g++";
-    cpp = "cpp";
     optFlags = [ ];
     prefixMapFlag = "debug-prefix-map";
     canStackClashProtect = false;
@@ -262,6 +261,7 @@ let
         export NIX_SYSTEM_BUILD
         export NIX_FOR_BUILD_CC_HARDEN=
         export NIX_FOR_BUILD_LD_HARDEN=
+        export CC_WRAPPER_CC_LTO=
       '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage11Pkgs is missing package definition for `${n}`") pkgs) // {
@@ -288,6 +288,7 @@ let
 
         gmp = pkgs.gmp.override {
           cxx = false;
+          gnum4 = stage01Pkgs.gnum4;
         };
 
         gcc = pkgs.gcc.override {
@@ -338,7 +339,9 @@ let
 
         glibc_progs = pkgs.glibc_progs.override {
           type = "small";
+          bison = stage01Pkgs.bison;
           python3 = stage01Pkgs.python_tiny;
+          cc_gcc_glibc_early = stage1Pkgs.cc_gcc_glibc_early;
           glibc_lib = stage1Pkgs.glibc_lib_gcc;
         };
 

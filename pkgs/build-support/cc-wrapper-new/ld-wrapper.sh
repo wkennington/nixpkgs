@@ -17,7 +17,6 @@ if [ -n "${CC_WRAPPER_DEBUG-}" -o -n "${CC_WRAPPER@typefx@_LD_DEBUG-}" ]; then
   for i in "$@"; do
       echo "  $i" >&2
   done
-  set -x
 fi
 
 if [ -z "${CC_WRAPPER@typefx@_LD_WRAPPER_FLAGS_SET-}" ]; then
@@ -257,7 +256,7 @@ if [ -n "${CC_WRAPPER@typefx@_LD_ADD_RPATH-1}" ]; then
     # If the path is not in the store, don't add it to the rpath.
     # This typically happens for libraries in /tmp that are later
     # copied to $out/lib.  If not, we're screwed.
-    startsWith '@CC_WRAPPER_STORE@' "$i" || continue
+    startsWith '@NIX_STORE@' "$i" || continue
 
     beforeParams+=('-rpath' "$i")
   done

@@ -30,7 +30,7 @@ in
   '';
 
   # Needed to prevent libunistring.so from referencing dev
-  NIX_CFLAGS_COMPILE = "-DLIBDIR=\"${placeholder "lib"}/lib\"";
+  CC_WRAPPER_CFLAGS = "-DLIBDIR=\"${placeholder "lib"}/lib\"";
 
   outputs = [
     "dev"

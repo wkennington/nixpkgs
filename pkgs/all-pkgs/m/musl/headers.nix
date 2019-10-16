@@ -29,6 +29,6 @@ stdenv.mkDerivation {
 
   postInstall = ''
     mkdir -p "$out"/nix-support
-    echo "-idirafter $out/include" >"$out"/nix-support/cflags-compile
+    echo "-idirafter $out/include" >"$out"/nix-support/cflags
   '';
 }

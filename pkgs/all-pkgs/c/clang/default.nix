@@ -86,7 +86,6 @@ stdenv.mkDerivation {
   passthru = {
     cc = "clang";
     cxx = "clang++";
-    cpp = "clang -E";
     optFlags = [ ];
     prefixMapFlag = "debug-prefix-map";
     canStackClashProtect = false;
