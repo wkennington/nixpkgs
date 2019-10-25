@@ -449,10 +449,14 @@ let
           gzip gcc binutils zlib gmp linux-headers cc_gcc_early cc_gcc_glibc_headers cc_gcc_glibc_nolibc
           cc_gcc_glibc_nolibgcc cc_gcc_glibc_early cc_gcc_glibc;
 
+        wrapCC = pkgs.wrapCC.override {
+          srco = ../../../../cc-wrapper/cc-wrapper-0.1.tar.xz;
+        };
+
         # These are only needed to evaluate
         inherit (stage0Pkgs) fetchurl fetchTritonPatch;
         inherit (stage11Pkgs) gnum4;
-        inherit (pkgs) wrapCC;
+        #inherit (pkgs) wrapCC;
         hostcc = null;
       };
     });

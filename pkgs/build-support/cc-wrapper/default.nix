@@ -8,6 +8,7 @@
 { stdenv
 , lib
 , fetchurl
+, srco ? null
 }:
 
 lib.makeOverridable
@@ -42,7 +43,7 @@ assert target != "";
 stdenv.mkDerivation rec {
   name = "cc-wrapper-${version}";
 
-  src = fetchurl {
+  src = if srco != null then srco else fetchurl {
     url = "https://github.com/triton/cc-wrapper/releases/download/v${version}/${name}.tar.xz";
     sha256 = "1906ba61c39e79dc1a05561d7fd53e283b9fb4686ba7361b4697826e37a4dfc5";
   };
