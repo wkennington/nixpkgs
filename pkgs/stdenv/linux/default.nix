@@ -490,7 +490,7 @@ let
         name = "stdenv-deps";
         buildCommand = ''
           mkdir -p $out
-        '' + lib.flip lib.concatMapStrings extraAttrs.bootstrappedPackages' (n: ''
+        '' + lib.flip lib.concatMapStrings extraAttrs.bootstrappedPackages (n: ''
           [ -h "$out/$(basename "${n}")" ] || ln -s "${n}" "$out"
         '');
         allowSubstitutes = false;
@@ -502,15 +502,15 @@ let
           mkdir -p $out
           ln -s "${stdenvDeps}" $out
         '';
-        allowedRequisites = extraAttrs.bootstrappedPackages' ++ [ stdenvDeps ];
+        allowedRequisites = extraAttrs.bootstrappedPackages ++ [ stdenvDeps ];
         allowSubstitutes = false;
         preferLocalBuild = true;
       };
     };
 
     extraAttrs = rec {
-      bootstrappedPackages' = lib.concatMap (n: n.all or [ ]) (lib.attrValues (overrides { cc_gcc_glibc = null; }));
-      bootstrappedPackages = [ stdenv ] ++ bootstrappedPackages';
+      bootstrappedPackages = lib.filter (n: n.allowSubstitutes != false) (
+        lib.concatMap (n: n.all or [ ]) (lib.attrValues (overrides { cc_gcc_glibc = null; })));
     };
 
     overrides = pkgs: rec {

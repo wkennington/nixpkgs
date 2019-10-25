@@ -163,4 +163,4 @@ self = (stdenv.override { cc = null; }).mkDerivation rec {
       powerpc64le-linux;
   };
 };
-in self
+in (self // { all = self.all ++ [ self.cc_reqs ];})
