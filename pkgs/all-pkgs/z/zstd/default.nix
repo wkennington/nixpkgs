@@ -32,9 +32,10 @@ stdenv.mkDerivation rec {
     mkdir -p "$lib"/lib
     mv -v "$dev"/lib*/*.so* "$lib"/lib
     ln -sv "$lib"/lib/* "$dev"/lib
+  '';
 
-    mkdir -p "$man"/share
-    mv "$bin"/share/man "$man"/share
+  postFixup = ''
+    rm -rv "$bin"/share
   '';
 
   outputs = [

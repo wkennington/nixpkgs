@@ -3754,6 +3754,8 @@ quazip = callPackage ../all-pkgs/q/quazip { };
 
 radvd = callPackage ../all-pkgs/r/radvd { };
 
+ragel = callPackage ../all-pkgs/r/ragel { };
+
 rapidjson = callPackage ../all-pkgs/r/rapidjson { };
 
 raptor2 = callPackage ../all-pkgs/r/raptor2 { };
