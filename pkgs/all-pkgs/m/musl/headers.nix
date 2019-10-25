@@ -1,23 +1,30 @@
 { stdenv
-, glibc
-, musl
+, cc
+, fetchurl
 }:
 
-stdenv.mkDerivation {
-  name = "${musl.name}-headers";
+let
+  inherit (import ./default.nix { cc = null; inherit fetchurl stdenv; })
+    src
+    meta
+    version;
+in
+(stdenv.override { cc = null; }).mkDerivation {
+  name = "musl-headers-${version}";
 
-  inherit (musl)
-    src;
+  inherit
+    src
+    meta;
+
+  nativeBuildInputs = [
+    cc
+  ];
 
   preConfigure = ''
     mkdir -p build
     cd build
     configureScript=../configure
   '';
-
-  configureFlags = [
-    "--host=${glibc.host}"
-  ];
 
   buildPhase = ''
     true

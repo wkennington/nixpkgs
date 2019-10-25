@@ -857,6 +857,16 @@ cc_gcc_glibc_headers = pkgs.wrapCC {
   ];
 };
 
+cc_gcc_musl_headers = pkgs.wrapCC {
+  compiler = pkgs.gcc.bin;
+  tools = [ pkgs.binutils.bin ];
+  inputs = [
+    pkgs.gcc.cc_headers
+    pkgs.musl_headers_gcc
+    pkgs.linux-headers
+  ];
+};
+
 cc_gcc_glibc_nolibc = pkgs.wrapCC {
   compiler = pkgs.gcc.bin;
   tools = [ pkgs.binutils.bin ];
@@ -2595,6 +2605,8 @@ libmypaint = callPackage ../all-pkgs/l/libmypaint { };
 
 libnatpmp = callPackage ../all-pkgs/l/libnatpmp { };
 
+libnatspec = callPackage ../all-pkgs/l/libnatspec { };
+
 libnetfilter_acct = callPackage ../all-pkgs/l/libnetfilter_acct { };
 
 libnetfilter_conntrack = callPackage ../all-pkgs/l/libnetfilter_conntrack { };
@@ -3152,60 +3164,14 @@ murmur = callPackageAlias "murmur_git" { };
 
 musepack = callPackage ../all-pkgs/m/musepack { };
 
-musl = callPackage ../all-pkgs/m/musl {
-  stdenv = pkgs.stdenv.override {
-    cc = pkgs.wrapCCNew {
-      compiler = pkgs.gcc;
-      tools = [
-        pkgs.binutils
-      ];
-      inputs = [
-        (pkgs.stdenv.mkDerivation {
-          name = "gcc-headers";
-          buildCommand = ''
-            mkdir -p "$out"/nix-support
-            exec 3>"$out"/nix-support/cflags-compile
-            echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include)" >&3
-            echo "-idirafter $(echo '${pkgs.gcc}'/lib/gcc/*/*/include-fixed)" >&3
-          '';
-        })
-        (pkgs.stdenv.mkDerivation {
-          name = "gcclib";
-          buildCommand = ''
-            mkdir -p "$out"/nix-support
-            libs="$(echo '${pkgs.gcc}'/lib/gcc/*/*)"
-            echo "-B$libs" >"$out"/nix-support/cflags-compile
-            echo "-L$libs -L${pkgs.gcc}/lib" >"$out"/nix-support/ldflags
-          '';
-        })
-        (pkgs.stdenv.mkDerivation {
-          name = "linux-headers";
-          buildCommand = ''
-            mkdir -p "$out"/nix-support
-            echo "-idirafter ${pkgs.linux-headers}/include" >"$out"/nix-support/cflags-compile
-          '';
-        })
-      ];
-    };
-  };
+musl_lib = null;
+
+musl_lib_gcc = callPackage ../all-pkgs/g/glibc {
+  cc = pkgs.cc_gcc_musl_nolibc;
 };
 
-musl_headers = callPackage ../all-pkgs/m/musl/headers.nix {
-  stdenv = pkgs.stdenv.override {
-    cc = pkgs.wrapCCNew {
-      compiler = pkgs.gcc;
-      tools = [ pkgs.binutils ];
-      inputs = [
-        (pkgs.stdenv.mkDerivation {
-          name = "linux-headers";
-          buildCommand = ''
-            mkdir -p "$out"/nix-support
-            echo "-idirafter ${pkgs.linux-headers}/include" >"$out"/nix-support/cflags-compile
-          '';
-        })
-      ];
-    };
-  };
+musl_headers_gcc = callPackage ../all-pkgs/m/musl/headers.nix {
+  cc = pkgs.cc_gcc_early;
 };
 
 mutter_3-26 = callPackage ../all-pkgs/m/mutter {
@@ -4653,8 +4619,6 @@ cfitsio = callPackage ../development/libraries/cfitsio { };
 #
 #
   libgtop = callPackage ../development/libraries/libgtop {};
-#
-  libnatspec = callPackage ../development/libraries/libnatspec { };
 #
   libndp = callPackage ../development/libraries/libndp { };
 #

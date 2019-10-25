@@ -3,14 +3,17 @@
 , fetchurl
 }:
 
+let
+  version = "1.1.24";
+in
 (stdenv.override { cc = null; }).mkDerivation rec {
-  name = "musl-1.1.23";
+  name = "musl-${version}";
 
   src = fetchurl {
     url = "https://www.musl-libc.org/releases/${name}.tar.gz";
-    multihash = "QmdJfuZf7VdcfVW6vixRgCvWKAGedbxoTnwi2qm2cKQfBs";
+    multihash = "QmT6j4ASw3xhXSMrdoN2tRuNz9E9ZgsaDU5DuV9XfXt3VE";
     hashOutput = false;
-    sha256 = "8a0feb41cef26c97dde382c014e68b9bb335c094bbc1356f6edaaf6b79bd14aa";
+    sha256 = "1370c9a812b2cf2a7d92802510cca0058cc37e66a7bedd70051f0a34015022a3";
   };
 
   nativeBuildInputs = [
@@ -33,7 +36,7 @@
   '';
 
   # Can't force the libc to use this
-  NIX_CC_STACK_PROTECTOR = false;
+  CC_WRAPPER_CC_STACK_PROTECTOR = false;
 
   outputs = [
     "dev"
@@ -44,6 +47,7 @@
   allowedReferences = outputs;
 
   passthru = {
+    inherit version;
     srcVerification = fetchurl {
       failEarly = true;
       inherit (src)
@@ -65,6 +69,8 @@
       wkennington
     ];
     platforms = with platforms;
-      x86_64-linux;
+      powerpc64le-linux
+      ++ i686-linux
+      ++ x86_64-linux;
   };
 }
