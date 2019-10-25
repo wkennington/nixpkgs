@@ -57,7 +57,7 @@
     mv "$dev"/lib*/*san.so* "$libsan"/lib
     mv "$dev"/lib*/libssp.so* "$libssp"/lib
     mv "$dev"/lib*/*.so* "$lib"/lib
-    ln -sv "$lib"/lib/* "$libcxx"/lib "$libsan"/lib/* "$libssp"/lib/* "$dev"/lib
+    ln -sv "$lib"/lib/* "$libcxx"/lib/* "$libsan"/lib/* "$libssp"/lib/* "$dev"/lib
 
     mkdir -p "$dev"/nix-support
     echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags
