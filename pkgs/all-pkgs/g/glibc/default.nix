@@ -25,8 +25,7 @@ let
     src
     patches
     version;
-in
-(stdenv.override { cc = null; }).mkDerivation rec {
+self = (stdenv.override { cc = null; }).mkDerivation rec {
   name = "glibc-${version}";
 
   inherit
@@ -139,8 +138,17 @@ in
       name = "glibc-cc_reqs-${version}";
 
       buildCommand = ''
+        mkdir -p "$out"/lib
+        ln -sv '${self.dev}'/lib/libc* "$out"/lib
+        ln -sfv '${self.lib}'/lib/libc* "$out"/lib
+
+        rm "$out"/lib/libc.so
+        cp '${self.dev}'/lib/libc.so "$out"/lib
+        chmod a+w "$out"/lib/libc.so
+        echo "GROUP ( ${gcc_lib_glibc}/lib/libgcc_s.so ${libidn2_glibc}/lib/libidn2.so )" >>"$out"/lib/libc.so
+
         mkdir -p "$out"/nix-support
-        echo "-L${gcc_lib_glibc}/lib -L${libidn2_glibc}/lib --push-state --no-as-needed -lidn2 -lgcc_s --pop-state" >"$out"/nix-support/ldflags-dynamic
+        echo "-L$out/lib" >"$out"/nix-support/cflags-link
       '';
     };
   };
@@ -154,4 +162,5 @@ in
       x86_64-linux ++
       powerpc64le-linux;
   };
-}
+};
+in self

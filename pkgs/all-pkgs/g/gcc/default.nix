@@ -124,6 +124,9 @@ stdenv.mkDerivation rec {
     "--with-local-prefix=/no-such-path/local-prefix"
     "--with-native-system-header-dir=/no-such-path/native-headers"
     "--with-debug-prefix-map=$NIX_BUILD_TOP=/no-such-path"
+  ] ++ optionals (type != "bootstrap") [
+    # Not autodetected during cross compiles
+    "gcc_cv_initfini_array=yes"
   ];
 
   preConfigure = ''
