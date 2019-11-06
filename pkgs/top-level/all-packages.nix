@@ -783,6 +783,7 @@ busybox = callPackage ../all-pkgs/b/busybox { };
 
 busybox_shell = callPackageAlias "busybox" {
   minimal = true;
+  stdenv = pkgs.stdenv.override { cc = pkgs.cc_gcc_musl; };
   extraConfig = ''
     CONFIG_STATIC y
     CONFIG_ASH y
@@ -798,6 +799,7 @@ busybox_shell = callPackageAlias "busybox" {
 
 busybox_bootstrap = callPackageAlias "busybox" {
   minimal = true;
+  stdenv = pkgs.stdenv.override { cc = pkgs.cc_gcc_musl; };
   extraConfig = ''
     CONFIG_STATIC y
     CONFIG_ASH y
@@ -862,7 +864,7 @@ cc_gcc_musl_headers = pkgs.wrapCC {
   tools = [ pkgs.binutils.bin ];
   inputs = [
     pkgs.gcc.cc_headers
-    pkgs.musl_headers_gcc
+    pkgs.musl_headers
     pkgs.linux-headers
   ];
 };
@@ -873,6 +875,18 @@ cc_gcc_glibc_nolibc = pkgs.wrapCC {
   inputs = [
     pkgs.gcc_lib_glibc_static
     pkgs.gcc.cc_headers
+    pkgs.glibc_headers_gcc
+    pkgs.linux-headers
+  ];
+};
+
+cc_gcc_musl_nolibc = pkgs.wrapCC {
+  compiler = pkgs.gcc.bin;
+  tools = [ pkgs.binutils.bin ];
+  inputs = [
+    pkgs.gcc_lib_musl_static
+    pkgs.gcc.cc_headers
+    pkgs.musl_headers
     pkgs.linux-headers
   ];
 };
@@ -888,6 +902,17 @@ cc_gcc_glibc_nolibgcc = pkgs.wrapCC {
   ];
 };
 
+cc_gcc_musl_nolibgcc = pkgs.wrapCC {
+  compiler = pkgs.gcc.bin;
+  tools = [ pkgs.binutils.bin ];
+  inputs = [
+    pkgs.gcc_lib_musl_static
+    pkgs.gcc.cc_headers
+    pkgs.musl_lib_gcc
+    pkgs.linux-headers
+  ];
+};
+
 cc_gcc_glibc_early = pkgs.wrapCC {
   compiler = pkgs.gcc.bin;
   tools = [ pkgs.binutils.bin ];
@@ -895,6 +920,17 @@ cc_gcc_glibc_early = pkgs.wrapCC {
     pkgs.gcc_lib_glibc
     pkgs.gcc.cc_headers
     pkgs.glibc_lib_gcc
+    pkgs.linux-headers
+  ];
+};
+
+cc_gcc_musl_early = pkgs.wrapCC {
+  compiler = pkgs.gcc.bin;
+  tools = [ pkgs.binutils.bin ];
+  inputs = [
+    pkgs.gcc_lib_musl
+    pkgs.gcc.cc_headers
+    pkgs.musl_lib_gcc
     pkgs.linux-headers
   ];
 };
@@ -908,6 +944,18 @@ cc_gcc_glibc = pkgs.wrapCC {
     pkgs.gcc.cc_headers
     pkgs.glibc_lib_gcc.cc_reqs
     pkgs.glibc_lib_gcc
+    pkgs.linux-headers
+  ];
+};
+
+cc_gcc_musl = pkgs.wrapCC {
+  compiler = pkgs.gcc.bin;
+  tools = [ pkgs.binutils.bin ];
+  inputs = [
+    pkgs.gcc_runtime_musl
+    pkgs.gcc_lib_musl
+    pkgs.gcc.cc_headers
+    pkgs.musl_lib_gcc
     pkgs.linux-headers
   ];
 };
@@ -976,10 +1024,10 @@ civetweb = callPackage ../all-pkgs/c/civetweb { };
 
 cjdns = callPackage ../all-pkgs/c/cjdns { };
 
-clang_8 = callPackage ../all-pkgs/c/clang {
-  llvm = pkgs.llvm_8;
+clang_9 = callPackage ../all-pkgs/c/clang {
+  llvm = pkgs.llvm_9;
 };
-clang = callPackageAlias "clang_8" { };
+clang = callPackageAlias "clang_9" { };
 
 clr-boot-manager = callPackage ../all-pkgs/c/clr-boot-manager { };
 
@@ -1016,30 +1064,13 @@ collectd_plugins = callPackage ../all-pkgs/c/collectd {
   type = "plugins";
 };
 
-compiler-rt_8 = callPackage ../all-pkgs/c/compiler-rt {
-  llvm = pkgs.llvm_8;
-  target_cc = pkgs.wrapCCNew {
-    compiler = pkgs.clang_8.bin;
-    tools = [ pkgs.lld_8.bin ];
-    inputs = [
-      (pkgs.stdenv.mkDerivation {
-        name = "clang-headers";
-        buildCommand = ''
-          mkdir -p "$out"/nix-support
-          echo "-idirafter ${pkgs.clang.cc_headers}/include" >"$out"/nix-support/cflags-compile
-        '';
-      })
-      (pkgs.stdenv.mkDerivation {
-        name = "libc-headers";
-        buildCommand = ''
-          mkdir -p "$out"/nix-support
-          echo "-idirafter ${pkgs.glibc}/include" >"$out"/nix-support/cflags-compile
-        '';
-      })
-    ];
-  };
+colm_0-12 = callPackage ../all-pkgs/c/colm {
+  channel = "0.12";
 };
-compiler-rt = callPackageAlias "compiler-rt_8" { };
+colm_0-13 = callPackage ../all-pkgs/c/colm {
+  channel = "0.13";
+};
+colm = callPackageAlias "colm_0-12" { };
 
 colord = callPackage ../all-pkgs/c/colord { };
 
@@ -1048,6 +1079,11 @@ colord-gtk = callPackage ../all-pkgs/c/colord-gtk { };
 colorhug-client = callPackage ../all-pkgs/c/colorhug-client { };
 
 combine-xml-catalogs = callPackage ../all-pkgs/c/combine-xml-catalogs { };
+
+compiler-rt_9 = callPackage ../all-pkgs/c/compiler-rt {
+  llvm = pkgs.llvm_9;
+};
+compiler-rt = callPackageAlias "compiler-rt_9" { };
 
 conntrack-tools = callPackage ../all-pkgs/c/conntrack-tools { };
 
@@ -1560,8 +1596,17 @@ gcc_lib_glibc = callPackage ../all-pkgs/g/gcc/lib.nix {
   cc = pkgs.cc_gcc_glibc_nolibgcc;
 };
 
+gcc_lib_musl = callPackage ../all-pkgs/g/gcc/lib.nix {
+  cc = pkgs.cc_gcc_musl_nolibgcc;
+};
+
 gcc_lib_glibc_static = callPackage ../all-pkgs/g/gcc/lib.nix {
   cc = pkgs.cc_gcc_glibc_headers;
+  type = "nolibc";
+};
+
+gcc_lib_musl_static = callPackage ../all-pkgs/g/gcc/lib.nix {
+  cc = pkgs.cc_gcc_musl_headers;
   type = "nolibc";
 };
 
@@ -1575,33 +1620,22 @@ gcc_runtime_glibc = callPackage ../all-pkgs/g/gcc/runtime.nix {
   gcc_lib = pkgs.gcc_lib_glibc;
 };
 
-gcc_lib_musl = callPackage ../all-pkgs/g/gcc/lib.nix {
-  cc = wrapCCNew {
-    compiler = pkgs.gcc.bin;
-    tools = [ pkgs.binutils.bin ];
-    inputs = [
-      pkgs.gcc_lib_nolibc
-      pkgs.gcc.cc_headers
-      pkgs.musl
-      pkgs.linux-headers
-    ];
-  };
+gcc_runtime_musl = callPackage ../all-pkgs/g/gcc/runtime.nix {
+  cc = pkgs.cc_gcc_musl_early;
+  gcc_lib = pkgs.gcc_lib_musl;
+  libsan = false;
+  preConfigure = ''
+    # Needed for the libstdc++ configure script to pick the right headers
+    # that don't use glibc macros
+    export NIX_SYSTEM_BUILD="$(echo "$NIX_SYSTEM_BUILD" | sed 's,gnu,musl,')"
+    export NIX_SYSTEM_HOST="$(echo "$NIX_SYSTEM_HOST" | sed 's,gnu,musl,')"
+  '';
+  failureHook = ''
+    find . -name config.log -exec cat {} \;
+  '';
 };
 
-gcc_lib_musl_static = callPackage ../all-pkgs/g/gcc/lib.nix {
-  cc = wrapCCNew {
-    compiler = pkgs.gcc.bin;
-    tools = [ pkgs.binutils.bin ];
-    inputs = [
-      pkgs.gcc.cc_headers
-      pkgs.musl_headers
-      pkgs.linux-headers
-    ];
-  };
-  type = "nolibc";
-};
-
-gcc_runtime = callPackage ../all-pkgs/g/gcc/runtime.nix { };
+gcc_runtime = null;
 
 gconf = callPackage ../all-pkgs/g/gconf { };
 
@@ -2277,6 +2311,8 @@ keepalived = callPackage ../all-pkgs/k/keepalived { };
 
 keepassx = callPackage ../all-pkgs/k/keepassx { };
 
+kelbt = callPackage ../all-pkgs/k/kelbt { };
+
 kerberos = callPackageAlias "krb5_lib" { };
 
 kexec-tools = callPackage ../all-pkgs/k/kexec-tools { };
@@ -2948,15 +2984,15 @@ lirc = callPackage ../all-pkgs/l/lirc { };
 
 live555 = callPackage ../all-pkgs/l/live555 { };
 
-lld_8 = callPackage ../all-pkgs/l/lld {
-  llvm = pkgs.llvm_8;
+lld_9 = callPackage ../all-pkgs/l/lld {
+  llvm = pkgs.llvm_9;
 };
-lld = callPackageAlias "lld_8" { };
+lld = callPackageAlias "lld_9" { };
 
-llvm_8 = callPackage ../all-pkgs/l/llvm {
-  channel = "8";
+llvm_9 = callPackage ../all-pkgs/l/llvm {
+  channel = "9";
 };
-llvm = callPackageAlias "llvm_8" { };
+llvm = callPackageAlias "llvm_9" { };
 
 lm-sensors = callPackage ../all-pkgs/l/lm-sensors { };
 
@@ -3166,13 +3202,11 @@ musepack = callPackage ../all-pkgs/m/musepack { };
 
 musl_lib = null;
 
-musl_lib_gcc = callPackage ../all-pkgs/g/glibc {
+musl_lib_gcc = callPackage ../all-pkgs/m/musl {
   cc = pkgs.cc_gcc_musl_nolibc;
 };
 
-musl_headers_gcc = callPackage ../all-pkgs/m/musl/headers.nix {
-  cc = pkgs.cc_gcc_early;
-};
+musl_headers = callPackage ../all-pkgs/m/musl/headers.nix { };
 
 mutter_3-26 = callPackage ../all-pkgs/m/mutter {
   channel = "3.26";
@@ -3720,7 +3754,9 @@ quazip = callPackage ../all-pkgs/q/quazip { };
 
 radvd = callPackage ../all-pkgs/r/radvd { };
 
-ragel = callPackage ../all-pkgs/r/ragel { };
+ragel_6 = callPackage ../all-pkgs/r/ragel/6.nix { };
+ragel_7 = callPackage ../all-pkgs/r/ragel/7.nix { };
+ragel = callPackageAlias "ragel_6" { };
 
 rapidjson = callPackage ../all-pkgs/r/rapidjson { };
 

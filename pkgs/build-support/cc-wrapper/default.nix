@@ -8,7 +8,6 @@
 { stdenv
 , lib
 , fetchurl
-, srco ? null
 }:
 
 lib.makeOverridable
@@ -21,6 +20,7 @@ lib.makeOverridable
 let
   inherit (lib)
     concatStringsSep
+    hasPrefix
     optionalString;
 
   inherit (compiler)
@@ -37,16 +37,20 @@ let
 
   tooldirs = map (n: "${n}/bin") (tools ++ [ compiler ]);
 
-  version = "0.1";
+  target' = if target != null then target else stdenv.targetSystem;
+
+  external = compiler.external;
+
+  version = "0.1.2";
 in
 assert target != "";
 stdenv.mkDerivation rec {
   name = "cc-wrapper-${version}";
 
-  src = if srco != null then srco else fetchurl {
+  src = ../../../../cc-wrapper/cc-wrapper-0.1.2.tar.xz /*fetchurl {
     url = "https://github.com/triton/cc-wrapper/releases/download/v${version}/${name}.tar.xz";
-    sha256 = "1906ba61c39e79dc1a05561d7fd53e283b9fb4686ba7361b4697826e37a4dfc5";
-  };
+    sha256 = "2a030841f632b4be62434cb1da886f27fbea7f25c8c1b05a13fdc4a11d9fc0c4";
+  }*/;
 
   preConfigure = ''
     configureFlagsArray+=("--with-pure-prefixes=$NIX_STORE")
@@ -64,10 +68,23 @@ stdenv.mkDerivation rec {
       vars["$file"]+=" $(tr '\n' ' ' <"$input"/nix-support/"$file")"
     }
 
+  '' + optionalString (!external && hasPrefix "i686" target') ''
+    vars['cflags-before']+=" -march=prescott"
+    vars['cflags-before']+=" -msse2"
+    vars['cflags-before']+=" -mfpmath=sse"
+  '' + optionalString (!external && hasPrefix "x86_64" target') ''
+    vars['cflags-before']+=" -march=sandybridge"
+    vars['cflags-before']+=" -mavx"
+  '' + optionalString (!external && hasPrefix "powerpc64le" target') ''
+    vars['cflags-before']+=" -mcpu=power9"
+    vars['cflags-before']+=" -msecure-plt"
+  '' + ''
     for inc in "$compiler" $tools $inputs; do
       maybeAppend cflags "$inc"
-      maybeAppend cxxflags "$inc"
+      maybeAppend cflags-before "$inc"
       maybeAppend cflags-link "$inc"
+      maybeAppend cxxflags "$inc"
+      maybeAppend cxxflags-before "$inc"
       maybeAppend cxxflags-link "$inc"
       maybeAppend ldflags "$inc"
       maybeAppend ldflags-before "$inc"
@@ -88,6 +105,14 @@ stdenv.mkDerivation rec {
     "--with-var-prefix=CC_WRAPPER${typefx}"
     "--with-build-dir-env-var=NIX_BUILD_TOP"
   ];
+
+  preBuild = ''
+    echo 'int main() { return 0; }' >main.c
+    if $CC -o main main.c -flto 2>/dev/null; then
+      echo "Using LTO" >&2
+      export CC_WRAPPER_CFLAGS="$CC_WRAPPER_CFLAGS -flto"
+    fi
+  '';
 
   postInstall = ''
     mkdir -p "$out"/nix-support

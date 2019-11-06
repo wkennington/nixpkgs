@@ -54,6 +54,12 @@ in
     touch "$out"/include/gnu/stubs.h
 
     mkdir -p "$out"/nix-support
-    echo "-idirafter $out/include" >"$out"/nix-support/cflags
+    echo "-fno-strict-overflow" >>"$out"/nix-support/cflags-before
+    echo "-fstack-protector-strong" >>"$out"/nix-support/cflags-before
+    echo "-idirafter $out/include" >>"$out"/nix-support/cflags
+    echo "--enable-new-dtags" >>"$out"/nix-support/ldflags-before
+    echo "-z noexecstack" >>"$out"/nix-support/ldflags-before
+    echo "-z now" >>"$out"/nix-support/ldflags-before
+    echo "-z relro" >>"$out"/nix-support/ldflags-before
   '';
 }

@@ -1,11 +1,22 @@
 { stdenv
+, lib
 , cc
 , hostcc
 , gcc
 , gcc_lib
+
+, libsan ? true
+, preConfigure ? ""
+, failureHook ? null
 }:
 
-(stdenv.override { cc = null; }).mkDerivation rec {
+let
+  inherit (lib)
+    boolEn
+    optionalString
+    optionals;
+in
+(stdenv.override { cc = null; }).mkDerivation ({
   name = "gcc-runtime-${gcc.version}";
 
   src = gcc.src;
@@ -19,15 +30,24 @@
 
   configureFlags = gcc.commonConfigureFlags ++ [
     "--with-system-libunwind"
+    "--${boolEn libsan}-libsanitizer"
   ];
 
   postPatch = ''
+    # Make configure think we vendored these sources
+    # We don't actully need them for target tools
     mkdir -p mpfr/src mpc gmp
+
+    # Don't build libgcc or the host gcc tool
     sed -i 's,^maybe-all-gcc: .*,maybe-all-gcc:,' Makefile.in
     sed -i 's,^\(maybe-\(all\|install\)-target-libgcc:\) .*,\1,' Makefile.in
+
+    # Don't try and use a gcc binary from our current build directory
+    # Always use the one we built previously
+    sed -i '/^[ ]*ok=/s,yes,no,' configure
   '';
 
-  preConfigure = ''
+  preConfigure = preConfigure + ''
     mkdir -v build
     cd build
     tar xf '${gcc_lib.internal}'/build.tar.xz
@@ -36,7 +56,15 @@
   '';
 
   preBuild = ''
-    buildFlagsArray+=(RAW_CXX_FOR_TARGET="$CC")
+    buildFlagsArray+=(
+      RAW_CXX_FOR_TARGET="$CC"
+      COMPILER_AS_FOR_TARGET="$($CC -print-prog-name=as)"
+      COMPILER_LD_FOR_TARGET="$($CC -print-prog-name=ld)"
+      COMPILER_NM_FOR_TARGET="$($CC -print-prog-name=nm)"
+    )
+  '' + lib.optionalString (stdenv.targetSystem == "i686-linux") ''
+    # Override bad arch options passed in for libatomic
+    export CC_WRAPPER_CFLAGS="$CC_WRAPPER_CFLAGS -march=prescott -mtune=prescott"
   '';
 
   buildFlags = [
@@ -51,14 +79,19 @@
     mv "$dev"/lib/gcc/*/*/include/* "$dev"/include
     rm -rv "$dev"/lib/gcc
 
-    mkdir -p "$lib"/lib "$libcxx"/lib "$libsan"/lib "$libssp"/lib
+    mkdir -p "$lib"/lib "$libcxx"/lib "$libssp"/lib
     mv "$dev"/lib*/libstdc++*.so* "$libcxx"/lib
     rm "$libcxx"/lib/*.py
-    mv "$dev"/lib*/*san.so* "$libsan"/lib
     mv "$dev"/lib*/libssp.so* "$libssp"/lib
+  '' + optionalString libsan ''
+    mkdir -p "$libsan"/lib
+    mv "$dev"/lib*/*san.so* "$libsan"/lib
+  '' + ''
     mv "$dev"/lib*/*.so* "$lib"/lib
-    ln -sv "$lib"/lib/* "$libcxx"/lib/* "$libsan"/lib/* "$libssp"/lib/* "$dev"/lib
-
+    ln -sv "$lib"/lib/* "$libcxx"/lib/* "$libssp"/lib/* "$dev"/lib
+  '' + optionalString libsan ''
+    ln -sv "$libsan"/lib/* "$dev"/lib
+  '' + ''
     mkdir -p "$dev"/nix-support
     echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags
     echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
@@ -75,8 +108,9 @@
     "dev"
     "lib"
     "libcxx"
-    "libsan"
     "libssp"
+  ] ++ optionals libsan [
+    "libsan"
   ];
 
   meta = with stdenv.lib; {
@@ -88,4 +122,4 @@
       x86_64-linux ++
       powerpc64le-linux;
   };
-}
+} // (if failureHook != null then { inherit failureHook; } else { }))

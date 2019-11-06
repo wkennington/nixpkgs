@@ -84,11 +84,6 @@ in
     ln -sv '${glibc_lib.lib}'/lib "$out"/lib
   '';
 
-  # Hardening can't be applied to all source
-  # Makefiles manually harden for this
-  CC_WRAPPER_CC_STACK_PROTECTOR = false;
-  CC_WRAPPER_CC_FORTIFY_SOURCE = false;
-
   meta = with stdenv.lib; {
     maintainers = with maintainers; [
       wkennington

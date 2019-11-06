@@ -105,10 +105,17 @@ self = (stdenv.override { cc = null; }).mkDerivation rec {
     mv "$lib"/include "$dev"
 
     mkdir -p "$dev"/nix-support
+    echo "-D_FORTIFY_SOURCE=2" >>"$dev"/nix-support/cflags-before
+    echo "-fno-strict-overflow" >>"$dev"/nix-support/cflags-before
+    echo "-fstack-protector-strong" >>"$dev"/nix-support/cflags-before
     echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags
     echo "-B$dev/lib" >>"$dev"/nix-support/cflags
     dyld="$(echo "$lib"/lib/ld-*.so)"
     echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
+    echo "--enable-new-dtags" >>"$dev"/nix-support/ldflags-before
+    echo "-z noexecstack" >>"$dev"/nix-support/ldflags-before
+    echo "-z now" >>"$dev"/nix-support/ldflags-before
+    echo "-z relro" >>"$dev"/nix-support/ldflags-before
     echo "-dynamic-linker $dyld" >>"$dev"/nix-support/ldflags-before
   '' + optionalString (type != "bootstrap") ''
     # Ensure we always have a fallback C.UTF-8 locale-archive
@@ -125,10 +132,6 @@ self = (stdenv.override { cc = null; }).mkDerivation rec {
   # Patchelf will break our loader
   dontPatchELF = true;
 
-  # Early libs can't use some of our hardening flags
-  CC_WRAPPER_CC_FORTIFY_SOURCE = false;
-  CC_WRAPPER_CC_STACK_PROTECTOR = false;
-  CC_WRAPPER_LD_HARDEN = false;
   CC_WRAPPER_LD_ADD_RPATH = false;
 
   passthru = {

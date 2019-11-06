@@ -237,6 +237,7 @@ stdenv.mkDerivation rec {
   passthru = {
     inherit target version commonConfigureFlags;
     impl = "gcc";
+    external = false;
 
     cc = "gcc";
     cxx = "g++";

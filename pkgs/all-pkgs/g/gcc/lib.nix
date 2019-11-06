@@ -79,9 +79,6 @@ in
     ln -sv libgcc.a "$dev"/lib/libgcc_eh.a
   '';
 
-  # Stack protector support is added to the compiler later
-  CC_WRAPPER_CC_STACK_PROTECTOR = false;
-
   outputs = [
     "dev"
     "lib"

@@ -59,6 +59,7 @@ let
     prefixMapFlag = "debug-prefix-map";
     canStackClashProtect = false;
     target = null;
+    external = true;
   };
 
   bootstrapShell = "${bootstrapTools}/bin/bash";
@@ -139,11 +140,6 @@ let
       name = "stdenv-linux-boot-stage0.1";
       cc = stage0Pkgs.cc_gcc_glibc;
 
-      preHook = commonBootstrapOptions.preHook + ''
-        export CC_WRAPPER_CC_HARDEN=
-        export CC_WRAPPER_LD_HARDEN=
-      '';
-
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage01Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
         inherit (pkgs) stdenv python_tiny;
@@ -175,11 +171,6 @@ let
       extraBuildInputs = [
         stage01Pkgs.patchelf
       ];
-
-      preHook = commonBootstrapOptions.preHook + ''
-        export CC_WRAPPER_CC_HARDEN=
-        export CC_WRAPPER_LD_HARDEN=
-      '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage02Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
@@ -218,9 +209,6 @@ let
         export NIX_SYSTEM_HOST='${bootstrapTarget}'
         NIX_SYSTEM_BUILD="$('${bootstrapCompiler}'/bin/gcc -dumpmachine)" || exit 1
         export NIX_SYSTEM_BUILD
-        export CC_WRAPPER_FOR_BUILD_CC_HARDEN=
-        export CC_WRAPPER_FOR_BUILD_LD_HARDEN=
-        export CC_WRAPPER_CC_LTO=
       '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage1Pkgs is missing package definition for `${n}`") pkgs) // {
@@ -264,9 +252,6 @@ let
         export NIX_SYSTEM_HOST='${bootstrapTarget}'
         NIX_SYSTEM_BUILD="$('${bootstrapCompiler}'/bin/gcc -dumpmachine)" || exit 1
         export NIX_SYSTEM_BUILD
-        export NIX_FOR_BUILD_CC_HARDEN=
-        export NIX_FOR_BUILD_LD_HARDEN=
-        export CC_WRAPPER_CC_LTO=
       '';
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage11Pkgs is missing package definition for `${n}`") pkgs) // {
@@ -449,14 +434,10 @@ let
           gzip gcc binutils zlib gmp linux-headers cc_gcc_early cc_gcc_glibc_headers cc_gcc_glibc_nolibc
           cc_gcc_glibc_nolibgcc cc_gcc_glibc_early cc_gcc_glibc;
 
-        wrapCC = pkgs.wrapCC.override {
-          srco = ../../../../cc-wrapper/cc-wrapper-0.1.tar.xz;
-        };
-
         # These are only needed to evaluate
         inherit (stage0Pkgs) fetchurl fetchTritonPatch;
         inherit (stage11Pkgs) gnum4;
-        #inherit (pkgs) wrapCC;
+        inherit (pkgs) wrapCC;
         hostcc = null;
       };
     });
