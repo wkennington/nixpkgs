@@ -16,12 +16,18 @@ maybeAppendFlagsFromFile() {
   fi
 }
 
+maybeAppendFlagsFromFile CPPFLAGS '@libs@'/nix-support/stdinc
 maybeAppendFlagsFromFile CPPFLAGS '@libs@'/nix-support/cflags
 maybeAppendFlagsFromFile CPPFLAGS '@libs@'/nix-support/cflags-link
 
+maybeAppendFlagsFromFile CXXFLAGS '@libs@'/nix-support/stdincxx
 maybeAppendFlagsFromFile CXXFLAGS '@libs@'/nix-support/cxxflags
 maybeAppendFlagsFromFile CXXFLAGS '@libs@'/nix-support/cxxflags-link
 
+maybeAppendFlagsFromFile DYLD '@libs@'/nix-support/dynamic-linker
+if [ -n "${DYLD-}" ]; then
+  LDFLAGS_PRE="-dynamic-linker $DYLD"
+fi
 maybeAppendFlagsFromFile LDFLAGS_PRE '@libs@'/nix-support/ldflags
 maybeAppendFlagsFromFile LDFLAGS_PRE '@libs@'/nix-support/ldflags-before
 maybeAppendFlagsFromFile LDFLAGS_PRE '@libs@'/nix-support/ldflags-dynamic

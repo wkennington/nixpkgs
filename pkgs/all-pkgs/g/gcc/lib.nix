@@ -65,7 +65,7 @@ in
 
     mkdir -p "$dev"/nix-support
     echo "-B$dev/lib" >>"$dev"/nix-support/cflags
-    echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags
+    echo "-idirafter $dev/include" >>"$dev"/nix-support/stdinc
     echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
   '' + optionalString (type != "nolibc") ''
     find . -not -type d -and -not -name '*'.h -delete

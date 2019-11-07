@@ -59,13 +59,13 @@ in
     mkdir -p "$dev"/nix-support
     echo "-fno-strict-overflow" >>"$dev"/nix-support/cflags-before
     echo "-fstack-protector-strong" >>"$dev"/nix-support/cflags-before
-    echo "-idirafter $dev/include" >"$dev"/nix-support/cflags
+    echo "-idirafter $dev/include" >"$dev"/nix-support/stdinc
     echo "-B$dev/lib" >"$dev"/nix-support/cflags-link
+    echo -n "$lib/lib/libc.so" >>"$dev"/nix-support/dynamic-linker
     echo "--enable-new-dtags" >>"$dev"/nix-support/ldflags-before
     echo "-z noexecstack" >>"$dev"/nix-support/ldflags-before
     echo "-z now" >>"$dev"/nix-support/ldflags-before
     echo "-z relro" >>"$dev"/nix-support/ldflags-before
-    echo "-dynamic-linker $lib/lib/libc.so" >"$dev"/nix-support/ldflags-before
     echo "-L$dev/lib" >"$dev"/nix-support/ldflags
   '' + optionalString (stdenv.targetSystem == "powerpc64le-linux") ''
     # TODO: Make 128-bit floats work

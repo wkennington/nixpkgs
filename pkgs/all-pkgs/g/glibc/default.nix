@@ -55,9 +55,6 @@ self = (stdenv.override { cc = null; }).mkDerivation rec {
   ];
 
   preConfigure = ''
-    # Prevent impure dynamic-linker paths from being injected
-    export CC_WRAPPER_LDFLAGS_BEFORE="$CC_WRAPPER_LDFLAGS_BEFORE -dynamic-linker $lib/lib/fake-ld.so"
-
     mkdir -v build
     cd build
     configureScript='../configure'
@@ -108,15 +105,15 @@ self = (stdenv.override { cc = null; }).mkDerivation rec {
     echo "-D_FORTIFY_SOURCE=2" >>"$dev"/nix-support/cflags-before
     echo "-fno-strict-overflow" >>"$dev"/nix-support/cflags-before
     echo "-fstack-protector-strong" >>"$dev"/nix-support/cflags-before
-    echo "-idirafter $dev/include" >>"$dev"/nix-support/cflags
+    echo "-idirafter $dev/include" >>"$dev"/nix-support/stdinc
     echo "-B$dev/lib" >>"$dev"/nix-support/cflags
     dyld="$(echo "$lib"/lib/ld-*.so)"
+    echo -n "$dyld" >>"$dev"/nix-support/dynamic-linker
     echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
     echo "--enable-new-dtags" >>"$dev"/nix-support/ldflags-before
     echo "-z noexecstack" >>"$dev"/nix-support/ldflags-before
     echo "-z now" >>"$dev"/nix-support/ldflags-before
     echo "-z relro" >>"$dev"/nix-support/ldflags-before
-    echo "-dynamic-linker $dyld" >>"$dev"/nix-support/ldflags-before
   '' + optionalString (type != "bootstrap") ''
     # Ensure we always have a fallback C.UTF-8 locale-archive
     export LOCALE_ARCHIVE="$lib"/lib/locale/locale-archive

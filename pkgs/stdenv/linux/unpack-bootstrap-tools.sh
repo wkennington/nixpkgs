@@ -110,13 +110,13 @@ ln -s $out/include-glibc $glibc/include
 # Make sure the cc-wrapper picks up the right thing
 mkdir -p "$glibc"/nix-support
 cxxinc="$(dirname "$(dirname "$out"/include/c++/*/*/bits/c++config.h)")"
-echo "-idirafter $cxxinc" >>"$glibc"/nix-support/cxxflags
-echo "-idirafter $(dirname "$cxxinc")" >>"$glibc"/nix-support/cxxflags
+echo "-idirafter $cxxinc" >>"$glibc"/nix-support/stdincxx
+echo "-idirafter $(dirname "$cxxinc")" >>"$glibc"/nix-support/stdincxx
 gccinc="$(echo "$glibc"/lib/gcc/*/*/include)"
-echo "-idirafter $gccinc" >>"$glibc"/nix-support/cflags
-echo "-idirafter $gccinc-fixed" >>"$glibc"/nix-support/cflags
-echo "-idirafter $glibc/include" >>"$glibc"/nix-support/cflags
+echo "-idirafter $gccinc" >>"$glibc"/nix-support/stdinc
+echo "-idirafter $gccinc-fixed" >>"$glibc"/nix-support/stdinc
+echo "-idirafter $glibc/include" >>"$glibc"/nix-support/stdinc
 echo "-B$glibc/lib" >>"$glibc"/nix-support/cflags
 dyld="$(echo "$glibc"/lib/ld-*.so)"
-echo "-dynamic-linker $dyld" >>"$glibc"/nix-support/ldflags-before
+echo -n "$dyld" >>"$glibc"/nix-support/dynamic-linker
 echo "-L$glibc/lib" >>"$glibc"/nix-support/ldflags

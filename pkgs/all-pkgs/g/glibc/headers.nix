@@ -56,7 +56,8 @@ in
     mkdir -p "$out"/nix-support
     echo "-fno-strict-overflow" >>"$out"/nix-support/cflags-before
     echo "-fstack-protector-strong" >>"$out"/nix-support/cflags-before
-    echo "-idirafter $out/include" >>"$out"/nix-support/cflags
+    echo "-idirafter $out/include" >>"$out"/nix-support/stdinc
+    touch "$out"/nix-support/dynamic-linker
     echo "--enable-new-dtags" >>"$out"/nix-support/ldflags-before
     echo "-z noexecstack" >>"$out"/nix-support/ldflags-before
     echo "-z now" >>"$out"/nix-support/ldflags-before

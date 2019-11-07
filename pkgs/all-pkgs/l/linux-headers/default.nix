@@ -88,7 +88,7 @@ in
 
   postInstall = ''
     mkdir -p "$out"/nix-support
-    echo "-idirafter $out/include" >"$out"/nix-support/cflags
+    echo "-idirafter $out/include" >"$out"/nix-support/stdinc
   '';
 
   preFixup = ''

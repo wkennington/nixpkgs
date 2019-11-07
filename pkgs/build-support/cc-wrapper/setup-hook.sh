@@ -36,7 +36,7 @@ fi
   fi
 
   if [ -d $1/include ]; then
-    export CC_WRAPPER@typefx@_CFLAGS+=" ${ccIncludeFlag:--isystem} $1/include"
+    export CC_WRAPPER@typefx@_STDINC+=" ${ccIncludeFlag:--isystem} $1/include"
   fi
 
   if [ -d $1/lib64 -a ! -L $1/lib64 ]; then

@@ -41,16 +41,16 @@ let
 
   external = compiler.external;
 
-  version = "0.1.2";
+  version = "0.1.4";
 in
 assert target != "";
 stdenv.mkDerivation rec {
   name = "cc-wrapper-${version}";
 
-  src = ../../../../cc-wrapper/cc-wrapper-0.1.2.tar.xz /*fetchurl {
+  src = fetchurl {
     url = "https://github.com/triton/cc-wrapper/releases/download/v${version}/${name}.tar.xz";
-    sha256 = "2a030841f632b4be62434cb1da886f27fbea7f25c8c1b05a13fdc4a11d9fc0c4";
-  }*/;
+    sha256 = "bf76f158d69a079f28fb776c6e63401d31c8b368a71c32974ad2446f3f135f55";
+  };
 
   preConfigure = ''
     configureFlagsArray+=("--with-pure-prefixes=$NIX_STORE")
@@ -65,7 +65,7 @@ stdenv.mkDerivation rec {
       local input="$2"
 
       exists "$input"/nix-support/"$file" || return 0
-      vars["$file"]+=" $(tr '\n' ' ' <"$input"/nix-support/"$file")"
+      vars["$file"]+="''${vars["$file"]+ }$(tr '\n' ' ' <"$input"/nix-support/"$file")"
     }
 
   '' + optionalString (!external && hasPrefix "i686" target') ''
@@ -80,16 +80,24 @@ stdenv.mkDerivation rec {
     vars['cflags-before']+=" -msecure-plt"
   '' + ''
     for inc in "$compiler" $tools $inputs; do
+      maybeAppend stdinc "$inc"
+      maybeAppend stdincxx "$inc"
       maybeAppend cflags "$inc"
       maybeAppend cflags-before "$inc"
       maybeAppend cflags-link "$inc"
       maybeAppend cxxflags "$inc"
       maybeAppend cxxflags-before "$inc"
       maybeAppend cxxflags-link "$inc"
+      maybeAppend dynamic-linker "$inc"
       maybeAppend ldflags "$inc"
       maybeAppend ldflags-before "$inc"
       maybeAppend ldflags-dynamic "$inc"
     done
+
+    if [ -n "''${vars['dynamic-linker']-}" -a ! -e "''${vars['dynamic-linker']}" ]; then
+      echo "Invalid dynamic-linker \"''${vars['dynamic-linker']}\""
+      exit 1
+    fi
 
     for var in "''${!vars[@]}"; do
       configureFlagsArray+=("--with-$var=''${vars["$var"]}")

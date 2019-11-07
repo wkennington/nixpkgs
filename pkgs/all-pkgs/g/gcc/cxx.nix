@@ -42,8 +42,8 @@
 
     mkdir -p "$dev"/nix-support
     cxxinc="$(dirname "$(dirname "$dev"/include/c++/*/*/bits/c++config.h)")"
-    echo "-idirafter $(dirname "$cxxinc")" >>"$dev"/nix-support/cxxflags
-    echo "-idirafter $cxxinc" >>"$dev"/nix-support/cxxflags
+    echo "-idirafter $(dirname "$cxxinc")" >>"$dev"/nix-support/stdincxx
+    echo "-idirafter $cxxinc" >>"$dev"/nix-support/stdincxx
     echo "-L$dev/lib" >>"$dev"/nix-support/ldflags
   '';
 
