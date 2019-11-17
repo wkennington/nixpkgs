@@ -3529,9 +3529,9 @@ parallel = callPackage ../all-pkgs/p/parallel { };
 
 parted = callPackage ../all-pkgs/p/parted { };
 
-patchelf = callPackage ../all-pkgs/p/patchelf { };
-
-patchelf_old = callPackage ../all-pkgs/p/patchelf/old.nix { };
+patchelf = callPackageAlias "patchelf_0-9" { };
+patchelf_0-9 = callPackage ../all-pkgs/p/patchelf/0.9.nix { };
+patchelf_0-10 = callPackage ../all-pkgs/p/patchelf/0.10.nix { };
 
 patchutils = callPackage ../all-pkgs/p/patchutils { };
 

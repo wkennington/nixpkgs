@@ -142,7 +142,7 @@ let
 
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage01Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
-        inherit (pkgs) stdenv python_tiny;
+        inherit (pkgs) stdenv python_tiny patchelf;
 
         bison = pkgs.bison.override {
           type = "bootstrap";
@@ -152,7 +152,7 @@ let
           type = "bootstrap";
         };
 
-        patchelf = pkgs.patchelf.override {
+        patchelf_0-9 = pkgs.patchelf_0-9.override {
           type = "bootstrap";
         };
 
@@ -257,7 +257,7 @@ let
       overrides = pkgs: (lib.mapAttrs (n: _: throw "stage11Pkgs is missing package definition for `${n}`") pkgs) // {
         inherit lib;
         inherit (pkgs) stdenv isl isl_0-21 libmpc mpfr bash_small coreutils_small gawk_small pcre
-          gnupatch_small gnused_small gnutar_small pkgconfig pkgconf pkgconf-wrapper xz wrapCC;
+          gnupatch_small gnused_small gnutar_small pkgconfig pkgconf pkgconf-wrapper xz wrapCC patchelf;
 
         python_tiny = pkgs.python_tiny.override {
           python = stage01Pkgs.python_tiny;
@@ -311,7 +311,7 @@ let
           type = "small";
         };
 
-        patchelf = pkgs.patchelf.override {
+        patchelf_0-9 = pkgs.patchelf_0-9.override {
           type = "small";
         };
 
@@ -430,7 +430,7 @@ let
           linux-headers_4-14 gcc_lib_glibc_static libidn2_glibc libunistring_glibc;
         inherit (pkgs) stdenv isl isl_0-21 libmpc mpfr bash_small coreutils_small gawk_small pcre
           gnupatch_small gnused_small gnutar_small pkgconfig pkgconf pkgconf-wrapper xz xz_5-2-4
-          patchelf pkgconf_unwrapped brotli brotli_1-0-7 bzip2 diffutils findutils gnugrep gnumake
+          patchelf patchelf_0-9 pkgconf_unwrapped brotli brotli_1-0-7 bzip2 diffutils findutils gnugrep gnumake
           gzip gcc binutils zlib gmp linux-headers cc_gcc_early cc_gcc_glibc_headers cc_gcc_glibc_nolibc
           cc_gcc_glibc_nolibgcc cc_gcc_glibc_early cc_gcc_glibc;
 

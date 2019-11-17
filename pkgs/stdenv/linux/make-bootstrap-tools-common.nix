@@ -55,7 +55,8 @@ rec {
       root="$TMPDIR/root"
       mkdir -pv "$root"/{bin,lib,libexec}
 
-      cp -dv '${glibc_lib_gcc.dev}'/lib/{libc.so,libc_nonshared.a,*.o} "$root"/lib
+      cp -dv '${glibc_lib_gcc.cc_reqs}'/lib/libc.so "$root"/lib
+      cp -dv '${glibc_lib_gcc.dev}'/lib/{libc_nonshared.a,*.o} "$root"/lib
       cp -dv '${gcc_lib_glibc.dev}'/lib/{libgcc_s.so,libgcc.a,*.o} "$root"/lib
       sed -i "s,$NIX_STORE[^ ]*/,,g" "$root"/lib/lib{c,gcc_s}.so
       chmod -R u+w "$root"/lib
@@ -67,22 +68,19 @@ rec {
       cp -rLv '${gcc.cc_headers}'/include "$root"/include-gcc
       cp -rLv '${gcc.cc_headers}'/include-fixed "$root"/include-fixed-gcc
       cp -rLv '${gcc_runtime_glibc.dev}'/include/c++/* "$root"/include-c++
-      cp -rLv '${gcc.bin}'/libexec "$root"
-      chmod -R u+w "$root"/libexec
-      rm -rv "$root"/libexec/gcc/*/*/{plugin,*lto*}
 
       declare -A sha256s=()
       copy_bin_and_deps() {
         local file="$1"
         local outdir="$2"
 
-        echo "Copying $file" >&2
         local outfile="$outdir/$(basename "$file")"
         if [ -e "$outfile" ]; then
           echo "Already have: $outfile" >&2
           return 0
         fi
-        sha="$(sha256sum "$file")"
+        mkdir -pv "$outdir"
+        sha="$(sha256sum "$file" | awk '{print $1}')"
         if [ -n "''${sha256s["$sha"]-}" ]; then
           ln -srv "''${sha256s["$sha"]}" "$outfile"
           return 0
@@ -132,6 +130,16 @@ rec {
           exit 1
         fi
         copy_bin_and_deps "$file" "$root"/bin
+      done
+      for file in '${gcc.bin}'/libexec/gcc/*/*/*; do
+        test -f "$file" && test -x "$file" || continue
+        copy_bin_and_deps "$file" "$(dirname "$root"/''${file#${gcc.bin}})"
+      done
+
+      for lib in "$root"/lib/lib*.so*; do
+        slib="''${lib%.so*}.so"
+        test ! -e "$slib" || continue
+        ln -srv "$lib" "$slib"
       done
 
       nuke-refs "$root"/{bin,lib,libexec}/*
