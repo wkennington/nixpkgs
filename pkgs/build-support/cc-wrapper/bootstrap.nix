@@ -1,6 +1,5 @@
 { stdenv
 , compiler
-, libs
 }:
 
 assert stdenv.cc == null;
@@ -8,8 +7,7 @@ stdenv.mkDerivation {
   name = "cc-wrapper-bootstrap";
 
   inherit
-    compiler
-    libs;
+    compiler;
 
   buildCommand = ''
     mkdir -p "$out"/nix-support

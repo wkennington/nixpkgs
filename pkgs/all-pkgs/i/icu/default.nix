@@ -13,7 +13,7 @@ let
     "http://download.icu-project.org/files/icu4c/${v}/${tarballName v}"
   ];
 
-  version = "64.2";
+  version = "65.1";
 in
 stdenv.mkDerivation rec {
   name = "icu4c-${version}";
@@ -21,7 +21,7 @@ stdenv.mkDerivation rec {
   src = fetchurl {
     urls = tarballUrls version;
     hashOutput = false;
-    sha256 = "627d5d8478e6d96fc8c90fed4851239079a561a6a8b9e48b0892f24e82d31d6c";
+    sha256 = "53e37466b3d6d6d01ead029e3567d873a43a5d1c668ed2278e253b683136d948";
   };
 
   postUnpack = ''

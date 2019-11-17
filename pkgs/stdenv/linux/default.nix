@@ -29,7 +29,7 @@ let
   };
 
   bootstrapTools = derivation {
-    name = "bootstrap-tools";
+    name = "bs-tools";
 
     builder = "/bin/sh";
 
@@ -41,7 +41,6 @@ let
     outputs = [
       "out"
       "compiler"
-      "glibc"
     ];
 
     system = hostSystem;
@@ -118,16 +117,12 @@ let
           stdenv = stdenv.override {
             cc = pkgs.callPackage ../../build-support/cc-wrapper/bootstrap.nix {
               compiler = bootstrapCompiler;
-              libs = bootstrapTools.glibc;
             };
           };
         };
 
         cc_gcc_glibc = wrapCC {
           compiler = bootstrapCompiler;
-          inputs = [
-            bootstrapTools.glibc
-          ];
         };
       };
     });

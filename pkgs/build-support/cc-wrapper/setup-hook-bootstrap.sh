@@ -16,21 +16,23 @@ maybeAppendFlagsFromFile() {
   fi
 }
 
-maybeAppendFlagsFromFile CPPFLAGS '@libs@'/nix-support/stdinc
-maybeAppendFlagsFromFile CPPFLAGS '@libs@'/nix-support/cflags
-maybeAppendFlagsFromFile CPPFLAGS '@libs@'/nix-support/cflags-link
+maybeAppendFlagsFromFile CPPFLAGS '@compiler@'/nix-support/stdincxx
+maybeAppendFlagsFromFile CPPFLAGS '@compiler@'/nix-support/stdinc
+maybeAppendFlagsFromFile CFLAGS '@compiler@'/nix-support/cflags
+maybeAppendFlagsFromFile CFLAGS '@compiler@'/nix-support/cflags-link
 
-maybeAppendFlagsFromFile CXXFLAGS '@libs@'/nix-support/stdincxx
-maybeAppendFlagsFromFile CXXFLAGS '@libs@'/nix-support/cxxflags
-maybeAppendFlagsFromFile CXXFLAGS '@libs@'/nix-support/cxxflags-link
+maybeAppendFlagsFromFile CXXFLAGS '@compiler@'/nix-support/cxxflags
+maybeAppendFlagsFromFile CXXFLAGS '@compiler@'/nix-support/cflags
+maybeAppendFlagsFromFile CXXFLAGS '@compiler@'/nix-support/cxxflags-link
+maybeAppendFlagsFromFile CXXFLAGS '@compiler@'/nix-support/cflags-link
 
-maybeAppendFlagsFromFile DYLD '@libs@'/nix-support/dynamic-linker
+maybeAppendFlagsFromFile DYLD '@compiler@'/nix-support/dynamic-linker
 if [ -n "${DYLD-}" ]; then
   LDFLAGS_PRE="-dynamic-linker $DYLD"
 fi
-maybeAppendFlagsFromFile LDFLAGS_PRE '@libs@'/nix-support/ldflags
-maybeAppendFlagsFromFile LDFLAGS_PRE '@libs@'/nix-support/ldflags-before
-maybeAppendFlagsFromFile LDFLAGS_PRE '@libs@'/nix-support/ldflags-dynamic
+maybeAppendFlagsFromFile LDFLAGS_PRE '@compiler@'/nix-support/ldflags
+maybeAppendFlagsFromFile LDFLAGS_PRE '@compiler@'/nix-support/ldflags-before
+maybeAppendFlagsFromFile LDFLAGS_PRE '@compiler@'/nix-support/ldflags-dynamic
 
 dynamicLinker=
 export LDFLAGS=
